@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jau Training</title>
+<meta name="description" content="Seus treinos, cargas e evolução com o personal Jau.">
+<meta name="theme-color" content="#A50000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jau Training">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Montserrat:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app"><div class="boot"><img src="img/logo.webp" alt="Jau Training" width="280" height="203"></div></div>
+
+<div id="timer" class="timer" hidden>
+  <div class="tbar"><i id="tfill"></i></div>
+  <div class="tin">
+    <div><span class="tl" id="tlabel">Descanso</span><strong id="tclock">0:00</strong><span class="tm" id="tmeta"></span></div>
+    <div class="tbtns"><button id="tplus" type="button">+15s</button><button id="tskip" type="button">Fechar</button></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<div id="syncchip" class="syncchip" hidden></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
