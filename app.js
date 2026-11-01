@@ -2332,7 +2332,7 @@ function libItem(l){
       <label>Como fazer<textarea id="l-ins-${l.id}" rows="3" data-lf="instructions" data-lib="${l.id}">${esc(l.instructions)}</textarea></label>
       <label>Vídeo do YouTube<input id="l-vid-${l.id}" type="url" data-lf="video" data-lib="${l.id}" value="${esc(l.video)}" placeholder="https://youtube.com/watch?v=... ou link de Shorts"></label>
       <span id="l-vst-${l.id}">${videoStatus(l)}</span>
-      <div class="tools">${u ? `<span class="hint">Usado em ${u} ${u === 1 ? 'ficha' : 'fichas'}. Tire das fichas para poder apagar.</span>` : `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`}</div>
+      <div class="tools"><button type="button" class="icon" data-act="lib-copy" data-v="${l.id}">Copiar exercício</button>${u ? `<span class="hint">Usado em ${u} ${u === 1 ? 'ficha' : 'fichas'}. Tire das fichas para poder apagar.</span>` : `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`}</div>
     </div>` : ''}
   </article>`;
 }
@@ -2578,6 +2578,14 @@ document.addEventListener('click', e => {
     const arr = l[key], ix = arr.indexOf(v);
     if (ix > -1) arr.splice(ix, 1); else { arr.push(v); const o = l[other].indexOf(v); if (o > -1) l[other].splice(o, 1); }
     save(); const el = document.getElementById('lib-' + l.id); if (el) el.outerHTML = libItem(l);
+  }
+  else if (act === 'lib-copy'){
+    const o = db.library.find(l => l.id === v); if (!o) return;
+    const c = JSON.parse(JSON.stringify(o)); c.id = 'c-' + uid(); c.name = o.name + ' (cópia)'; c.custom = true;
+    db.library.push(c); state.libOpen = c.id; state.libQ = ''; state.libM = ''; save(); render();
+    const el = document.getElementById('lib-' + c.id); if (el) el.scrollIntoView({block: 'start'});
+    const i = document.getElementById('l-name-' + c.id); if (i){ i.focus(); i.select(); }
+    toast('Cópia criada. Mude o nome e o que precisar.');
   }
   else if (act === 'lib-del'){ if (!arm(b, 'Toque de novo para apagar', 'Apagar da biblioteca')) return; db.library = db.library.filter(l => l.id !== v); state.libOpen = null; save(); document.getElementById('lib-list').innerHTML = libList(); toast('Exercício apagado'); }
   else if (act === 'm-new'){ const m = {id: 'm-' + uid(), name: 'Novo método', desc: ''}; db.methods.push(m); save(); render(); const i = document.getElementById('m-name-' + m.id); if (i){ i.focus(); i.select(); } }
