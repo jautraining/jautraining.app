@@ -713,3 +713,51 @@ main.auth{max-width:460px;padding-block:24px 80px}
 .previewbar{margin:0;background:var(--ink);color:var(--bg);border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:600}
 .syncchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;width:max-content;max-width:calc(100vw - 32px);background:var(--ink);color:var(--bg);font-size:.76rem;font-weight:600;line-height:1.35;padding:9px 14px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);text-align:center}
 .newst input[type=email]{flex:1 1 100%}
+
+/* --- rascunho aprovado: vencimento, vídeo, como fazer, figurinha --- */
+/* vencimento do plano */
+.namerow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.due{font-size:.7rem;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--sunk);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.due.breve{background:var(--t-prep);color:#1D1515}
+.due.hoje{background:var(--t-prep);color:#1D1515}
+.due.vencido{background:var(--fill);color:var(--on-fill)}
+.planmsg{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;border-radius:12px;padding:10px 14px;font-size:.9rem}
+.planmsg.hoje{background:var(--soft);color:var(--accent)}
+.planmsg.vencido{background:var(--fill);color:var(--on-fill)}
+.planmsg a{color:inherit;font-size:.8rem;font-weight:700;text-underline-offset:3px}
+.duerow{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.duerow label{flex:1 1 180px}
+.duerow .icon{margin-bottom:2px}
+.newdue{display:flex;align-items:center;gap:8px;flex:1 1 100%;font-size:.8rem;color:var(--muted)}
+.newdue input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;color:var(--ink)}
+
+/* vídeo dentro do app */
+.vidov{position:fixed;inset:0;z-index:60;background:rgba(10,4,4,.72);display:flex;align-items:flex-end;justify-content:center;padding:12px max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+@media (min-width:640px){.vidov{align-items:center}}
+.vidbox{background:var(--surface);color:var(--ink);border-radius:18px;padding:14px;width:100%;max-width:560px;max-height:calc(100dvh - 24px);overflow-y:auto;display:flex;flex-direction:column;gap:12px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.vidbox.short{max-width:400px}
+.vidtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.vidttl{min-width:0;display:flex;flex-direction:column;gap:2px}
+.vidttl b{font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em;line-height:1.25}
+.vidframe{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;border-radius:12px;overflow:hidden;background:#140B0B}
+.vidbox.short .vidframe{aspect-ratio:9/16;height:min(60dvh,520px);width:auto;margin:0 auto}
+.vidframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vidwait{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:#C9BDBC;font-size:.82rem}
+.vidhow{font-size:.86rem;line-height:1.5}
+.vidext{font-size:.78rem;font-weight:700;color:var(--accent);text-align:center;text-underline-offset:3px}
+button.vcard{width:100%;text-align:left;font:inherit;cursor:pointer}
+body.noscroll{overflow:hidden}
+
+/* como fazer no card */
+.ehow{margin-top:8px;gap:6px}
+.ehow p{font-size:.86rem;line-height:1.5;color:var(--ink)}
+
+/* modelos da imagem de fim de treino: arrastar para o lado */
+.stk-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:12px;overscroll-behavior-x:contain}
+.stk-car::-webkit-scrollbar{display:none}
+.stk-slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;border-radius:0}
+.stk-dots{display:flex;justify-content:center;gap:2px;margin-top:-4px}
+.stk-dots button{width:30px;height:22px;border:0;padding:0;background:transparent;display:grid;place-items:center}
+.stk-dots button::after{content:"";width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .2s,background .2s}
+.stk-dots button[aria-pressed="true"]::after{width:20px;background:var(--accent)}
+@media (prefers-reduced-motion:reduce){.stk-dots button::after{transition:none}}

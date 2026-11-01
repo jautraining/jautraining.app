@@ -64,9 +64,230 @@ function seedLibrary(){ return withDefaults([
   L('prancha','Prancha',['abdomen'],['obliquos','delt_ant'],'Cotovelos abaixo dos ombros, quadril alinhado e glúteo contraído. Respire sem perder a posição.'),
   L('puxada-frente','Puxada frontal',['costas'],['biceps'],N_COST),
   L('afundo','Afundo com halteres',['quadriceps','gluteos'],['adutores'],'Passo largo, tronco estável e desça até o joelho de trás quase tocar o chão.'),
-  L('stiff','Stiff com barra',['posteriores','gluteos'],['lombar'],'Joelhos levemente flexionados, barra rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo.')
+  L('stiff','Stiff com barra',['posteriores','gluteos'],['lombar'],'Joelhos levemente flexionados, barra rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo.'),
+  L("supino-reto-barra","Supino reto com barra",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-incl-barra","Supino inclinado com barra",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-incl-halter","Supino inclinado com halteres",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-decl-barra","Supino declinado com barra",["peitoral"],["triceps", "delt_ant"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-decl-halter","Supino declinado com halteres",["peitoral"],["triceps", "delt_ant"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-maq","Supino reto na máquina",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender os braços, voltando devagar."),
+  L("supino-incl-maq","Supino inclinado na máquina",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender os braços, voltando devagar."),
+  L("supino-smith","Supino reto no Smith",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("supino-incl-smith","Supino inclinado no Smith",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
+  L("crucifixo-reto","Crucifixo reto com halteres",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
+  L("crucifixo-incl","Crucifixo inclinado com halteres",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
+  L("peck-deck","Voador (peck deck)",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
+  L("crossover-alto","Crossover na polia alta",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
+  L("crossover-medio","Crossover na polia média",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
+  L("crossover-baixo","Crossover na polia baixa",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
+  L("crossover-unilateral","Crossover unilateral na polia",["peitoral"],["delt_ant", "obliquos"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
+  L("pullover-halter","Pullover com halter",["peitoral", "costas"],["triceps"],"Manter o abdômen sempre ativo, quadril estável e levar o halter para trás da cabeça até alongar bem, voltando com os cotovelos levemente flexionados."),
+  L("paralelas-peito","Mergulho nas paralelas (ênfase peitoral)",["peitoral", "triceps"],["delt_ant"],"Tronco levemente inclinado à frente e cotovelos um pouco abertos. Desça até sentir o peitoral alongar, sem forçar o ombro, e suba empurrando."),
+  L("flexao","Flexão de braço",["peitoral"],["triceps", "delt_ant", "abdomen"],"Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("flexao-joelhos","Flexão de braço com joelhos apoiados",["peitoral"],["triceps", "delt_ant"],"Joelhos apoiados e corpo alinhado dos joelhos à cabeça, com o abdômen contraído. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("flexao-inclinada","Flexão inclinada (mãos elevadas)",["peitoral"],["triceps", "delt_ant"],"Mãos apoiadas num banco ou banco de step. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("flexao-declinada","Flexão declinada (pés elevados)",["peitoral", "delt_ant"],["triceps", "abdomen"],"Pés apoiados num banco. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("flexao-elastico","Flexão de braço com elástico",["peitoral"],["triceps", "delt_ant", "abdomen"],"Elástico passado pelas costas e preso nas mãos. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("supino-elastico","Supino em pé com elástico",["peitoral"],["delt_ant", "triceps"],"Elástico preso atrás na altura do peito. Abdômen ativo, um pé à frente e empurrar para a frente até quase estender os braços. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("crucifixo-elastico","Crucifixo em pé com elástico",["peitoral"],["delt_ant"],"Elástico preso atrás na altura do peito. Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
+  L("barra-fixa-pronada","Barra fixa pronada",["costas"],["biceps", "delt_post", "antebraco"],"Pegada um pouco mais aberta que os ombros. Puxe levando o peito em direção à barra, com as escápulas descendo, e desça até estender bem os braços."),
+  L("barra-fixa-supinada","Barra fixa supinada",["costas", "biceps"],["antebraco"],"Pegada na largura dos ombros com as palmas para você. Puxe até o queixo passar a barra e desça controlando até estender os braços."),
+  L("barra-fixa-assistida","Barra fixa assistida (graviton)",["costas"],["biceps", "delt_post"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("barra-fixa-elastico","Barra fixa com elástico de assistência",["costas"],["biceps", "delt_post"],"Elástico preso na barra e apoiado nos pés ou joelhos. Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("barra-fixa-negativa","Barra fixa negativa",["costas"],["biceps", "antebraco"],"Comece com o queixo acima da barra (subindo num banco) e desça o mais devagar que conseguir, de 3 a 5 segundos, até estender os braços."),
+  L("puxada-supinada","Puxada frontal supinada",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("puxada-triangulo","Puxada com triângulo",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("puxada-unilateral","Puxada unilateral na polia",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("puxada-elastico","Puxada alta com elástico",["costas"],["biceps"],"Elástico preso no alto. Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("pulldown-corda","Pulldown com corda",["costas"],["triceps"],"Iniciar o movimento sempre pela extensão dos ombros, contraindo as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-baixa-triangulo","Remada baixa com triângulo",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-baixa-aberta","Remada baixa pegada aberta",["costas", "delt_post"],["biceps", "trapezio"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-baixa-unilateral","Remada baixa unilateral na polia",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-maq-pronada","Remada máquina pegada pronada",["costas", "delt_post"],["biceps", "trapezio"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-articulada","Remada articulada unilateral",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("serrote","Remada unilateral com halter (serrote)",["costas"],["biceps", "delt_post"],"Mão e joelho apoiados no banco, coluna neutra. Puxe o halter levando o cotovelo em direção ao quadril, contraindo bem as costas."),
+  L("remada-curvada-supinada","Remada curvada supinada com barra",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
+  L("remada-curvada-halteres","Remada curvada com halteres",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
+  L("remada-curvada-smith","Remada curvada no Smith",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
+  L("remada-cavalinho","Remada cavalinho (T-bar)",["costas"],["biceps", "delt_post", "lombar"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
+  L("remada-seal","Remada no banco inclinado com halteres",["costas"],["biceps", "delt_post"],"Peito apoiado no banco inclinado. Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-invertida","Remada invertida (australiana)",["costas"],["biceps", "delt_post", "abdomen"],"Corpo alinhado embaixo da barra, glúteo e abdômen contraídos. Puxe o peito em direção à barra juntando as escápulas."),
+  L("remada-elastico","Remada com elástico",["costas"],["biceps", "delt_post"],"Elástico preso à frente na altura do peito. Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("terra-convencional","Levantamento terra convencional",["posteriores", "gluteos", "lombar"],["quadriceps", "trapezio", "costas", "antebraco"],"Barra rente às canelas, coluna neutra e abdômen bem ativo. Empurre o chão com os pés e estenda quadril e joelhos juntos, mantendo a barra colada ao corpo."),
+  L("extensao-lombar","Extensão lombar no banco romano",["lombar"],["gluteos", "posteriores"],"Quadril apoiado no banco e tronco descendo com a coluna neutra. Suba até alinhar o corpo, sem hiperestender a lombar."),
+  L("superman","Superman (extensão lombar no solo)",["lombar"],["gluteos", "delt_post"],"Deitado de barriga para baixo, eleve braços e pernas juntos contraindo lombar e glúteo, segure 1 segundo e desça devagar."),
+  L("good-morning","Good morning com barra",["posteriores", "lombar"],["gluteos"],"Barra apoiada nos ombros, joelhos levemente flexionados. Leve o quadril para trás inclinando o tronco com a coluna neutra e volte contraindo o glúteo."),
+  L("encolhimento-barra","Encolhimento com barra",["trapezio"],["antebraco"],"Braços estendidos e tronco estável. Eleve os ombros em direção às orelhas, segure 1 segundo e desça devagar, sem girar os ombros."),
+  L("encolhimento-halteres","Encolhimento com halteres",["trapezio"],["antebraco"],"Braços estendidos ao lado do corpo e tronco estável. Eleve os ombros em direção às orelhas, segure 1 segundo e desça devagar."),
+  L("desenv-barra","Desenvolvimento militar com barra em pé",["delt_ant"],["delt_med", "triceps", "trapezio", "abdomen"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Glúteo contraído para proteger a lombar."),
+  L("desenv-sentado","Desenvolvimento sentado com halteres",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
+  L("desenv-maq","Desenvolvimento na máquina",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
+  L("desenv-smith","Desenvolvimento no Smith",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
+  L("desenv-arnold","Desenvolvimento Arnold",["delt_ant", "delt_med"],["triceps"],"Manter o abdômen sempre ativo. Comece com as palmas para você e gire os punhos enquanto sobe, terminando com as palmas para a frente."),
+  L("desenv-unilateral","Desenvolvimento unilateral em pé com halter",["delt_ant"],["delt_med", "triceps", "obliquos"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Não deixe o tronco inclinar para o lado."),
+  L("landmine-press","Landmine press (desenvolvimento na barra apoiada)",["delt_ant"],["peitoral", "triceps", "abdomen"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
+  L("desenv-elastico","Desenvolvimento com elástico",["delt_ant"],["delt_med", "triceps"],"Elástico preso embaixo dos pés. Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("pike-pushup","Flexão pike (ênfase ombro)",["delt_ant"],["triceps", "delt_med"],"Quadril elevado formando um V invertido. Desça a cabeça em direção ao chão entre as mãos e empurre de volta."),
+  L("elev-lateral-sentado","Elevação lateral sentado com halteres",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("elev-lateral-polia","Elevação lateral unilateral na polia",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("elev-lateral-maq","Elevação lateral na máquina",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("elev-lateral-elastico","Elevação lateral com elástico",["delt_med"],["trapezio"],"Elástico preso embaixo dos pés. Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("elev-frontal-halteres","Elevação frontal com halteres",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
+  L("elev-frontal-anilha","Elevação frontal com anilha",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
+  L("elev-frontal-polia","Elevação frontal na polia",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
+  L("remada-alta-barra","Remada alta com barra",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("remada-alta-halteres","Remada alta com halteres",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("crucifixo-inverso-halteres","Crucifixo inverso com halteres",["delt_post"],["trapezio", "costas"],"Tronco inclinado à frente com a coluna neutra. Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
+  L("crucifixo-inverso-banco","Crucifixo inverso no banco inclinado",["delt_post"],["trapezio", "costas"],"Peito apoiado no banco inclinado. Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
+  L("crucifixo-inverso-maq","Crucifixo inverso na máquina (voador inverso)",["delt_post"],["trapezio", "costas"],"Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
+  L("crucifixo-inverso-polia","Crucifixo inverso na polia",["delt_post"],["trapezio", "costas"],"Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
+  L("facepull-elastico","Face pull com elástico",["delt_post", "trapezio"],["costas"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("rotacao-externa","Rotação externa de ombro na polia",["delt_post"],[],"Cotovelo colado ao corpo e dobrado a 90 graus. Gire o antebraço para fora sem afastar o cotovelo, devagar e com carga leve."),
+  L("elev-y","Elevação em Y no banco inclinado",["delt_post", "trapezio"],["delt_med"],"Peito apoiado no banco inclinado, polegares para cima. Eleve os braços formando um Y, contraindo as escápulas, e desça devagar."),
+  L("rosca-direta-barra","Rosca direta com barra",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
+  L("rosca-w","Rosca direta com barra W",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
+  L("rosca-alternada","Rosca alternada com halteres",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco. Gire o punho para fora ao subir."),
+  L("rosca-martelo-halteres","Rosca martelo com halteres",["biceps", "antebraco"],[],"Pegada neutra, cotovelos fixos ao lado do corpo e descida controlada."),
+  L("rosca-martelo-cruzada","Rosca martelo cruzada",["biceps", "antebraco"],[],"Pegada neutra, levando o halter em direção ao ombro oposto. Cotovelos fixos e descida controlada."),
+  L("rosca-scott-barra","Rosca Scott com barra W",["biceps"],["antebraco"],"Braços bem apoiados no banco Scott. Desça até quase estender os cotovelos, sem soltar o peso, e suba contraindo o bíceps."),
+  L("rosca-scott-maq","Rosca Scott na máquina",["biceps"],["antebraco"],"Braços bem apoiados no banco. Desça até quase estender os cotovelos e suba contraindo o bíceps."),
+  L("rosca-scott-unilateral","Rosca Scott unilateral com halter",["biceps"],["antebraco"],"Braço bem apoiado no banco Scott. Desça até quase estender o cotovelo e suba contraindo o bíceps."),
+  L("rosca-concentrada","Rosca concentrada",["biceps"],[],"Sentado, cotovelo apoiado na parte interna da coxa. Suba contraindo bem o bíceps e desça devagar até estender o braço."),
+  L("rosca-polia","Rosca direta na polia",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
+  L("rosca-polia-corda","Rosca na polia com corda",["biceps", "antebraco"],[],"Pegada neutra na corda e cotovelos fixos ao lado do corpo. Suba afastando levemente as mãos e desça controlando."),
+  L("rosca-bayesian","Rosca na polia de costas (unilateral)",["biceps"],[],"De costas para a polia, braço levemente atrás do corpo. Suba contraindo o bíceps sem levar o cotovelo à frente."),
+  L("rosca-inclinada","Rosca no banco inclinado com halteres",["biceps"],["antebraco"],"Costas apoiadas no banco inclinado e braços soltos para trás. Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
+  L("rosca-inversa","Rosca inversa com barra",["antebraco", "biceps"],[],"Pegada pronada (palmas para baixo), cotovelos fixos ao lado do corpo. Suba sem dobrar os punhos e desça devagar."),
+  L("rosca-elastico","Rosca direta com elástico",["biceps"],["antebraco"],"Elástico preso embaixo dos pés. Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("flexao-punho","Flexão de punho com barra",["antebraco"],[],"Antebraços apoiados nas coxas com as palmas para cima. Flexione os punhos levando a barra para cima e desça até alongar."),
+  L("extensao-punho","Extensão de punho com barra",["antebraco"],[],"Antebraços apoiados nas coxas com as palmas para baixo. Estenda os punhos levando a barra para cima e desça devagar."),
+  L("farmer-walk","Caminhada do fazendeiro (farmer walk)",["antebraco", "trapezio"],["abdomen", "obliquos"],"Um halter pesado em cada mão, ombros para trás e abdômen ativo. Caminhe com passos curtos sem deixar o tronco balançar."),
+  L("triceps-corda","Tríceps na polia com corda",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final. Abra levemente a corda no final."),
+  L("triceps-barra","Tríceps na polia com barra reta",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
+  L("triceps-v","Tríceps na polia com barra V",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
+  L("triceps-unilateral","Tríceps unilateral na polia",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
+  L("triceps-testa-w","Tríceps testa com barra W",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir. Cotovelos apontando para cima, sem abrir."),
+  L("triceps-testa-polia","Tríceps testa na polia",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir. Cotovelos apontando para cima, sem abrir."),
+  L("triceps-frances-halter","Tríceps francês com halter",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
+  L("triceps-frances-w","Tríceps francês com barra W",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
+  L("triceps-coice","Tríceps coice com halter",["triceps"],[],"Tronco inclinado e cotovelo fixo ao lado do corpo. Estenda o braço para trás contraindo o tríceps e volte devagar."),
+  L("triceps-coice-polia","Tríceps coice na polia",["triceps"],[],"Tronco inclinado e cotovelo fixo ao lado do corpo. Estenda o braço para trás contraindo o tríceps e volte devagar."),
+  L("triceps-maq","Tríceps na máquina",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
+  L("mergulho-banco","Mergulho no banco",["triceps"],["delt_ant", "peitoral"],"Mãos apoiadas no banco atrás do corpo e quadril perto do banco. Desça dobrando os cotovelos para trás e suba estendendo os braços."),
+  L("paralelas-triceps","Mergulho nas paralelas (ênfase tríceps)",["triceps"],["peitoral", "delt_ant"],"Tronco mais reto e cotovelos apontando para trás. Desça até os cotovelos chegarem a 90 graus e suba estendendo os braços."),
+  L("supino-fechado","Supino fechado com barra",["triceps", "peitoral"],["delt_ant"],"Mãos na largura dos ombros e cotovelos próximos ao corpo. Desça a barra até o peito e empurre estendendo os braços."),
+  L("flexao-diamante","Flexão diamante",["triceps", "peitoral"],["delt_ant", "abdomen"],"Mãos juntas embaixo do peito formando um losango. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
+  L("triceps-elastico","Tríceps com elástico",["triceps"],[],"Elástico preso no alto. Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("agach-smith","Agachamento no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-frontal","Agachamento frontal com barra",["quadriceps"],["gluteos", "abdomen", "adutores"],"Barra apoiada na frente dos ombros, cotovelos altos e tronco ereto. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-goblet","Agachamento goblet",["quadriceps", "gluteos"],["adutores", "abdomen"],"Halter ou kettlebell junto ao peito, tronco ereto. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-sumo-halter","Agachamento sumô com halter",["adutores", "gluteos"],["quadriceps"],"Pés afastados e apontando para fora, halter entre as pernas. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-box","Agachamento com barra no caixote (box squat)",["quadriceps", "gluteos"],["posteriores", "adutores", "lombar"],"Desça até sentar de leve no caixote, sem relaxar o tronco, e suba empurrando o chão. Manter o abdômen sempre ativo."),
+  L("agach-pendulo","Agachamento pêndulo",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("belt-squat","Agachamento no belt squat",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-peso-corporal","Agachamento com peso corporal",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-elastico","Agachamento com elástico",["quadriceps", "gluteos"],["adutores", "abdutores"],"Elástico embaixo dos pés e nas mãos à altura dos ombros. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("agach-salto","Agachamento com salto",["quadriceps", "gluteos"],["panturrilha"],"Desça no agachamento e suba explodindo num salto. Aterrisse suave, com os joelhos alinhados aos pés."),
+  L("wall-sit","Agachamento isométrico na parede",["quadriceps"],["gluteos"],"Costas apoiadas na parede e joelhos a 90 graus, alinhados com os pés. Segure a posição respirando normalmente."),
+  L("sissy","Agachamento sissy",["quadriceps"],[],"Calcanhares elevados e quadril alinhado ao tronco. Leve os joelhos à frente descendo devagar e volte contraindo o quadríceps."),
+  L("leg-press-45","Leg press 45°",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto na execução. Não tire o quadril do encosto."),
+  L("leg-press-unilateral","Leg press unilateral",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto. Joelho alinhado ao pé durante todo o movimento."),
+  L("extensora-unilateral","Cadeira extensora unilateral",["quadriceps"],[],"Manter o abdômen sempre ativo, explorar a amplitude e controlar a cadência."),
+  L("hack-smith","Hack no Smith",["quadriceps", "gluteos"],["adutores"],"Pés um pouco à frente do corpo. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("bulgaro-smith","Búlgaro no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
+  L("bulgaro-peso","Búlgaro com peso corporal",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
+  L("afundo-barra","Afundo com barra",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
+  L("afundo-smith","Afundo no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
+  L("afundo-reverso","Recuo com halteres",["gluteos", "quadriceps"],["adutores"],"Dê o passo para trás. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
+  L("recuo-smith","Recuo no Smith",["gluteos", "quadriceps"],["adutores"],"Dê o passo para trás. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
+  L("afundo-cruzado","Afundo cruzado (curtsy)",["gluteos", "abdutores"],["quadriceps", "adutores"],"Leve a perna para trás e cruzada, como numa reverência. Tronco estável e suba empurrando com a perna da frente."),
+  L("passada","Passada (avanço caminhando) com halteres",["quadriceps", "gluteos"],["adutores"],"Passos largos e alternados, tronco estável. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
+  L("step-up","Subida no banco (step-up) com halteres",["quadriceps", "gluteos"],["adutores"],"Pé inteiro apoiado no banco. Suba empurrando com a perna de cima, sem dar impulso com a de baixo, e desça controlando."),
+  L("cadeira-adutora","Cadeira adutora",["adutores"],[],"Manter o abdômen sempre ativo, explorar a amplitude e controlar a cadência."),
+  L("adutor-polia","Adução de quadril na polia",["adutores"],[],"Tronco estável e perna de apoio firme. Puxe a perna em direção à linha do corpo, cruzando levemente, e volte devagar."),
+  L("elev-pelvica-barra","Elevação pélvica com barra",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("elev-pelvica-smith","Elevação pélvica no Smith",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("elev-pelvica-unilateral","Elevação pélvica unilateral",["gluteos"],["posteriores", "abdutores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("elev-pelvica-elastico","Elevação pélvica com elástico",["gluteos"],["posteriores", "abdutores"],"Elástico acima dos joelhos, empurrando para fora. Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("ponte-gluteo","Ponte de glúteo no solo",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("ponte-unilateral","Ponte de glúteo unilateral",["gluteos"],["posteriores", "abdutores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
+  L("frog-pump","Frog pump",["gluteos"],["abdutores"],"Deitado, solas dos pés juntas e joelhos abertos. Eleve o quadril contraindo bem o glúteo e desça devagar."),
+  L("gluteo-4-apoios","Glúteo 4 apoios com caneleira",["gluteos"],["posteriores"],"Em quatro apoios, abdômen ativo e coluna neutra. Eleve a perna empurrando o calcanhar para cima, sem arquear a lombar."),
+  L("gluteo-polia-4-apoios","Glúteo na polia em 4 apoios",["gluteos"],["posteriores"],"Em quatro apoios, abdômen ativo e coluna neutra. Leve a perna para trás e para cima contraindo o glúteo, sem arquear a lombar."),
+  L("gluteo-maq","Glúteo na máquina (coice)",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, tronco estável e contrair o glúteo ao final do movimento."),
+  L("ext-quadril-elastico","Extensão de quadril com elástico (coice)",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, tronco estável e contrair o glúteo ao final do movimento. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("abdutora-inclinada","Cadeira abdutora com tronco inclinado",["abdutores", "gluteos"],[],"Tronco inclinado à frente, sem tirar o quadril do banco. Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta."),
+  L("abducao-deitado","Abdução de quadril deitado de lado",["abdutores"],["gluteos"],"Deitado de lado com o corpo alinhado. Eleve a perna de cima sem girar o quadril e desça devagar."),
+  L("abducao-elastico","Abdução de quadril com elástico",["abdutores"],["gluteos"],"Elástico acima dos joelhos. Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
+  L("caminhada-lateral","Caminhada lateral com elástico",["abdutores"],["gluteos"],"Elástico acima dos joelhos ou nos tornozelos, semiagachado. Dê passos laterais curtos sem deixar os joelhos entrarem."),
+  L("clamshell","Concha (clamshell) com elástico",["abdutores"],["gluteos"],"Deitado de lado, joelhos flexionados e pés juntos. Abra o joelho de cima sem girar o quadril e feche devagar."),
+  L("stiff-halteres","Stiff com halteres",["posteriores", "gluteos"],["lombar"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
+  L("stiff-unilateral","Stiff unilateral com halter",["posteriores", "gluteos"],["lombar", "abdutores"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo. Quadril alinhado, sem girar."),
+  L("stiff-smith","Stiff no Smith",["posteriores", "gluteos"],["lombar"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
+  L("stiff-elastico","Stiff com elástico",["posteriores", "gluteos"],["lombar"],"Elástico embaixo dos pés. Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
+  L("rdl-barra","Levantamento terra romeno (RDL) com barra",["posteriores", "gluteos"],["lombar", "antebraco"],"Manter o abdômen sempre ativo e focar no movimento de jogar o quadril para trás, alongando os posteriores. Barra rente às pernas."),
+  L("terra-trap","Levantamento terra com trap bar",["quadriceps", "gluteos", "posteriores"],["lombar", "trapezio", "antebraco"],"Coluna neutra e abdômen bem ativo. Empurre o chão com os pés e suba estendendo quadril e joelhos juntos."),
+  L("hiperextensao-gluteo","Hiperextensão 45° (ênfase glúteo)",["gluteos"],["posteriores", "lombar"],"Quadril na borda do apoio e costas levemente arredondadas. Suba contraindo o glúteo, sem hiperestender a lombar."),
+  L("pull-through","Pull-through na polia",["gluteos"],["posteriores"],"De costas para a polia, corda entre as pernas. Leve o quadril para trás e volte estendendo o quadril, contraindo bem o glúteo."),
+  L("kettlebell-swing","Kettlebell swing",["gluteos", "posteriores"],["lombar", "abdomen"],"O movimento vem do quadril, não dos braços. Jogue o quadril para trás e estenda com força, deixando o kettlebell subir até a altura do peito."),
+  L("mesa-flexora","Mesa flexora",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força. Quadril colado no banco."),
+  L("flexora-elastico","Flexão de joelho com elástico",["posteriores"],["panturrilha"],"Deitado de barriga para baixo, elástico no tornozelo. Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
+  L("flexora-caneleira","Flexora em pé com caneleira",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
+  L("flexao-nordica","Flexão nórdica",["posteriores"],[],"Ajoelhado com os tornozelos presos. Desça o tronco à frente o mais devagar que conseguir, mantendo o quadril estendido, e use as mãos para voltar."),
+  L("flexora-bola","Flexão de joelho na bola suíça",["posteriores"],["gluteos"],"Deitado com os calcanhares na bola e quadril elevado. Puxe a bola em direção ao glúteo sem deixar o quadril cair."),
+  L("panturrilha-sentado","Panturrilha sentado",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
+  L("panturrilha-leg","Panturrilha no leg press",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
+  L("panturrilha-smith","Panturrilha no Smith",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
+  L("panturrilha-unilateral","Panturrilha unilateral com halter",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
+  L("panturrilha-degrau","Panturrilha no degrau (peso corporal)",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
+  L("abd-supra","Abdominal supra no solo",["abdomen"],[],"Lombar apoiada no chão. Suba as escápulas contraindo o abdômen, sem puxar o pescoço com as mãos."),
+  L("abd-supra-anilha","Abdominal supra com anilha",["abdomen"],[],"Anilha junto ao peito e lombar apoiada no chão. Suba as escápulas contraindo o abdômen e desça devagar."),
+  L("abd-maq","Abdominal na máquina",["abdomen"],["obliquos"],"Flexione o tronco contraindo o abdômen. Os braços só seguram, a força vem do abdômen."),
+  L("abd-elastico","Abdominal ajoelhado com elástico",["abdomen"],["obliquos"],"Ajoelhado de frente para o elástico preso no alto, flexione o tronco contraindo o abdômen. Os braços só seguram, não puxam."),
+  L("abd-bicicleta","Abdominal bicicleta",["abdomen", "obliquos"],[],"Lombar apoiada no chão. Leve o cotovelo em direção ao joelho oposto, alternando, sem puxar o pescoço."),
+  L("abd-cruzado","Abdominal cruzado (oblíquo) no solo",["obliquos"],["abdomen"],"Lombar apoiada no chão. Suba girando o tronco em direção ao joelho oposto e desça devagar."),
+  L("abd-remador","Abdominal remador",["abdomen"],[],"Sentado, tronco levemente para trás. Traga os joelhos ao peito e estenda de novo, sem apoiar os pés no chão."),
+  L("abd-canivete","Abdominal canivete (V-up)",["abdomen"],["obliquos"],"Deitado, suba tronco e pernas ao mesmo tempo tentando tocar os pés com as mãos, e desça controlando."),
+  L("toque-calcanhar","Toque no calcanhar",["obliquos"],["abdomen"],"Deitado com os joelhos dobrados e escápulas fora do chão. Incline o tronco para os lados tocando os calcanhares."),
+  L("elev-pernas-paralela","Elevação de pernas na paralela",["abdomen"],["obliquos"],"Costas apoiadas e braços firmes no apoio. Eleve os joelhos ou as pernas enrolando o quadril, sem dar impulso."),
+  L("elev-pernas-barra","Elevação de pernas na barra fixa",["abdomen"],["obliquos", "antebraco"],"Pendurado na barra, sem balançar. Eleve os joelhos ou as pernas enrolando o quadril e desça devagar."),
+  L("abd-roda","Abdominal com roda (ab wheel)",["abdomen"],["obliquos", "costas"],"Ajoelhado, abdômen bem ativo e glúteo contraído. Role a roda à frente até onde conseguir sem arquear a lombar e volte."),
+  L("dead-bug","Dead bug",["abdomen"],["obliquos"],"Deitado, braços e joelhos para cima e lombar colada no chão. Estenda braço e perna opostos devagar, sem tirar a lombar do chão."),
+  L("hollow","Canoinha (hollow hold)",["abdomen"],[],"Deitado, lombar colada no chão, braços e pernas estendidos e elevados. Segure a posição respirando normalmente."),
+  L("prancha-lateral","Prancha lateral",["obliquos"],["abdomen", "abdutores"],"Cotovelo abaixo do ombro e corpo alinhado, quadril elevado. Segure a posição sem deixar o quadril cair."),
+  L("prancha-toque-ombro","Prancha alta com toque no ombro",["abdomen"],["obliquos", "delt_ant"],"Em prancha com braços estendidos e pés afastados. Toque o ombro oposto alternando, sem deixar o quadril girar."),
+  L("mountain-climber","Escalador (mountain climber)",["abdomen"],["delt_ant", "quadriceps"],"Em prancha com braços estendidos. Traga os joelhos ao peito alternando, em ritmo constante e sem elevar o quadril."),
+  L("pallof","Pallof press na polia",["obliquos", "abdomen"],[],"De lado para a polia, mãos no peito. Estenda os braços à frente resistindo à rotação do tronco e volte devagar."),
+  L("pallof-elastico","Pallof press com elástico",["obliquos", "abdomen"],[],"De lado para o elástico, mãos no peito. Estenda os braços à frente resistindo à rotação do tronco e volte devagar."),
+  L("russian-twist","Rotação russa (russian twist) com anilha",["obliquos"],["abdomen"],"Sentado com o tronco inclinado para trás e coluna neutra. Gire o tronco levando a anilha de um lado para o outro."),
+  L("woodchop","Lenhador na polia (woodchopper)",["obliquos"],["abdomen", "delt_ant"],"Braços estendidos segurando a polia. Gire o tronco puxando na diagonal, com o abdômen ativo e os pés firmes."),
+  L("flexao-lateral","Flexão lateral de tronco com halter",["obliquos"],["abdomen"],"Halter numa das mãos, tronco ereto. Incline para o lado do halter e volte contraindo o oblíquo do outro lado."),
+  L("burpee","Burpee",["quadriceps", "peitoral"],["gluteos", "triceps", "abdomen", "delt_ant"],"Agache, apoie as mãos, leve os pés para trás, faça uma flexão, volte os pés e suba com um salto. Ritmo constante e controlado."),
+  L("crucifixo-polia-deitado","Crucifixo deitado na polia",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
+  L("supino-incl-elastico","Supino inclinado com elástico",["peitoral"],["delt_ant", "triceps"],"Elástico preso embaixo, atrás do corpo. Abdômen ativo e empurrar para a frente e para cima até quase estender os braços."),
+  L("chest-press-unilateral","Supino unilateral na máquina",["peitoral"],["delt_ant", "triceps", "obliquos"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender o braço, sem girar o tronco."),
+  L("puxada-neutra-aberta","Puxada pegada neutra aberta",["costas"],["biceps", "delt_post"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
+  L("remada-baixa-supinada","Remada baixa pegada supinada",["costas"],["biceps"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
+  L("remada-alta-polia-corda","Remada alta na polia com corda",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
+  L("desenv-barra-sentado","Desenvolvimento com barra sentado",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
+  L("rosca-zottman","Rosca Zottman",["biceps", "antebraco"],[],"Suba com as palmas para cima, gire no topo e desça com as palmas para baixo, devagar. Cotovelos fixos ao lado do corpo."),
+  L("rosca-spider","Rosca spider no banco inclinado",["biceps"],[],"Peito apoiado no banco inclinado e braços soltos para baixo. Suba contraindo bem o bíceps e desça até estender os cotovelos."),
+  L("triceps-frances-polia-unilateral","Tríceps francês unilateral na polia",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
+  L("agach-sumo-barra","Agachamento sumô com barra",["adutores", "gluteos"],["quadriceps", "lombar"],"Pés afastados e apontando para fora, joelhos seguindo a linha dos pés. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("bulgaro-barra","Búlgaro com barra",["quadriceps", "gluteos"],["adutores", "abdomen"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
+  L("leg-press-horiz-unilateral","Leg press horizontal unilateral",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto. Joelho alinhado ao pé durante todo o movimento."),
+  L("hack-invertido","Hack invertido (de frente para a máquina)",["gluteos", "quadriceps"],["posteriores", "adutores"],"Peito apoiado na máquina e quadril indo para trás na descida. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
+  L("step-up-lateral","Subida lateral no banco",["gluteos", "abdutores"],["quadriceps"],"De lado para o banco, pé de cima inteiro apoiado. Suba empurrando com essa perna, sem impulso da de baixo, e desça devagar."),
+  L("abducao-maq-pe","Abdução de quadril em pé na máquina",["abdutores"],["gluteos"],"Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta."),
+  L("abducao-caneleira","Abdução de quadril em pé com caneleira",["abdutores"],["gluteos"],"Apoiado com as mãos, tronco estável. Abra a perna para o lado usando o glúteo, sem inclinar o corpo, e volte devagar."),
+  L("coice-caneleira","Coice em pé com caneleira",["gluteos"],["posteriores"],"Apoiado com as mãos e tronco levemente à frente. Leve a perna para trás contraindo o glúteo, sem arquear a lombar."),
+  L("flexora-sentada-unilateral","Cadeira flexora unilateral",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
+  L("prancha-elev-perna","Prancha com elevação de perna",["abdomen"],["gluteos", "obliquos"],"Em prancha com os cotovelos apoiados, eleve uma perna de cada vez sem girar o quadril. Abdômen e glúteo contraídos."),
+  L("abd-infra-declinado","Abdominal infra no banco declinado",["abdomen"],[],"Segure firme no banco e eleve o quadril usando o abdômen, sem dar impulso com as pernas. Desça devagar."),
+  L("afundo-salto","Afundo com salto",["quadriceps", "gluteos"],["panturrilha", "adutores"],"Desça no afundo e troque as pernas no ar com um salto. Aterrisse suave e com o tronco estável.")
 ]);}
-function withDefaults(list){ const p = list.find(l => l.id === 'prancha'); if (p) p.defMeas = 'tempo'; return list; }
+const TEMPO_IDS = ["prancha", "farmer-walk", "wall-sit", "hollow", "prancha-lateral", "mountain-climber", "prancha-elev-perna"];
+function withDefaults(list){ list.forEach(l => { if (TEMPO_IDS.includes(l.id)) l.defMeas = 'tempo'; }); return list; }
 function seedMethods(){ return [
   {id:'normal', name:'Normal', desc:'Séries tradicionais: faça as repetições, descanse o intervalo indicado e repita.'},
   {id:'conjugado', name:'Conjugado (bi-set)', desc:'Dois exercícios em sequência, sem descanso entre eles. Faça a série do A, vá direto para o B e só então descanse o intervalo indicado.'},
@@ -209,7 +430,7 @@ const CONSENT_VERSION = 'teste-2026-10';
 const RECOVERY_LINK = /type=recovery/.test(location.hash);
 const APP_URL = location.origin + location.pathname.replace(/index\.html$/, '');
 const AUTH = {screen: 'loading', view: RECOVERY_LINK ? 'recovery' : 'login', user: null, profile: null, msg: '', err: '', busy: false};
-const SYNC = {synced: {}, status: 'ok', timer: null, running: false, again: false, retry: 0, retryT: null, lastPull: 0, pulling: false, pendingRender: false};
+const SYNC = {synced: {}, ver: {}, since: {}, fullAt: 0, conflict: false, status: 'ok', timer: null, running: false, again: false, retry: 0, retryT: null, lastPull: 0, pulling: false, pendingRender: false};
 let sb = null;
 try {
   if (window.supabase && CFG.supabaseUrl && !/COLE_AQUI/.test(CFG.supabaseUrl + CFG.supabaseKey))
@@ -221,7 +442,7 @@ if (sb) sb.auth.onAuthStateChange((ev, session) => {
 const isP = () => !!(AUTH.profile && AUTH.profile.role === 'personal');
 const cacheKey = () => 'jau-cache-v1:' + (AUTH.user ? AUTH.user.id : 'anon');
 function emptyDb(){ return {library: [], methods: [], students: [], drafts: {}, draftMeta: {}, settings: {wa: ''}, seen: {}, onboarded: {}}; }
-function cacheWrite(){ if (!AUTH.user) return; try { localStorage.setItem(cacheKey(), JSON.stringify({db, synced: SYNC.synced, profile: AUTH.profile})); } catch(e){} }
+function cacheWrite(){ if (!AUTH.user) return; try { localStorage.setItem(cacheKey(), JSON.stringify({db, synced: SYNC.synced, ver: SYNC.ver, since: SYNC.since, fullAt: SYNC.fullAt, profile: AUTH.profile})); } catch(e){} }
 function cacheRead(){ try { const c = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return c && c.db ? c : null; } catch(e){ return null; } }
 
 /* Cada linha do banco vira uma "foto" em texto. Salvar = enviar só as fotos que mudaram. */
@@ -239,20 +460,25 @@ function snap(){
     db.library.forEach((l, i) => { const {id, ...rest} = l; m['lib:' + id] = JSON.stringify({ord: i, data: rest}); });
     db.methods.forEach((x, i) => { const {id, ...rest} = x; m['met:' + id] = JSON.stringify({ord: i, data: rest}); });
     m['set:wa'] = JSON.stringify((db.settings && db.settings.wa) || '');
+    if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
 }
 const TBL = {
-  lib: {t: 'library', pk: 'id', row: (id, v) => ({id, ord: v.ord, data: v.data})},
-  met: {t: 'methods', pk: 'id', row: (id, v) => ({id, ord: v.ord, data: v.data})},
+  lib: {t: 'library', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, ord: v.ord, data: v.data})},
+  met: {t: 'methods', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, ord: v.ord, data: v.data})},
   set: {t: 'settings', pk: 'key', row: (id, v) => ({key: id, value: v})},
-  stu: {t: 'students', pk: 'id', row: (id, v) => ({id, email: v.email, data: v.data})},
-  prv: {t: 'student_private', pk: 'student_id', row: (id, v) => ({student_id: id, notes: v})},
-  log: {t: 'logs', pk: 'id', row: (id, v) => ({id, student_id: v.student_id, date: v.date, data: v.data})},
-  seen: {t: 'feed_seen', pk: 'log_id', row: id => ({log_id: id})}
+  stu: {t: 'students', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, email: v.email, data: v.data})},
+  prv: {t: 'student_private', pk: 'student_id', ts: 'updated_at', row: (id, v) => ({student_id: id, notes: v})},
+  log: {t: 'logs', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, student_id: v.student_id, date: v.date, data: v.data})},
+  seen: {t: 'feed_seen', pk: 'log_id', ts: 'seen_at', row: id => ({log_id: id})}
 };
 const UP_ORDER = ['lib', 'met', 'set', 'stu', 'prv', 'log', 'seen'], DEL_ORDER = ['seen', 'log', 'prv', 'stu', 'met', 'lib', 'set'];
+/* Versão de cada linha que este aparelho conhece (data da última alteração no banco). */
+const kindsFor = P => P ? ['lib', 'met', 'stu', 'prv', 'log', 'seen'] : ['lib', 'met', 'stu', 'log'];
+const verOf = (p, id) => { const v = SYNC.ver[p] && SYNC.ver[p][id]; return v ? v[0] : null; };
+function setVer(p, id, ts, ord){ (SYNC.ver[p] = SYNC.ver[p] || {})[id] = ord == null ? [ts] : [ts, ord]; if (ts && (!SYNC.since[p] || ts > SYNC.since[p])) SYNC.since[p] = ts; }
 function diff(){
   const cur = snap(), prev = SYNC.synced, up = {}, del = {};
   const pre = k => k.slice(0, k.indexOf(':'));
@@ -261,29 +487,67 @@ function diff(){
   return {cur, up, del, n: Object.keys(up).length + Object.keys(del).length};
 }
 const hasPending = () => diff().n > 0;
+async function selectIn(T, cols, ids){
+  const out = [];
+  for (let i = 0; i < ids.length; i += 100){
+    const {data, error} = await sb.from(T.t).select(cols).in(T.pk, ids.slice(i, i + 100));
+    if (error) throw error;
+    out.push(...(data || []));
+  }
+  return out;
+}
+/* Antes de gravar por cima de uma linha que já existe, confere se outro aparelho mexeu nela. */
+async function guard(p, ks, cur, prev){
+  const T = TBL[p]; if (!T.ts || !SYNC.ver[p]) return ks;
+  const ids = ks.map(k => k.slice(p.length + 1)).filter(id => verOf(p, id));
+  if (!ids.length) return ks;
+  const srv = await selectIn(T, T.pk + ',' + T.ts, ids), now = {};
+  srv.forEach(r => now[r[T.pk]] = r[T.ts]);
+  const changed = ids.filter(id => now[id] && now[id] !== verOf(p, id)), gone = ids.filter(id => !now[id]);
+  if (!changed.length && !gone.length) return ks;
+  const rows = changed.length ? await selectIn(T, '*', changed) : [];
+  rows.forEach(r => applyRow(p, r));
+  gone.forEach(id => dropRow(p, id));
+  finishApply(p === 'lib' || p === 'met' ? [] : [p]);
+  const fresh = snap(), hit = new Set([...changed, ...gone].map(id => p + ':' + id));
+  hit.forEach(k => { if (k in fresh){ prev[k] = fresh[k]; cur[k] = fresh[k]; } else { delete prev[k]; delete cur[k]; } });
+  SYNC.conflict = true;
+  return ks.filter(k => !hit.has(k));
+}
 async function push(){
   if (!sb || !AUTH.user) return;
   const {cur, up, del} = diff(), prev = SYNC.synced;
   for (const p of UP_ORDER){
-    const ks = up[p]; if (!ks) continue;
+    let ks = up[p]; if (!ks) continue;
+    ks = await guard(p, ks, cur, prev);
+    const T = TBL[p];
     for (let i = 0; i < ks.length; i += 200){
       const part = ks.slice(i, i + 200);
-      const rows = part.map(k => TBL[p].row(k.slice(p.length + 1), JSON.parse(cur[k])));
-      const {error} = await sb.from(TBL[p].t).upsert(rows, {onConflict: TBL[p].pk});
+      const rows = part.map(k => T.row(k.slice(p.length + 1), JSON.parse(cur[k])));
+      let q = sb.from(T.t).upsert(rows, {onConflict: T.pk});
+      if (T.ts && p !== 'seen') q = q.select(T.pk + ',' + T.ts + (p === 'lib' || p === 'met' ? ',ord' : ''));
+      const {data, error} = await q;
       if (error) throw error;
+      (data || []).forEach(r => setVer(p, r[T.pk], r[T.ts], r.ord));
       part.forEach(k => prev[k] = cur[k]);
     }
   }
   for (const p of DEL_ORDER){
     const ks = del[p]; if (!ks) continue;
     for (let i = 0; i < ks.length; i += 200){
-      const part = ks.slice(i, i + 200);
-      const {error} = await sb.from(TBL[p].t).delete().in(TBL[p].pk, part.map(k => k.slice(p.length + 1)));
+      const part = ks.slice(i, i + 200), ids = part.map(k => k.slice(p.length + 1));
+      const {error} = await sb.from(TBL[p].t).delete().in(TBL[p].pk, ids);
       if (error) throw error;
       part.forEach(k => delete prev[k]);
+      if (SYNC.ver[p]) ids.forEach(id => delete SYNC.ver[p][id]);
     }
   }
   cacheWrite();
+  if (SYNC.conflict){
+    SYNC.conflict = false; dataVer++;
+    toast('Isto foi alterado em outro aparelho ao mesmo tempo. Fiquei com a versão mais nova.');
+    if (typing() || state.done || state.editLog) SYNC.pendingRender = true; else render();
+  }
   if (up.stu && isP()) setTimeout(() => refresh(true), 1500);
 }
 const isNetErr = e => !e || (!e.code && /fetch|network|load failed|timeout/i.test(String(e.message || e)));
@@ -309,45 +573,143 @@ async function runSync(){
     if (SYNC.again){ SYNC.again = false; scheduleSync(150); }
   }
 }
-async function fetchAll(t, pk){
+async function fetchAll(t, pk, cols, since){
   const out = [];
   for (let from = 0; ; from += 1000){
-    const {data, error} = await sb.from(t).select('*').order(pk).range(from, from + 999);
+    let q = sb.from(t).select(cols || '*');
+    if (since) q = q.gt(since[0], since[1]);
+    const {data, error} = await q.order(pk).range(from, from + 999);
     if (error) throw error;
     out.push(...data);
     if (data.length < 1000) return out;
   }
 }
 const byOrd = (a, b) => (a.ord - b.ord) || (a.id < b.id ? -1 : 1);
-/* Baixa tudo do banco. Devolve true se algo mudou. */
+function fixStudent(s){
+  s.days = s.days || {}; DAYS.forEach(x => { s.days[x.k] = s.days[x.k] || {title: '', ex: []}; if (!s.days[x.k].ex) s.days[x.k].ex = []; });
+  s.last = (s.logs || []).reduce((m, x) => !m || x.date > m ? x.date : m, null);
+  return s;
+}
+/* Aplica uma linha que veio do banco nos dados do aparelho. */
+function applyRow(p, r){
+  const T = TBL[p], id = r[T.pk];
+  if (p === 'lib' || p === 'met'){
+    const arr = p === 'lib' ? db.library : db.methods, o = Object.assign({id}, r.data), i = arr.findIndex(x => x.id === id);
+    if (i >= 0) arr[i] = o; else arr.push(o);
+    setVer(p, id, r[T.ts], r.ord);
+  } else if (p === 'stu'){
+    let s = db.students.find(x => x.id === id);
+    if (!s){ s = {id, logs: [], privNotes: ''}; db.students.push(s); }
+    Object.keys(s).forEach(k => { if (!['id', 'logs', 'privNotes'].includes(k)) delete s[k]; });
+    Object.assign(s, r.data, {email: r.email || '', userId: r.user_id || null});
+    fixStudent(s); setVer(p, id, r[T.ts]);
+  } else if (p === 'prv'){
+    const s = db.students.find(x => x.id === id); if (s) s.privNotes = r.notes || '';
+    setVer(p, id, r[T.ts]);
+  } else if (p === 'log'){
+    db.students.forEach(s => { if (s.logs && s.logs.some(l => l.id === id)) s.logs = s.logs.filter(l => l.id !== id); });
+    const s = db.students.find(x => x.id === r.student_id);
+    if (s){ s.logs = s.logs || []; s.logs.push(Object.assign({id, date: r.date}, r.data)); }
+    setVer(p, id, r[T.ts]);
+  } else if (p === 'seen'){ db.seen[id] = true; setVer(p, id, r[T.ts]); }
+}
+function dropRow(p, id){
+  if (p === 'lib') db.library = db.library.filter(x => x.id !== id);
+  else if (p === 'met') db.methods = db.methods.filter(x => x.id !== id);
+  else if (p === 'stu'){
+    const s = db.students.find(x => x.id === id);
+    if (s && SYNC.ver.log) (s.logs || []).forEach(l => delete SYNC.ver.log[l.id]);
+    db.students = db.students.filter(x => x.id !== id);
+  }
+  else if (p === 'prv'){ const s = db.students.find(x => x.id === id); if (s) s.privNotes = ''; }
+  else if (p === 'log') db.students.forEach(s => { if (s.logs) s.logs = s.logs.filter(l => l.id !== id); });
+  else if (p === 'seen') delete db.seen[id];
+  if (SYNC.ver[p]) delete SYNC.ver[p][id];
+}
+function finishApply(kinds){
+  const ord = (p, x) => { const v = SYNC.ver[p] && SYNC.ver[p][x.id]; return v && v[1] != null ? v[1] : 1e9; };
+  if (kinds.includes('lib')) db.library.sort((a, b) => ord('lib', a) - ord('lib', b));
+  if (kinds.includes('met')) db.methods.sort((a, b) => ord('met', a) - ord('met', b));
+  if (kinds.includes('log') || kinds.includes('stu')) db.students.forEach(s => {
+    s.logs = (s.logs || []).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0); fixStudent(s);
+  });
+}
+/* Primeira vez (ou uma vez por dia): baixa tudo. */
+async function pullFull(P){
+  const [lib, met, set, stus, logs, prv, seen] = await Promise.all([
+    fetchAll('library', 'id'), fetchAll('methods', 'id'), fetchAll('settings', 'key'), fetchAll('students', 'id'), fetchAll('logs', 'id'),
+    P ? fetchAll('student_private', 'student_id') : Promise.resolve([]), P ? fetchAll('feed_seen', 'log_id') : Promise.resolve([])]);
+  if (hasPending()) return false;
+  const logsBy = {}, prvBy = {};
+  SYNC.ver = {}; SYNC.since = {};
+  logs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.created_at < b.created_at ? -1 : 1))
+    .forEach(r => { (logsBy[r.student_id] = logsBy[r.student_id] || []).push(Object.assign({id: r.id, date: r.date}, r.data)); setVer('log', r.id, r.updated_at); });
+  prv.forEach(r => { prvBy[r.student_id] = r.notes || ''; setVer('prv', r.student_id, r.updated_at); });
+  db.library = lib.sort(byOrd).map(r => { setVer('lib', r.id, r.updated_at, r.ord); return Object.assign({id: r.id}, r.data); });
+  db.methods = met.sort(byOrd).map(r => { setVer('met', r.id, r.updated_at, r.ord); return Object.assign({id: r.id}, r.data); });
+  applySettings(set);
+  db.seen = Object.fromEntries(seen.map(r => { setVer('seen', r.log_id, r.seen_at); return [r.log_id, true]; }));
+  db.students = stus.sort((a, b) => a.created_at < b.created_at ? -1 : 1).map(r => {
+    setVer('stu', r.id, r.updated_at);
+    return fixStudent(Object.assign({id: r.id, email: r.email || '', userId: r.user_id || null}, r.data, {privNotes: P ? (prvBy[r.id] || '') : '', logs: logsBy[r.id] || []}));
+  });
+  kindsFor(P).forEach(p => SYNC.ver[p] = SYNC.ver[p] || {});
+  SYNC.fullAt = Date.now();
+  return true;
+}
+function applySettings(set){
+  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver');
+  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0});
+}
+/* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
+async function pullDelta(P){
+  const kinds = kindsFor(P);
+  const back = p => SYNC.since[p] || '1970-01-01T00:00:00Z';
+  const [set, ...res] = await Promise.all([fetchAll('settings', 'key'), ...kinds.map(async p => {
+    const T = TBL[p];
+    const [rows, cnt] = await Promise.all([fetchAll(T.t, T.pk, '*', [T.ts, back(p)]), sb.from(T.t).select(T.pk, {count: 'exact', head: true})]);
+    if (cnt.error) throw cnt.error;
+    return {p, rows: rows.filter(r => r[T.ts] !== verOf(p, r[T.pk])), count: cnt.count};
+  })]);
+  // Quantidade diferente: alguma linha foi apagada (ou chegou sem aparecer acima). Confere a lista de ids.
+  for (const x of res){
+    const T = TBL[x.p], known = Object.assign({}, SYNC.ver[x.p] || {});
+    x.rows.forEach(r => known[r[T.pk]] = [r[T.ts]]);
+    if (typeof x.count === 'number' && x.count !== Object.keys(known).length){
+      const ids = await fetchAll(T.t, T.pk, T.pk + ',' + T.ts), live = new Set(ids.map(r => r[T.pk]));
+      x.gone = Object.keys(known).filter(id => !live.has(id));
+      const miss = ids.filter(r => !known[r[T.pk]] || (r[T.ts] !== known[r[T.pk]][0] && !x.rows.some(y => y[T.pk] === r[T.pk]))).map(r => r[T.pk]);
+      if (miss.length) x.rows.push(...await selectIn(T, '*', miss));
+    }
+  }
+  if (hasPending()) return false;
+  const before = JSON.stringify(db.settings);
+  applySettings(set);
+  let touched = before !== JSON.stringify(db.settings);
+  const order = ['lib', 'met', 'stu', 'prv', 'log', 'seen'];
+  res.sort((a, b) => order.indexOf(a.p) - order.indexOf(b.p)).forEach(x => {
+    x.rows.forEach(r => applyRow(x.p, r));
+    (x.gone || []).forEach(id => dropRow(x.p, id));
+    if (x.rows.length || (x.gone || []).length) touched = true;
+  });
+  if (touched) finishApply(kinds);
+  return touched;
+}
+/* Baixa do banco. Devolve true se algo mudou. */
 async function pull(){
   if (!sb || SYNC.pulling) return false;
   SYNC.pulling = true;
   try {
     const P = isP();
-    const [lib, met, set, stus, logs, prv, seen] = await Promise.all([
-      fetchAll('library', 'id'), fetchAll('methods', 'id'), fetchAll('settings', 'key'), fetchAll('students', 'id'), fetchAll('logs', 'id'),
-      P ? fetchAll('student_private', 'student_id') : Promise.resolve([]), P ? fetchAll('feed_seen', 'log_id') : Promise.resolve([])]);
-    if (hasPending()) return false;
-    const before = JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]);
-    const logsBy = {}, prvBy = {};
-    logs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.created_at < b.created_at ? -1 : 1))
-      .forEach(r => (logsBy[r.student_id] = logsBy[r.student_id] || []).push(Object.assign({id: r.id, date: r.date}, r.data)));
-    prv.forEach(r => prvBy[r.student_id] = r.notes || '');
-    db.library = lib.sort(byOrd).map(r => Object.assign({id: r.id}, r.data));
-    db.methods = met.sort(byOrd).map(r => Object.assign({id: r.id}, r.data));
-    const wa = set.find(r => r.key === 'wa');
-    db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : ''});
-    db.seen = Object.fromEntries(seen.map(r => [r.log_id, true]));
-    db.students = stus.sort((a, b) => a.created_at < b.created_at ? -1 : 1).map(r => {
-      const s = Object.assign({id: r.id, email: r.email || '', userId: r.user_id || null}, r.data, {privNotes: P ? (prvBy[r.id] || '') : '', logs: logsBy[r.id] || []});
-      s.days = s.days || {}; DAYS.forEach(x => { s.days[x.k] = s.days[x.k] || {title: '', ex: []}; if (!s.days[x.k].ex) s.days[x.k].ex = []; });
-      s.last = s.logs.reduce((m, x) => !m || x.date > m ? x.date : m, null);
-      return s;
-    });
-    SYNC.synced = snap(); SYNC.lastPull = Date.now(); dataVer++; cacheWrite();
+    const full = !SYNC.fullAt || Date.now() - SYNC.fullAt > 864e5 || kindsFor(P).some(p => !SYNC.ver[p]);
+    const before = full ? JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]) : null;
+    const res = full ? await pullFull(P) : await pullDelta(P);
+    SYNC.lastPull = Date.now();
+    if (full && res === false) return false;
+    if (!full && !res) return false;
+    SYNC.synced = snap(); dataVer++; cacheWrite();
     if (!db.students.find(s => s.id === state.sid)) state.sid = db.students[0] && db.students[0].id;
-    return before !== JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]);
+    return full ? before !== JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]) : true;
   } finally { SYNC.pulling = false; }
 }
 const typing = () => { const a = document.activeElement; return !!(a && a.matches && a.matches('input,textarea,select')); };
@@ -378,8 +740,8 @@ async function enter(user){
   AUTH.user = user; AUTH.err = AUTH.msg = '';
   if (AUTH.view === 'recovery'){ AUTH.screen = 'auth'; render(); return; }
   const c = cacheRead();
-  if (c){ db = Object.assign(emptyDb(), c.db); SYNC.synced = c.synced || {}; AUTH.profile = c.profile || null; }
-  else { db = emptyDb(); SYNC.synced = {}; AUTH.profile = null; }
+  if (c){ db = Object.assign(emptyDb(), c.db); SYNC.synced = c.synced || {}; SYNC.ver = c.ver || {}; SYNC.since = c.since || {}; SYNC.fullAt = c.fullAt || 0; AUTH.profile = c.profile || null; }
+  else { db = emptyDb(); SYNC.synced = {}; SYNC.ver = {}; SYNC.since = {}; SYNC.fullAt = 0; AUTH.profile = null; }
   try {
     const {data, error} = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
     if (error) throw error;
@@ -391,13 +753,25 @@ async function enter(user){
   if (!isP() && (!AUTH.profile.consent_terms_at || !AUTH.profile.consent_health_at)){ AUTH.screen = 'consent'; render(); return; }
   await openApp(!!c);
 }
+/* Biblioteca nova: renomeia o afundo reverso e acrescenta só os exercícios que faltam (por id e por nome). */
+const LIB_V = 3;
+function libUpgrade(){
+  if ((db.settings.libVer || 0) >= LIB_V) return false;
+  const RENAME = {'afundo-reverso': ['Afundo reverso com halteres', 'Recuo com halteres']};
+  db.library.forEach(l => { const r = RENAME[l.id]; if (r && l.name === r[0]) l.name = r[1]; });
+  const ids = new Set(db.library.map(l => l.id)), names = new Set(db.library.map(l => norm(l.name)));
+  seedLibrary().forEach(l => { if (!ids.has(l.id) && !names.has(norm(l.name))) db.library.push(l); });
+  db.settings.libVer = LIB_V;
+  return true;
+}
 async function openApp(hasCache){
   state.mode = isP() ? 'personal' : 'aluno';
   if (!isP()) state.stab = state.stab || 'treino';
   if (hasCache && (db.students.length || db.library.length)){ AUTH.screen = 'app'; if (!db.students.find(s => s.id === state.sid)) state.sid = db.students[0] && db.students[0].id; render(); }
   else { AUTH.screen = 'loading'; render(); }
   try { if (hasPending()) await push(); } catch(e){}
-  try { await pull(); setSync(hasPending() ? 'offline' : 'ok'); }
+  let pulled = false;
+  try { await pull(); pulled = true; setSync(hasPending() ? 'offline' : 'ok'); }
   catch(e){
     console.error('pull', e);
     if (AUTH.screen !== 'app'){ AUTH.screen = 'error'; AUTH.err = isNetErr(e) ? 'Sem internet. Conecte-se e tente de novo.' : 'Não consegui carregar os dados (' + (e.message || e) + ').'; render(); return; }
@@ -405,7 +779,8 @@ async function openApp(hasCache){
   }
   if (isP()){
     let seeded = false;
-    if (!db.library.length){ db.library = seedLibrary(); seeded = true; }
+    if (!db.library.length){ db.library = seedLibrary(); db.settings.libVer = LIB_V; seeded = true; }
+    else if (pulled && libUpgrade()) seeded = true;
     if (!db.methods.length){ db.methods = seedMethods(); seeded = true; }
     if (!db.settings.wa){ db.settings.wa = '5521984183052'; seeded = true; }
     if (seeded){ cacheWrite(); runSync(); }
@@ -418,7 +793,7 @@ async function logout(){
   try { await sb.auth.signOut({scope: 'local'}); } catch(e){}
   try { localStorage.removeItem(cacheKey()); } catch(e){}
   clearTimeout(SYNC.timer); clearTimeout(SYNC.retryT);
-  db = emptyDb(); SYNC.synced = {}; AUTH.user = null; AUTH.profile = null; AUTH.screen = 'auth'; AUTH.view = 'login'; AUTH.err = AUTH.msg = '';
+  db = emptyDb(); SYNC.synced = {}; SYNC.ver = {}; SYNC.since = {}; SYNC.fullAt = 0; AUTH.user = null; AUTH.profile = null; AUTH.screen = 'auth'; AUTH.view = 'login'; AUTH.err = AUTH.msg = '';
   state.done = null; state.sid = undefined; state.psec = 'alunos'; state.pview = 'list'; state.stab = 'treino';
   setSync('ok'); render(); top();
 }
@@ -546,7 +921,7 @@ function accessHTML(s){
 }
 function inviteMsg(s){
   const first = s.name.trim().split(' ')[0];
-  return `Oi, ${first}! Seu treino agora está no app da Jau Training.\n\n1. Abra: ${APP_URL}\n2. Toque em "Criar conta" e use este e-mail: ${s.email}\n3. Confirme no link que chega no seu e-mail (olhe o spam também)\n4. Para abrir como app: no iPhone, Safari > Compartilhar > Adicionar à Tela de Início. No Android, Chrome > menu ⋮ > Instalar app.\n\nQualquer dúvida, me chama!`;
+  return `Oi, ${first}! Seu treino agora está no app da Jau Training. 🐆\n\n1. Abra: ${APP_URL}\n2. Toque em "Criar conta" e use este e-mail: ${s.email}\n3. Confirme no link que chega no seu e-mail (olhe o spam também)\n4. Para abrir como app:\n• no iPhone, Abra o link no Safari > Vá em Compartilhar > Adicionar à Tela de Início.\n• no Android, Abra o link no Chrome > Toque no menu ⋮ > Instalar app.\n\nQualquer dúvida, me chama! 🫶🏾`;
 }
 async function shareText(text, okMsg){
   try { if (navigator.share && matchMedia('(pointer:coarse)').matches){ await navigator.share({text}); return; } } catch(e){ if (e && e.name === 'AbortError') return; }
@@ -790,7 +1165,11 @@ function doneView(st){
     <section class="card stkcard">
       <div><p class="eyebrow">Treino concluído</p><h2 class="stk-h">Mandou bem, ${esc(st.name.split(' ')[0])}!</h2>
         <p class="small muted">${f.week}º treino da semana${f.streak ? ' · ' + f.streak + (f.streak === 1 ? ' semana' : ' semanas') + ' de sequência' : ''}</p></div>
-      <div class="stk-prev"><img id="sticker-img" alt="Imagem do treino com logo, nome do treino, volume load e séries" hidden><p id="stk-wait" class="small">Gerando imagem…</p></div>
+      <div class="stk-car" id="stk-car" role="group" aria-label="Modelos da imagem. Arraste para o lado para trocar.">
+        <div class="stk-prev stk-slide"><img id="stk-img-center" alt="Imagem do treino, modelo centralizado" hidden><p class="small stk-wait">Gerando imagem…</p></div>
+        <div class="stk-prev stk-slide"><img id="stk-img-left" alt="Imagem do treino, modelo alinhado à esquerda" hidden><p class="small stk-wait">Gerando imagem…</p></div>
+      </div>
+      <div class="stk-dots"><button type="button" data-act="stk-go" data-v="0" aria-label="Modelo centralizado" aria-pressed="true"></button><button type="button" data-act="stk-go" data-v="1" aria-label="Modelo alinhado à esquerda" aria-pressed="false"></button></div>
       <p class="small muted">Imagem PNG com fundo transparente: no Instagram, coloque por cima da sua foto no story ou no post.</p>
       <button class="btn block" type="button" data-act="save-sticker" id="save-stk" disabled>Salvar imagem</button>
     </section>
@@ -800,7 +1179,7 @@ function doneView(st){
   </main>`;
 }
 /* imagem PNG transparente para compartilhar */
-let STICKER = null;
+let STICKER = null, STKCACHE = null;
 function wrapLines(ctx, text, max){
   const words = String(text).split(/\s+/), lines = []; let cur = '';
   words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > max && cur){ lines.push(cur); cur = w; } else cur = t; });
@@ -811,52 +1190,113 @@ function spacedText(ctx, text, cx, y, sp){
   let x = cx - tot / 2; const al = ctx.textAlign; ctx.textAlign = 'left';
   chars.forEach((ch, i) => { ctx.fillText(ch, x, y); x += ws[i] + sp; }); ctx.textAlign = al;
 }
-async function makeSticker(title, vol, sets){
-  const serif = '"Cormorant Garamond", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
-  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 30px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
-  const logo = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = LOGO_HI; });
-  const W = 1080, PAD = 70, c = document.createElement('canvas'), ctx = c.getContext('2d');
-  const logoW = 600, logoH = Math.round(logoW * logo.height / logo.width);
-  let fs = 132, lines;
-  const fit = () => { ctx.font = `italic 700 ${fs}px ${serif}`; lines = wrapLines(ctx, title.toUpperCase(), W - PAD * 2); };
-  fit(); while ((lines.length > 2 || lines.some(t => ctx.measureText(t).width > W - PAD * 2)) && fs > 64){ fs -= 6; fit(); }
-  const yLogo = PAD, yKick = yLogo + logoH + 92, yTitle0 = yKick + 34 + Math.round(fs * 0.86);
-  const yTitleEnd = yTitle0 + (lines.length - 1) * Math.round(fs * 0.98);
-  const yNum = yTitleEnd + 190, yLbl = yNum + 62, H = yLbl + PAD;
-  c.width = W; c.height = H;
-  ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 3;
-  ctx.drawImage(logo, (W - logoW) / 2, yLogo, logoW, logoH);
-  ctx.font = `700 34px ${sans}`; spacedText(ctx, 'TREINO CONCLUÍDO', W / 2, yKick, 9);
-  ctx.font = `italic 700 ${fs}px ${serif}`; lines.forEach((t, i) => ctx.fillText(t, W / 2, yTitle0 + i * Math.round(fs * 0.98)));
-  const cols = [{cx: W * 0.29, num: vol.toLocaleString('pt-BR'), unit: 'kg', lbl: 'VOLUME LOAD'}, {cx: W * 0.71, num: String(sets), unit: '', lbl: sets === 1 ? 'SÉRIE' : 'SÉRIES'}];
-  cols.forEach(col => {
-    ctx.font = `800 104px ${sans}`; const w1 = ctx.measureText(col.num).width;
-    ctx.font = `700 46px ${sans}`; const w2 = col.unit ? ctx.measureText(col.unit).width + 12 : 0;
-    let x = col.cx - (w1 + w2) / 2; ctx.textAlign = 'left';
-    ctx.font = `800 104px ${sans}`; ctx.fillText(col.num, x, yNum);
-    if (col.unit){ ctx.font = `700 46px ${sans}`; ctx.fillText(col.unit, x + w1 + 12, yNum); }
-    ctx.textAlign = 'center'; ctx.font = `700 30px ${sans}`; spacedText(ctx, col.lbl, col.cx, yLbl, 6);
+function topPR(st, l){
+  const list = prHistory(st).prs[l.id] || []; if (!list.length) return null;
+  const prev = {};
+  st.logs.filter(x => x.date < l.date).forEach(x => x.entries.forEach(e => e.items.forEach((lid, pi) => bestSets(e, pi).forEach(c => { if (beats(c, prev[lid])) prev[lid] = c; }))));
+  let top = null, topScore = -Infinity;
+  list.forEach(p => {
+    const b = prev[p.libId]; let sc = 0;
+    if (b && p.kg && b.kg) sc = (p.kg - b.kg) / b.kg + (p.kg === b.kg ? 0.001 * (p.reps - b.reps) : 0);
+    else if (b) sc = (p.reps - b.reps) / Math.max(b.reps, 1);
+    if (sc > topScore){ topScore = sc; top = p; }
   });
-  ctx.shadowColor = 'transparent'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(W / 2 - 1.5, yNum - 96, 3, yLbl - yNum + 104);
+  if (!top) return null;
+  return {name: lib(top.libId).name, val: top.kg ? fmtKg(top.kg) + ' kg' : top.reps + (top.t ? ' s' : ' reps')};
+}
+function drawTrophy(ctx, x, y, s){
+  ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24);
+  ctx.fillStyle = '#F2C14E'; ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.fill(new Path2D('M7 3h10v4.5a5 5 0 0 1-10 0z'));
+  ctx.stroke(new Path2D('M7 5H4.5v1.2a3.3 3.3 0 0 0 3.1 3.3M17 5h2.5v1.2a3.3 3.3 0 0 1-3.1 3.3'));
+  ctx.fillRect(11, 12, 2, 4.2); ctx.fill(new Path2D('M8.5 16.5h7a1 1 0 0 1 1 1v2.5h-9v-2.5a1 1 0 0 1 1-1z'));
+  ctx.restore();
+}
+function fitOneLine(ctx, text, max){
+  if (ctx.measureText(text).width <= max) return text;
+  let t = text; while (t.length > 1 && ctx.measureText(t + '…').width > max) t = t.slice(0, -1);
+  return t.trimEnd() + '…';
+}
+async function makeSticker(title, vol, sets, pr, align){
+  const LEFT = align === 'left';
+  const serif = '"Cormorant Garamond", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
+  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
+  const logo = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = LOGO_HI; });
+  const W = 1080, PAD = 64, MAX = W - PAD * 2, c = document.createElement('canvas'), ctx = c.getContext('2d');
+  const logoW = 400, logoH = Math.round(logoW * logo.height / logo.width);
+  let fs = 124; ctx.font = `italic 700 ${fs}px ${serif}`;
+  while (ctx.measureText(title).width > MAX && fs > 56){ fs -= 4; ctx.font = `italic 700 ${fs}px ${serif}`; }
+  const tTxt = fitOneLine(ctx, title, MAX);
+  let pfs = 62, pTxt = '';
+  if (pr){
+    const full = pr.name + ' · ' + pr.val;
+    ctx.font = `700 ${pfs}px ${sans}`;
+    while (ctx.measureText(full).width + pfs * 1.3 > MAX && pfs > 38){ pfs -= 2; ctx.font = `700 ${pfs}px ${sans}`; }
+    pTxt = ctx.measureText(full).width + pfs * 1.3 <= MAX ? full : fitOneLine(ctx, pr.name, MAX - pfs * 1.3 - ctx.measureText(' · ' + pr.val).width) + ' · ' + pr.val;
+  }
+  const yLogo = PAD, ySL = yLogo + logoH + 84, ySN = ySL + 110, yTL = ySN + 104, yT = yTL + Math.round(fs * 0.92) + 10;
+  const yPL = yT + 96, yP = yPL + Math.round(pfs * 1.05) + 14;
+  const H = (pr ? yP : yT) + PAD;
+  c.width = W; c.height = H;
+  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'alphabetic';
+  ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 3;
+  ctx.drawImage(logo, LEFT ? PAD : (W - logoW) / 2, yLogo, logoW, logoH);
+  const volTxt = vol.toLocaleString('pt-BR'), setTxt = String(sets), setLbl = sets === 1 ? 'Série' : 'Séries';
+  ctx.font = `800 112px ${sans}`; const wNum = ctx.measureText(volTxt).width, wSet = ctx.measureText(setTxt).width;
+  ctx.font = `700 48px ${sans}`; const wUnit = ctx.measureText('kg').width;
+  ctx.font = `500 40px ${sans}`; const wLbl = ctx.measureText('Volume load').width, wSetLbl = ctx.measureText(setLbl).width;
+  const wVol = wNum + 12 + wUnit;
+  let xVolLbl, xVol, xSetLbl, xSet;
+  if (LEFT){ const x2 = PAD + Math.max(wVol, wLbl) + 110; xVolLbl = PAD; xVol = PAD; xSetLbl = x2; xSet = x2; }
+  else { const cx1 = W * 0.31, cx2 = W * 0.69; xVolLbl = cx1 - wLbl / 2; xVol = cx1 - wVol / 2; xSetLbl = cx2 - wSetLbl / 2; xSet = cx2 - wSet / 2; }
+  ctx.textAlign = 'left';
+  ctx.font = `500 40px ${sans}`; ctx.fillText('Volume load', xVolLbl, ySL); ctx.fillText(setLbl, xSetLbl, ySL);
+  ctx.font = `800 112px ${sans}`; ctx.fillText(volTxt, xVol, ySN); ctx.fillText(setTxt, xSet, ySN);
+  ctx.font = `700 48px ${sans}`; ctx.fillText('kg', xVol + wNum + 12, ySN);
+  ctx.textAlign = LEFT ? 'left' : 'center'; const tx = LEFT ? PAD : W / 2;
+  ctx.font = `500 40px ${sans}`; ctx.fillText('Treino concluído', tx, yTL);
+  ctx.font = `italic 700 ${fs}px ${serif}`; ctx.fillText(tTxt, tx, yT);
+  if (pr){
+    ctx.font = `500 40px ${sans}`; ctx.fillText('PR · maior progresso', tx, yPL);
+    ctx.font = `700 ${pfs}px ${sans}`;
+    const ic = Math.round(pfs * 1.02), gap = pfs * 0.28, wTxt = ctx.measureText(pTxt).width, x0 = LEFT ? PAD - 4 : (W - (ic + gap + wTxt)) / 2;
+    drawTrophy(ctx, x0, yP - ic * 0.86, ic);
+    ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'left'; ctx.fillText(pTxt, x0 + ic + gap, yP);
+  }
   const blob = await new Promise(res => c.toBlob(res, 'image/png'));
   return blob;
 }
+const STK_STYLES = ['center', 'left'];
 async function renderSticker(){
   const st = stu(); if (!st || !state.done) return; const dd = doneData(st); if (!dd) return;
-  const img = document.getElementById('sticker-img'), wait = document.getElementById('stk-wait'), btn = document.getElementById('save-stk');
+  STKCACHE = STKCACHE || {};
+  const d = new Date(dd.l.date), stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const car = document.getElementById('stk-car');
+  if (car && state.stkStyle === 'left') car.scrollLeft = car.clientWidth;
   try {
-    if (!STICKER || STICKER.logId !== dd.l.id){
-      const blob = await makeSticker(dd.l.title || 'Treino', dd.vol, dd.sets);
-      if (STICKER) URL.revokeObjectURL(STICKER.url);
-      const d = new Date(dd.l.date), stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      STICKER = {logId: dd.l.id, blob, url: URL.createObjectURL(blob), name: `treino-jau-training-${stamp}.png`};
+    for (const sty of STK_STYLES){
+      const ck = dd.l.id + '|' + sty;
+      if (!STKCACHE[ck]){
+        const blob = await makeSticker(dd.l.title || 'Treino', dd.vol, dd.sets, topPR(st, dd.l), sty);
+        STKCACHE[ck] = {logId: dd.l.id, key: ck, blob, url: URL.createObjectURL(blob), name: `treino-jau-training-${stamp}-${sty === 'left' ? 'esquerda' : 'centro'}.png`};
+      }
+      const im = document.getElementById('stk-img-' + sty); if (!im) return;
+      im.src = STKCACHE[ck].url; im.hidden = false;
+      const w = im.nextElementSibling; if (w) w.hidden = true;
     }
-    const i2 = document.getElementById('sticker-img'); if (!i2) return;
-    i2.src = STICKER.url; i2.hidden = false; const w2 = document.getElementById('stk-wait'); if (w2) w2.hidden = true;
-    const b2 = document.getElementById('save-stk'); if (b2) b2.disabled = false;
-  } catch(e){ if (wait) wait.textContent = 'Não consegui gerar a imagem neste aparelho.'; }
+    stkPick();
+  } catch(e){ document.querySelectorAll('.stk-wait').forEach(w => w.textContent = 'Não consegui gerar a imagem neste aparelho.'); }
 }
+function stkPick(){
+  const car = document.getElementById('stk-car'), st = stu(); if (!car || !st || !state.done) return;
+  const dd = doneData(st); if (!dd) return;
+  const i = Math.max(0, Math.min(STK_STYLES.length - 1, Math.round(car.scrollLeft / Math.max(1, car.clientWidth))));
+  state.stkStyle = STK_STYLES[i];
+  STICKER = (STKCACHE || {})[dd.l.id + '|' + STK_STYLES[i]] || null;
+  document.querySelectorAll('.stk-dots button').forEach((el, k) => el.setAttribute('aria-pressed', String(k === i)));
+  const b = document.getElementById('save-stk'); if (b) b.disabled = !STICKER;
+}
+document.addEventListener('scroll', e => { if (e.target && e.target.id === 'stk-car') stkPick(); }, true);
 async function saveSticker(){
   if (!STICKER) return;
   try {
@@ -910,8 +1350,8 @@ function onboardHTML(st){
      m: `<div class="obmock"><div class="set done"><span class="sn">${dot('trab')}1</span><div class="parts"><div class="part"><span class="target">10 a 12</span><span class="fld"><input value="40" readonly tabindex="-1" aria-hidden="true"><span>kg</span></span><span class="fld"><input value="12" readonly tabindex="-1" aria-hidden="true"><span>reps</span></span></div></div><span class="chk">${ICON_CHECK}</span></div></div>`},
     {t: 'O descanso é automático', p: 'Ao marcar a série, o cronômetro de descanso começa sozinho na parte de baixo da tela. Precisa de mais um pouco? Toque em +15s.',
      m: `<div class="obmock obtimer"><div class="obbar"><i></i></div><div class="obt"><span><small>DESCANSO</small><b>1:24</b></span><span class="obbtn">+15s</span></div></div>`},
-    {t: 'Aparelho ocupado? Dor ou dúvida?', p: 'Quando o personal cadastrar uma alternativa, aparece um botão para trocar o exercício na hora. Sentiu incômodo ou ficou com dúvida? Escreva na observação do exercício: ela chega direto pro personal.',
-     m: `<div class="obmock"><span class="swapbtn">${ICON_SWAP}Aparelho ocupado? Trocar por Afundo com halteres</span></div>`}
+    {t: 'Exercício alternativo, dor ou dúvida?', p: 'Quando o personal cadastrar uma alternativa, aparece um botão para trocar o exercício na hora. Sentiu incômodo ou ficou com dúvida? Escreva na observação do exercício: ela chega direto pro personal.',
+     m: `<div class="obmock"><span class="swapbtn">${ICON_SWAP}Trocar por exercício alternativo: Afundo com halteres</span></div>`}
   ];
   const sp = steps[k];
   return `<div class="obov" role="dialog" aria-modal="true" aria-label="Como usar o app"><div class="obcard">
@@ -1522,6 +1962,63 @@ function header(){
     <nav class="tabs">${tabs}</nav></div></header>`;
 }
 
+/* ---------- vencimento do plano ---------- */
+const isoToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function planState(s){
+  if (!s || !s.planDue) return null;
+  const t = isoToday();
+  if (s.planDue === t) return 'hoje';
+  if (s.planDue < t) return 'vencido';
+  const days = Math.round((new Date(s.planDue + 'T12:00') - new Date(t + 'T12:00')) / 864e5);
+  return days <= 5 ? 'breve' : 'ok';
+}
+function dueBR(iso){ const [y, m, d] = iso.split('-'); return d + '/' + m + (+y !== new Date().getFullYear() ? '/' + y.slice(2) : ''); }
+function addMonth(iso){
+  const [y, m, d] = (iso || isoToday()).split('-').map(Number);
+  const last = new Date(y, m + 1, 0).getDate(), dt = new Date(y, m, Math.min(d, last));
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+}
+function dueChip(s){
+  const p = planState(s); if (!p) return '';
+  const txt = p === 'hoje' ? 'Vence hoje' : p === 'vencido' ? 'Venceu ' + dueBR(s.planDue) : 'Vence ' + dueBR(s.planDue);
+  return `<span class="due ${p}" title="Vencimento do plano">${esc(txt)}</span>`;
+}
+function planMsg(s){
+  const p = planState(s); if (p !== 'hoje' && p !== 'vencido') return '';
+  return `<div class="planmsg ${p}" role="status"><b>${p === 'hoje' ? 'Seu plano vence hoje' : 'Seu plano venceu'}</b>${waNum() ? `<a href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Falar com o personal</a>` : ''}</div>`;
+}
+
+/* ---------- vídeo dentro do app ---------- */
+const isShort = url => /youtube\.com\/shorts\//.test(String(url || ''));
+function openVideo(libId){
+  const l = lib(libId), id = ytId(l.video);
+  if (!id) return;
+  closeVideo(true);
+  const src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&mute=1&playsinline=1&loop=1&playlist=' + id + '&rel=0&modestbranding=1';
+  const ov = document.createElement('div');
+  ov.className = 'vidov'; ov.id = 'vidov';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Vídeo de execução: ' + l.name);
+  ov.innerHTML = `<div class="vidbox ${isShort(l.video) ? 'short' : ''}">
+    <div class="vidtop"><div class="vidttl"><p class="eyebrow">Execução</p><b>${esc(l.name)}</b></div><button type="button" class="icon" data-act="vid-close">Fechar</button></div>
+    <div class="vidframe">
+      <p class="vidwait">${navigator.onLine === false ? 'Sem internet. O vídeo precisa de conexão para carregar.' : 'Carregando o vídeo…'}</p>
+      ${navigator.onLine === false ? '' : `<iframe src="${src}" title="${esc(l.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`}
+    </div>
+    ${l.instructions ? `<p class="vidhow">${esc(l.instructions)}</p>` : ''}
+    <a class="vidext" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">Não carregou? Abrir no YouTube</a>
+  </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) closeVideo(); });
+  document.body.appendChild(ov);
+  document.body.classList.add('noscroll');
+  const c = ov.querySelector('[data-act="vid-close"]'); if (c) c.focus();
+}
+function closeVideo(silent){
+  const ov = document.getElementById('vidov');
+  if (ov) ov.remove();
+  document.body.classList.remove('noscroll');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('vidov')) closeVideo(); });
+
 /* ---------- aluno ---------- */
 function studentView(){
   const st = stu();
@@ -1531,7 +2028,7 @@ function studentView(){
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   if (state.stab === 'evolucao') return `<main class="wrap">${hello}${evolution(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${hello}${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
@@ -1580,7 +2077,7 @@ function exCard(st, ex, i){
     <button type="button" class="icon" data-act="ex-open" data-v="${ex.id}">Ver séries</button></div></article>`;
   const isSw = k => !!(dr.swap && dr.swap[k] && ex.alt && ex.alt[k]);
   const swapBtns = ex.items.map((id, k) => { const a = ex.alt && ex.alt[k]; if (!a) return '';
-    return `<button type="button" class="swapbtn" data-act="swap" data-ex="${ex.id}" data-i="${k}">${isSw(k) ? ICON_SWAP + 'Voltar para ' + esc(lib(id).name) : ICON_SWAP + 'Aparelho ocupado? Trocar por ' + esc(lib(a).name)}</button>`; }).join('');
+    return `<button type="button" class="swapbtn" data-act="swap" data-ex="${ex.id}" data-i="${k}">${isSw(k) ? ICON_SWAP + 'Voltar para ' + esc(lib(id).name) : ICON_SWAP + 'Trocar por exercício alternativo: ' + esc(lib(a).name)}</button>`; }).join('');
   const lastTxt = refLine(st, refs, conj);
   const tag = k => isSw(k) ? '<span class="alttag">Alternativa</span>' : '';
   const title = conj ? ps.map((p, k) => `<span class="sub"><span class="ab">${L(k)}</span>${esc(p.name)}${tag(k)}</span>`).join('') : esc(ps[0].name) + tag(0);
@@ -1603,7 +2100,8 @@ function exCard(st, ex, i){
   const how = ps.filter(p => p.instructions).map((p, k) => `<p>${conj ? `<span class="ab">${L(used.indexOf(p.id))}</span>` : ''}${esc(p.instructions)}</p>`).join('');
   const vids = ps.map((p, k) => {
     const u = videoUrl(p);
-    return u ? `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre no YouTube</span></span></a>`
+    return u ? (ytId(p.video) ? `<button type="button" class="vcard" data-act="vid-open" data-v="${esc(p.id)}"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre aqui no app</span></span></button>`
+        : `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre em outra página</span></span></a>`)
       : `<a class="vcard none" href="https://www.youtube.com/results?search_query=${encodeURIComponent(p.name + ' execução')}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Vídeo em breve</b><span>Enquanto isso, buscar exemplo no YouTube</span></span></a>`;
   }).join('');
   const hasM = m.id !== 'normal';
@@ -1612,11 +2110,11 @@ function exCard(st, ex, i){
     <div class="ex-top"><span class="num">${i + 1}</span><div style="min-width:0">
       <h3 class="${conj ? 'conjgrp' : ''}">${title}</h3>
       <div class="meta"><span class="chip">${countType(ex, 'trab')} ${countType(ex, 'trab') === 1 ? 'série' : 'séries'} de trabalho</span><span class="chip">Intervalo ${esc(ex.rest)}</span></div>
-      ${muscles ? `<p class="musc">${esc(muscles)}</p>` : ''}
+      ${how ? `<div class="howto ehow">${how}</div>` : ''}
     </div></div>
     ${ex.notes ? `<p class="pnote">${esc(ex.notes)}</p>` : ''}
     ${swapBtns}
-    <details class="exinfo"><summary>Como fazer e vídeo</summary>${how ? `<div class="howto">${how}</div>` : ''}<div class="vids">${vids}</div></details>
+    <details class="exinfo"><summary>${ps.length > 1 ? 'Vídeos de execução' : 'Vídeo de execução'}</summary><div class="vids">${vids}</div></details>
     <div class="exlinks">${lastTxt}
       ${best ? `<span class="last rbest">${ICON_TROPHY}Recorde: ${esc(markTxt(best))}</span>` : ''}
       ${refs.some(Boolean) ? `<button type="button" class="linkbtn" data-act="goevo" data-v="${used[0]}">Ver evolução</button>` : ''}
@@ -1656,12 +2154,13 @@ function trainerView(){
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
+      <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
     <div class="stugrid">${db.students.slice().sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><h3>${esc(s.name)}</h3><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -1687,6 +2186,7 @@ function editView(){
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
     <div class="form">
       <label>Nome<input id="f-name" data-sf="name" value="${esc(s.name)}"></label>
+      <div class="duerow"><label>Vencimento do plano <span class="hint">${s.planDue ? (planState(s) === 'vencido' ? 'Vencido. O aluno vê o aviso "Seu plano venceu".' : planState(s) === 'hoje' ? 'Vence hoje. O aluno vê o aviso.' : 'Em dia.') : 'Opcional.'}</span><input id="f-due" type="date" data-sf="planDue" data-rerender="1" value="${esc(s.planDue || '')}"></label><button type="button" class="icon" data-act="due-plus">+1 mês</button></div>
       <label>E-mail de acesso <span class="hint">O aluno cria a conta no app com este e-mail e a ficha aparece pra ele. ${s.userId ? 'Situação: app ativo.' : s.email ? 'Situação: ainda não criou a conta.' : ''}</span><input id="f-email" type="email" inputmode="email" data-sf="email" value="${esc(s.email || '')}" placeholder="aluno@email.com"></label>
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
         <label>Organização dos treinos<select id="f-sched" data-sched="1"><option value="fixo" ${isSeq(s) ? '' : 'selected'}>Dias fixos da semana</option><option value="seq" ${isSeq(s) ? 'selected' : ''}>Sequência A, B, C (sem dia fixo)</option></select></label>
@@ -1710,7 +2210,7 @@ function editView(){
     <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button></div>
     ${copyPanel(s)}
     ${cardioEditor(d)}
-    <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Alternativa para quando o aparelho estiver ocupado') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
+    <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Escolha o exercício alternativo') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
     ${pk && pk.target === 'new' ? pickerHTML('Adicionar exercício da biblioteca') : `<button class="btn block ghost" type="button" data-act="pick-open" data-v="new">+ Adicionar exercício</button>`}
     </div></div>
     <div class="row" style="justify-content:center;margin-top:12px"><button class="icon danger" type="button" data-act="st-del" data-v="${s.id}">Remover aluno</button></div>
@@ -1722,7 +2222,7 @@ function editEx(ex, i, n){
   return `<div class="edit-ex ${hasM ? 'hasm' : ''}">
     ${hasM ? `<div class="mband">${methPill(ex.method)}<p>${esc(meth(ex.method).desc)}</p></div>` : ''}
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Alternativa: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Alternativa (aparelho ocupado)</button>`}</span>
+      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
       <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Pôr vídeo</button>`}
       <button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
       ${ex.items.length > 1 ? `<button type="button" class="icon" data-act="p-unpart" data-ex="${ex.id}" data-i="${k}" aria-label="Tirar ${esc(l.name)} do conjugado">✕</button>` : ''}</span></div>`; }).join('')}</div>
@@ -1750,10 +2250,11 @@ function pickerHTML(t){
 }
 function pickResults(){
   const q = norm(state.picker.q.trim());
-  let items = db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q)));
+  let items = db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q)))
+    .sort((a, b) => (q ? (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) : 0) || a.name.localeCompare(b.name, 'pt'));
   items = items.slice(0, q ? 20 : 12);
   const exact = db.library.some(l => norm(l.name) === q);
-  return items.map(l => `<button type="button" data-act="pick" data-v="${l.id}">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Personalizado')}${pickRef(l.id)}</small></button>`).join('')
+  return items.map(l => `<button type="button" data-act="pick" data-v="${l.id}">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}${pickRef(l.id)}</small></button>`).join('')
     + (q && !exact ? `<button type="button" class="new" data-act="pick-new">+ Criar "${esc(state.picker.q.trim())}" na biblioteca</button>` : '')
     + (!items.length && !q ? '<p class="muted small">Biblioteca vazia.</p>' : '');
 }
@@ -1805,14 +2306,14 @@ function libraryView(){
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Biblioteca de exercícios</h2></div><span class="muted small">${db.library.length} exercícios</span></div>
     <div class="filters"><input id="lib-q" class="search" placeholder="Buscar exercício" value="${esc(state.libQ)}" autocomplete="off">
       <select id="lib-m" class="selbox" data-change="libm" aria-label="Filtrar por músculo"><option value="">Todos os músculos</option>${MUSCLES.map(([k, l]) => `<option value="${k}" ${state.libM === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício personalizado</button>
+    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício</button>
     <div class="list libcols" id="lib-list">${libList()}</div>
   </main>`;
 }
 function libList(){
   const q = norm(state.libQ.trim());
-  const items = db.library.filter(l => (!q || norm(l.name).includes(q)) && (!state.libM || l.primary.includes(state.libM) || l.secondary.includes(state.libM)));
-  if (!items.length) return '<div class="empty">Nenhum exercício encontrado. Crie um personalizado.</div>';
+  const items = db.library.filter(l => (!q || norm(l.name).includes(q)) && (!state.libM || l.primary.includes(state.libM) || l.secondary.includes(state.libM))).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+  if (!items.length) return '<div class="empty">Nenhum exercício encontrado. Crie um novo.</div>';
   return items.map(libItem).join('');
 }
 function libItem(l){
@@ -1820,7 +2321,7 @@ function libItem(l){
   const chips = (key, cls) => `<div class="mchips ${cls}">${MUSCLES.map(([k, n]) => `<button type="button" data-act="lib-m" data-lib="${l.id}" data-key="${key}" data-v="${k}" aria-pressed="${l[key].includes(k)}">${n}</button>`).join('')}</div>`;
   const lv = {}; MUSCLES.forEach(([k]) => lv[k] = l.primary.includes(k) ? 2 : l.secondary.includes(k) ? 1 : 0);
   return `<article class="libitem ${open ? 'open' : ''}" id="lib-${l.id}">
-    <div class="libhead"><div class="nm"><b>${esc(l.name)}${l.custom ? '<span class="tagc">Personalizado</span>' : ''}</b><small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')} · ${yt ? 'vídeo do YouTube' : l.video ? 'vídeo' : 'sem vídeo'} · ${u ? 'em ' + u + (u === 1 ? ' ficha' : ' fichas') : 'não usado'}</small></div>
+    <div class="libhead"><div class="nm"><b>${esc(l.name)}</b><small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')} · ${yt ? 'vídeo do YouTube' : l.video ? 'vídeo' : 'sem vídeo'} · ${u ? 'em ' + u + (u === 1 ? ' ficha' : ' fichas') : 'não usado'}</small></div>
       <button type="button" class="icon" data-act="lib-open" data-v="${l.id}" aria-expanded="${open}">${open ? 'Fechar' : 'Editar'}</button></div>
     ${open ? `<div class="libed">
       <label>Nome<input id="l-name-${l.id}" data-lf="name" data-lib="${l.id}" value="${esc(l.name)}"></label>
@@ -1969,6 +2470,7 @@ document.addEventListener('click', e => {
     state.done = {logId: id, start, newAch}; state.dayPicked = false;
     render(); top();
   }
+  else if (act === 'stk-go'){ const car = document.getElementById('stk-car'); if (car) car.scrollTo({left: +v * car.clientWidth, behavior: 'smooth'}); }
   else if (act === 'save-sticker'){ saveSticker(); }
   else if (act === 'feedf'){ state.feedF = v; state.feedN = 20; render(); }
   else if (act === 'feed-more'){ state.feedN += 20; render(); }
@@ -2011,6 +2513,9 @@ document.addEventListener('click', e => {
   else if (act === 'done-close'){ state.done = null; render(); top(); }
   else if (act === 'swap'){ const rec = drEx(b.dataset.ex); rec.swap = rec.swap || {}; const k = +b.dataset.i; rec.swap[k] = !rec.swap[k]; save(); render(); }
   else if (act === 'alt-del'){ const f = findEx(b.dataset.ex); if (f && f.ex.alt){ f.ex.alt[+b.dataset.i] = null; save(); render(); } }
+  else if (act === 'due-plus'){ const s = stu(); s.planDue = addMonth(s.planDue); save(); render(); toast('Novo vencimento: ' + dueBR(s.planDue)); }
+  else if (act === 'vid-open'){ openVideo(v); }
+  else if (act === 'vid-close'){ closeVideo(); }
   else if (act === 'st-del'){ if (!arm(b, 'Toque de novo para remover o aluno e o histórico', 'Remover aluno')) return; db.students = db.students.filter(x => x.id !== v); state.sid = db.students[0] && db.students[0].id; state.pview = 'list'; save(); render(); top(); toast('Aluno removido'); }
   else if (act === 'nudge'){
     const st = db.students.find(x => x.id === v); if (!st) return; const msg = nudgeMsg(st);
@@ -2086,6 +2591,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.id === 'f-due'){ render(); return; }
   const t = e.target, c = t.dataset.change;
   if (c === 'cpst'){ if (state.copy){ state.copy.sid = t.value; render(); } return; }
   if (c === 'imptarget'){ if (state.imp) state.imp.target = t.value; return; }
@@ -2151,7 +2657,7 @@ document.addEventListener('submit', e => {
   const days = {}; DAYS.forEach(x => days[x.k] = {title: x.k === 'dom' ? 'Descanso' : '', ex: []});
   const fromId = (document.getElementById('new-from') || {}).value, src = fromId && db.students.find(x => x.id === fromId);
   const em = ((document.getElementById('new-email') || {}).value || '').trim().toLowerCase();
-  const s = {id: uid(), name, email: em, protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
+  const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
   db.students.push(s); save();
   state.sid = s.id; state.pview = 'edit'; state.editDay = 'seg'; state.newOpen = false; render(); top();
   toast(name.split(' ')[0] + ' adicionado. Monte a ficha.');
