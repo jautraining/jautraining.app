@@ -981,9 +981,6 @@ function mobHTML(d){
       return `<article class="mobcard ${ok ? 'done' : ''}" id="mob-${m.id}"><div class="mobh"><span class="num ${ok ? 'ok' : ''}">${ok ? ICON_CHECK : i + 1}</span><h3>${esc(l.name)}</h3></div>${vid}${meta ? `<p class="mobmeta">${meta}</p>` : ''}
         <button type="button" class="mobchk" data-act="mob-done" data-v="${m.id}" aria-pressed="${ok}">${ICON_CHECK}<span>${ok ? 'Feito' : 'Marcar como feito'}</span></button></article>`; }).join('')}</div></section>`;
 }
-const mobLog = (d, dr) => (d.mob || []).length ? {mob: d.mob.map(m => ({lib: m.lib, done: !!dr['mob:' + m.id]}))} : {};
-function mobLine(l){ if (!l.mob || !l.mob.length) return ''; const n = l.mob.filter(m => m.done).length;
-  return `<p class="mobline"><b>Mobilidade:</b> ${n} de ${l.mob.length} ${l.mob.length === 1 ? 'feito' : 'feitos'}${n && n < l.mob.length ? ' (' + esc(l.mob.filter(m => m.done).map(m => lib(m.lib).name).join(', ')) + ')' : ''}</p>`; }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -2370,7 +2367,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${mobLine(l)}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2397,7 +2394,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${mobLine(l)}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2590,7 +2587,7 @@ document.addEventListener('click', e => {
     });
     if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
-    st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, mobLog(d, dr)));
+    st.logs.push({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries});
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);

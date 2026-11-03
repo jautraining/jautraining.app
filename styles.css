@@ -810,5 +810,3 @@ body.noscroll{overflow:hidden}
 .mobrow .nm small{display:block;font-weight:500;margin-top:2px}
 .mobrow .macts{display:flex;gap:6px}
 .mobf{grid-column:1/-1;display:grid;grid-template-columns:72px minmax(0,1fr) minmax(0,1.4fr);gap:8px}
-.mobline{margin:8px 0 0;font-size:.85rem;color:var(--muted)}
-.mobline b{color:var(--ink)}
