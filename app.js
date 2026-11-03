@@ -1851,11 +1851,11 @@ function profile(st){
       <div class="stat"><span>Total</span><b>${f.all}</b></div>
     </div>
     <p class="small muted" style="margin-top:-12px">Sequência: semanas seguidas com ${f.target} ou mais treinos.</p>
+    <section class="card"><p class="eyebrow" style="margin-bottom:10px">Últimas 12 semanas</p><div class="heat">${heat}</div>
+      <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
     ${achSection(st)}${recordsSection(st)}${histSection(st)}
     ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Falar com o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
     <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Ver o tutorial do app de novo</button></div>
-    <section class="card"><p class="eyebrow" style="margin-bottom:10px">Últimas 12 semanas</p><div class="heat">${heat}</div>
-      <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
     <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
       ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
     ${st.logs.some(l => l.sample) ? '<p class="sample">A frequência inclui o histórico de exemplo das últimas 10 semanas.</p>' : ''}`;
