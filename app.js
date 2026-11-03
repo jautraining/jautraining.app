@@ -949,6 +949,13 @@ const draftKey = () => state.sid + '|' + state.day;
 const draft = () => (db.drafts[draftKey()] = db.drafts[draftKey()] || {});
 function drEx(exId){ const d = draft(); d[exId] = d[exId] || {sets:{}, comment:''}; if (!d[exId].sets) d[exId].sets = {}; return d[exId]; }
 function targets(ex){ return (ex.series && ex.series.length ? ex.series : [{type:'trab', reps:''}]).map(s => s.reps); }
+
+const THEME_KEY = 'jau-tema';
+function themeGet(){ try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch(e){ return 'auto'; } }
+function themeApply(v){ const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; }
+themeApply(themeGet());
+function themeHTML(){ const v = themeGet();
+  return `<section class="card themecard"><p class="eyebrow">Aparência</p><div class="seg" role="group" aria-label="Tema do app">${[['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([k, l]) => `<button type="button" data-act="theme" data-v="${k}" aria-pressed="${v === k}">${l}</button>`).join('')}</div><p class="muted small">Automático segue o modo claro ou escuro do seu celular. A escolha fica salva neste aparelho.</p></section>`; }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -1855,6 +1862,7 @@ function profile(st){
       <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
     ${achSection(st)}${recordsSection(st)}${histSection(st)}
     ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Falar com o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
+    ${themeHTML()}
     <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Ver o tutorial do app de novo</button></div>
     <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
       ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
@@ -2240,6 +2248,7 @@ function trainerView(){
         <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p>
+    ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
     ${accountHTML()}
   </main>`;
@@ -2520,6 +2529,7 @@ document.addEventListener('click', e => {
   else if (act === 'tec-tog'){ const f = findEx(b.dataset.ex); if (!f) return; const x = f.ex.series[+b.dataset.i]; if (x){ if (x.m) delete x.m; else x.m = true; } save(); render(); }
   else if (act === 'train-start'){ db.draftMeta = db.draftMeta || {}; db.draftMeta[draftKey()] = Date.now(); audioUnlock(); save(); render();
     const l = document.querySelector('.list'); if (l) l.scrollIntoView({block: 'start', behavior: 'smooth'}); }
+  else if (act === 'theme'){ try { localStorage.setItem(THEME_KEY, v); } catch(e){} themeApply(v); render(); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){

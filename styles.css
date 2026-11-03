@@ -781,3 +781,6 @@ body.noscroll{overflow:hidden}
 .tecn input{max-width:80px}
 .tecchip{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;font-size:.7rem;font-weight:800;flex:none}
 .tecchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.themecard{display:grid;gap:10px}
+.themecard .seg{margin:0}
