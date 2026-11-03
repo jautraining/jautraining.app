@@ -989,15 +989,15 @@ function tecSub(ex, si, s, np, conj){
     const at = (k, extra) => `data-k="${k}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"${extra || ''}`;
     if (tec === 'drop') for (let d = 0; d < n; d++){ const dv = (v.drops && v.drops[d]) || {};
       out.push(`<div class="tecrow"><span class="tl">${pre}Drop ${d + 1}</span>${nkOf(ex, pi) ? '' : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}" data-in="dkg" ${at(d)} value="${esc(dv.kg || '')}"><span>kg</span></label>`}<label class="fld"><input id="dr-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições do drop ${d + 1}, série ${si + 1}" data-in="dreps" ${at(d)} value="${esc(dv.reps || '')}"><span>reps</span></label></div>`); }
-    else out.push(`<p class="tecnote">${pre}Na linha de cima: carga e reps do 1º bloco. Aqui: as reps dos blocos seguintes.</p><div class="tecrow"><span class="tl">${pre}Blocos seguintes</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º bloco"><span>reps</span></label>`).join('')}</div></div>`);
+    else out.push(`<div class="tecrow"><span class="tl">${pre}Blocos seguintes</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º bloco"><span>reps</span></label>`).join('')}</div></div>`);
   }
   return `<div class="tecsub" id="tsub-${ex.id}-${si}">${out.join('')}</div>`;
 }
 const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
 function startHTML(d){
   const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
-  return `<button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${d.ex.length} ${d.ex.length === 1 ? 'exercício' : 'exercícios'} · ${ns} séries</small></span></button>
-    <button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}`;
+  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}
+    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${d.ex.length} ${d.ex.length === 1 ? 'exercício' : 'exercícios'} · ${ns} séries</small></span></button>`;
 }
 /* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
 let AC = null;

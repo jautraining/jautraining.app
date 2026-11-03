@@ -762,7 +762,7 @@ body.noscroll{overflow:hidden}
 .stk-dots button[aria-pressed="true"]::after{width:20px;background:var(--accent)}
 @media (prefers-reduced-motion:reduce){.stk-dots button::after{transition:none}}
 
-.startbtn{display:flex;align-items:center;justify-content:flex-start;gap:14px;text-align:left;padding:16px 18px;margin:2px 0 12px;min-height:64px}
+.startbtn{display:flex;align-items:center;justify-content:flex-start;gap:14px;text-align:left;padding:16px 18px;margin:14px 0 12px;min-height:64px}
 .startbtn b{display:block;font-size:1.05rem;letter-spacing:.01em}
 .startbtn small{display:block;font-weight:500;opacity:.88;font-size:.78rem;margin-top:2px}
 .startbtn .st-ic{flex:none;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center}
