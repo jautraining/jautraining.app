@@ -291,10 +291,11 @@ function withDefaults(list){ list.forEach(l => { if (TEMPO_IDS.includes(l.id)) l
 function seedMethods(){ return [
   {id:'normal', name:'Normal', desc:'Séries tradicionais: faça as repetições, descanse o intervalo indicado e repita.'},
   {id:'conjugado', name:'Conjugado (bi-set)', desc:'Dois exercícios em sequência, sem descanso entre eles. Faça a série do A, vá direto para o B e só então descanse o intervalo indicado.'},
-  {id:'dropset', name:'Drop-set', desc:'Na última série, ao chegar perto da falha, reduza a carga de 20 a 30% e continue sem descanso até a falha de novo.'},
-  {id:'restpause', name:'Rest-pause', desc:'Vá até perto da falha, descanse de 10 a 15 segundos e faça mais algumas repetições com a mesma carga. Repita 2 ou 3 vezes.'},
+  {id:'dropset', tec:'drop', name:'Drop-set', desc:'Na última série, ao chegar perto da falha, reduza a carga de 20 a 30% e continue sem descanso até a falha de novo.'},
+  {id:'restpause', tec:'blocos', name:'Rest-pause', desc:'Vá até perto da falha, descanse de 10 a 15 segundos e faça mais algumas repetições com a mesma carga. Repita 2 ou 3 vezes.'},
   {id:'piramide', name:'Pirâmide crescente', desc:'Aumente a carga a cada série e diminua as repetições, seguindo a faixa indicada para cada série.'},
-  {id:'isometria', name:'Isometria no pico', desc:'Segure 2 a 3 segundos na posição de maior contração em todas as repetições.'}
+  {id:'isometria', name:'Isometria no pico', desc:'Segure 2 a 3 segundos na posição de maior contração em todas as repetições.'},
+  {id:'cluster', tec:'blocos', name:'Cluster', desc:'Divida a série em blocos curtos com a mesma carga, descansando de 10 a 20 segundos entre um bloco e outro.'}
 ];}
 const STYPES = {aq:{l:'Aquecimento'}, prep:{l:'Preparatória'}, trab:{l:'Trabalho'}};
 function buildSeries(sets, reps, o){
@@ -754,9 +755,17 @@ async function enter(user){
   await openApp(!!c);
 }
 /* Biblioteca nova: renomeia o afundo reverso e acrescenta só os exercícios que faltam (por id e por nome). */
-const LIB_V = 3;
+const LIB_V = 4;
+function metUpgrade(){
+  const T = {dropset: 'drop', restpause: 'blocos'};
+  db.methods.forEach(m => { if (T[m.id] && m.tec === undefined) m.tec = T[m.id]; });
+  if (!db.methods.some(m => m.id === 'cluster' || norm(m.name) === 'cluster')) db.methods.push(seedMethods().find(m => m.id === 'cluster'));
+}
 function libUpgrade(){
-  if ((db.settings.libVer || 0) >= LIB_V) return false;
+  const v0 = db.settings.libVer || 0;
+  if (v0 >= LIB_V) return false;
+  if (v0 >= 3){ metUpgrade(); db.settings.libVer = LIB_V; return true; }
+  metUpgrade();
   const RENAME = {'afundo-reverso': ['Afundo reverso com halteres', 'Recuo com halteres']};
   db.library.forEach(l => { const r = RENAME[l.id]; if (r && l.name === r[0]) l.name = r[1]; });
   const ids = new Set(db.library.map(l => l.id)), names = new Set(db.library.map(l => norm(l.name)));
@@ -941,6 +950,66 @@ const draft = () => (db.drafts[draftKey()] = db.drafts[draftKey()] || {});
 function drEx(exId){ const d = draft(); d[exId] = d[exId] || {sets:{}, comment:''}; if (!d[exId].sets) d[exId].sets = {}; return d[exId]; }
 function targets(ex){ return (ex.series && ex.series.length ? ex.series : [{type:'trab', reps:''}]).map(s => s.reps); }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
+
+const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
+const nkE = (e, pi) => !!(e && e.nokg && e.nokg[pi]);
+const TEC = {drop: {l: 'Drop', def: 2}, blocos: {l: 'Blocos', def: 3}};
+const tecOfMeth = id => { const m = db.methods.find(x => x.id === id); return (m && TEC[m.tec]) ? m.tec : ''; };
+const tecN = ex => { const tec = tecOfMeth(ex.method), n = parseInt(ex.tecN); return Math.max(tec === 'blocos' ? 2 : 1, Math.min(6, n || (TEC[tec] ? TEC[tec].def : 2))); };
+function partVol(p, kg, r){
+  let v = kg && r ? kg * r : 0;
+  (p.drops || []).forEach(d => { if (!d) return; const k = numKg(d.kg), n = parseInt(d.reps) || 0; if (k && n) v += k * n; });
+  if (kg) (p.blocks || []).forEach(b => { v += kg * (parseInt(b) || 0); });
+  return v;
+}
+function extraTxt(p){
+  const out = [];
+  (p.drops || []).forEach(d => { if (d && (d.kg || d.reps)) out.push('drop ' + (d.kg ? d.kg + ' kg × ' : '') + (d.reps || '–')); });
+  const b = (p.blocks || []).filter(Boolean); if (b.length) out.push('blocos ' + [p.reps || '–', ...b].join(' + '));
+  return out.length ? ' (' + out.join(', ') + ')' : '';
+}
+function partTxt(e, p, pi){ const t = e.meas && e.meas[pi] === 'tempo', nk = nkE(e, pi); return (nk ? '' : (p.kg || '–') + ' kg × ') + (p.reps || '–') + (t ? ' s' : nk ? ' reps' : '') + extraTxt(p); }
+function measOpts(ex, k){ const v = (nkOf(ex, k) ? 's' : '') + measOf(ex, k);
+  return [['reps', 'Carga + reps'], ['sreps', 'Só reps'], ['tempo', 'Carga + tempo'], ['stempo', 'Só tempo']].map(([o, l]) => `<option value="${o}" ${v === o ? 'selected' : ''}>${l}</option>`).join(''); }
+function tecBox(ex){
+  const tec = tecOfMeth(ex.method); if (!tec) return '';
+  const n = tecN(ex), marked = (ex.series || []).filter(s => s.m).length, dr = tec === 'drop';
+  return `<div class="tecbox"><div class="tecrow1"><span class="lbl2">${dr ? 'Drop-set' : 'Blocos'} em quais séries?</span>
+    <div class="tools"><button type="button" class="icon" data-act="tec-apply" data-ex="${ex.id}" data-v="last">Só na última</button><button type="button" class="icon" data-act="tec-apply" data-ex="${ex.id}" data-v="all">Em todas as de trabalho</button></div></div>
+    <label class="tecn">${dr ? 'Drops em cada série' : 'Blocos em cada série, contando o primeiro'}<input id="tecn-${ex.id}" type="number" inputmode="numeric" min="${dr ? 1 : 2}" max="6" data-tecn="${ex.id}" value="${n}"></label>
+    <span class="hint">${marked ? `Marcado em ${marked} ${marked === 1 ? 'série' : 'séries'}. Para ajustar uma a uma, use o botão ${TEC[tec].l} de cada série.` : 'Nenhuma série marcada: o aluno vê só a explicação do método.'} ${dr ? 'O aluno anota a carga e as reps de cada drop.' : 'O aluno anota as reps de cada bloco, com a mesma carga.'}</span></div>`;
+}
+function tecChip(ex, k){ const tec = tecOfMeth(ex.method); if (!tec) return ''; const on = !!(ex.series[k] && ex.series[k].m); if (!on && ex.series[k] && ex.series[k].type !== 'trab') return '';
+  return `<button type="button" class="tecchip" data-act="tec-tog" data-ex="${ex.id}" data-i="${k}" aria-pressed="${on}" aria-label="${TEC[tec].l} na série ${k + 1}">${TEC[tec].l}</button>`; }
+function tecSub(ex, si, s, np, conj){
+  const tec = tecOfMeth(ex.method); if (!tec || !(ex.series && ex.series[si] && ex.series[si].m)) return '';
+  const n = tecN(ex), L = k => String.fromCharCode(65 + k), out = [];
+  for (let pi = 0; pi < np; pi++){
+    const v = (s.parts && s.parts[pi]) || {}, pre = conj ? L(pi) + ' · ' : '';
+    const at = (k, extra) => `data-k="${k}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"${extra || ''}`;
+    if (tec === 'drop') for (let d = 0; d < n; d++){ const dv = (v.drops && v.drops[d]) || {};
+      out.push(`<div class="tecrow"><span class="tl">${pre}Drop ${d + 1}</span>${nkOf(ex, pi) ? '' : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}" data-in="dkg" ${at(d)} value="${esc(dv.kg || '')}"><span>kg</span></label>`}<label class="fld"><input id="dr-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições do drop ${d + 1}, série ${si + 1}" data-in="dreps" ${at(d)} value="${esc(dv.reps || '')}"><span>reps</span></label></div>`); }
+    else out.push(`<div class="tecrow"><span class="tl">${pre}Blocos 2${n > 2 ? ' a ' + n : ''}</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º"><span>reps</span></label>`).join('')}</div></div>`);
+  }
+  return `<div class="tecsub" id="tsub-${ex.id}-${si}">${out.join('')}</div>`;
+}
+const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
+function startHTML(d){
+  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
+  return `<button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${d.ex.length} ${d.ex.length === 1 ? 'exercício' : 'exercícios'} · ${ns} séries</small></span></button>
+    <button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}`;
+}
+/* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
+let AC = null;
+function audioUnlock(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){ AC = null; } }
+function restBeep(){
+  try { if (!AC) return; if (AC.state === 'suspended') AC.resume();
+    const t0 = AC.currentTime + 0.02;
+    [0, 0.22, 0.44].forEach((dt, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = i === 2 ? 1175 : 880;
+      g.gain.setValueAtTime(0.0001, t0 + dt); g.gain.exponentialRampToValueAtTime(0.35, t0 + dt + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.18);
+      o.connect(g); g.connect(AC.destination); o.start(t0 + dt); o.stop(t0 + dt + 0.2); });
+  } catch(e){}
+}
 const tgtFmt = (t, m) => m === 'tempo' && t && !/s|seg|min/i.test(t) ? t + ' s' : t;
 const markTxt = b => (b.kg ? fmtKg(b.kg) + ' kg × ' : '') + b.reps + (b.t ? ' s' : '');
 const stypeOf = (ex, i) => (ex.series && ex.series[i] && ex.series[i].type) || 'trab';
@@ -1039,7 +1108,7 @@ const beats = (c, b) => !b || c.kg > b.kg || (c.kg === b.kg && c.reps > b.reps);
 function bestSets(e, pi){
   const out = [];
   e.sets.forEach((s, si) => { if ((s.type || 'trab') !== 'trab' || s.done === false) return; const p = s.parts[pi]; if (!p) return;
-    const tmp = !!(e.meas && e.meas[pi] === 'tempo'), kg0 = numKg(p.kg), r = parseInt(p.reps) || 0; if ((kg0 || tmp) && r) out.push({kg: kg0 || 0, reps: r, si}); });
+    const tmp = !!(e.meas && e.meas[pi] === 'tempo') || nkE(e, pi), kg0 = numKg(p.kg), r = parseInt(p.reps) || 0; if ((kg0 || tmp) && r) out.push({kg: kg0 || 0, reps: r, si}); });
   return out;
 }
 let prCache = {k: null, v: null}, dataVer = 0;
@@ -1101,7 +1170,7 @@ function achStats(st){
       w = new Date(w); w.setDate(w.getDate() + 7); }
   }
   let vol = 0;
-  st.logs.forEach(l => l.entries.forEach(e => e.sets.forEach(s => { if (s.done === false || (s.type || 'trab') !== 'trab') return; s.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); })));
+  st.logs.forEach(l => l.entries.forEach(e => e.sets.forEach(s => { if (s.done === false || (s.type || 'trab') !== 'trab') return; s.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); })));
   return {total: st.logs.length, fullWeeks, bestStreak, prs: prHistory(st).count, tons: vol / 1000};
 }
 function unlocked(st){ const s = achStats(st); return ACH.filter(a => s[a.k] >= a.v); }
@@ -1151,7 +1220,7 @@ function touchStart(){ db.draftMeta = db.draftMeta || {}; const k = draftKey(); 
 function doneData(st){
   const l = st.logs.find(x => x.id === state.done.logId); if (!l) return null;
   let sets = 0, vol = 0;
-  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); }));
+  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); }));
   return {l, sets, vol: Math.round(vol)};
 }
 function doneView(st){
@@ -1372,7 +1441,7 @@ function whenTxt(iso){
 }
 function logStats(l){
   let sets = 0, vol = 0;
-  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); }));
+  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); }));
   return {sets, vol: Math.round(vol)};
 }
 function feedView(){
@@ -1643,7 +1712,7 @@ function refLine(st, refs, conj){
   const ok = refs.filter(Boolean); if (!ok.length) return '';
   const txt = refs.map((r, k) => { if (!r) return ''; const w = workKg(r);
     const tm = r.entry.meas && r.entry.meas[r.pi] === 'tempo', rr = r.entry.sets.filter(x => (x.type || 'trab') === 'trab').map(x => x.parts[r.pi] && x.parts[r.pi].reps).filter(Boolean);
-    if (tm && !w.length) return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (rr.length ? rr.join(' · ') + ' s' : '—');
+    if ((tm || nkE(r.entry, r.pi)) && !w.length) return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (rr.length ? rr.join(' · ') + (tm ? ' s' : ' reps') : '—');
     return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (w.length ? w.map(fmtKg).join(' · ') + ' kg' : '—'); }).filter(Boolean).join(' | ');
   const r0 = ok[0], other = r0.log.protocol && st.protocol && r0.log.protocol !== st.protocol;
   return `<span class="last ${other ? 'ref' : ''}">${other ? 'Referência' : 'Último treino'}: ${esc(txt)} <small>(${ddmm(r0.log.date)}${other ? ' · ' + esc(r0.log.protocol) : ''})</small></span>`;
@@ -1696,7 +1765,7 @@ function loadDetail(s, id, cur){
       <button type="button" class="icon" data-act="load-chart" data-v="${id}" style="align-self:flex-start">Ver gráfico de evolução</button>
     </section>
     <section class="card"><div class="tablewrap"><table class="ltable"><thead><tr><th>Data</th><th>Protocolo</th><th>Séries (kg × reps)</th></tr></thead><tbody>
-      ${sess.map(({l, e, pi}) => `<tr><td>${dateBR(l.date, {day:'2-digit', month:'2-digit', year:'2-digit'})}</td><td>${esc(l.protocol || '—')}</td><td><div class="lsets">${e.sets.map(x => { const p = x.parts[pi] || {}; return `<span>${dot(x.type || 'trab')}${p.kg ? esc(fmtKg(numKg(p.kg))) : '–'} × ${esc(p.reps || '–')}${e.meas && e.meas[pi] === 'tempo' ? ' s' : ''}</span>`; }).join('')}</div>${e.comment ? `<div class="cmt" style="margin-top:6px"><b>Observação</b>${esc(e.comment)}</div>` : ''}</td></tr>`).join('')}
+      ${sess.map(({l, e, pi}) => `<tr><td>${dateBR(l.date, {day:'2-digit', month:'2-digit', year:'2-digit'})}</td><td>${esc(l.protocol || '—')}</td><td><div class="lsets">${e.sets.map(x => { const p = x.parts[pi] || {}; return `<span>${dot(x.type || 'trab')}${nkE(e, pi) ? '' : (p.kg ? esc(fmtKg(numKg(p.kg))) : '–') + ' × '}${esc(p.reps || '–')}${e.meas && e.meas[pi] === 'tempo' ? ' s' : nkE(e, pi) ? ' reps' : ''}${esc(extraTxt(p))}</span>`; }).join('')}</div>${e.comment ? `<div class="cmt" style="margin-top:6px"><b>Observação</b>${esc(e.comment)}</div>` : ''}</td></tr>`).join('')}
     </tbody></table></div></section>`;
 }
 
@@ -1798,8 +1867,8 @@ function repsFor(ex){
   return ex.items.map((_, k) => {
     const groups = [];
     (ex.series || []).forEach(s => { const ps = String(s.reps).split(/\s*\+\s*/); const r = ps[k] || ps[0];
-      const g = groups[groups.length - 1]; if (g && g.type === s.type && g.r === r) g.n++; else groups.push({type: s.type, n: 1, r}); });
-    return groups.map(g => `<span class="rg">${dot(g.type)}${g.n}× ${esc(tgtFmt(g.r, measOf(ex, k)))}</span>`).join('');
+      const g = groups[groups.length - 1], mm = !!(s.m && tecOfMeth(ex.method)); if (g && g.type === s.type && g.r === r && g.m === mm) g.n++; else groups.push({type: s.type, n: 1, r, m: mm}); });
+    return groups.map(g => `<span class="rg">${dot(g.type)}${g.n}× ${esc(tgtFmt(g.r, measOf(ex, k)))}${g.m ? (tecOfMeth(ex.method) === 'drop' ? ' + ' + tecN(ex) + (tecN(ex) > 1 ? ' drops' : ' drop') : ' em ' + tecN(ex) + ' blocos') : ''}</span>`).join('');
   });
 }
 const altTxt = (ex, k) => ex.alt && ex.alt[k] ? `<small class="altsum">ou ${esc(lib(ex.alt[k]).name)}</small>` : '';
@@ -1829,15 +1898,15 @@ function seriesFor(st, libId){
   const out = [];
   st.logs.slice().sort((a, b) => a.date < b.date ? -1 : 1).forEach(l => l.entries.forEach(e => {
     const pi = e.items.indexOf(libId); if (pi < 0) return;
-    const work = e.sets.filter(s => (s.type || 'trab') === 'trab'), tm = !!(e.meas && e.meas[pi] === 'tempo');
+    const work = e.sets.filter(s => (s.type || 'trab') === 'trab'), tm = !!(e.meas && e.meas[pi] === 'tempo') ? 1 : nkE(e, pi) ? 2 : 0;
     const sets = (work.length ? work : e.sets).map(s => { const p = s.parts[pi]; if (!p) return null;
-      if (tm){ const sec = parseInt(p.reps) || 0, kg = numKg(p.kg); return sec ? {kg: sec, reps: kg ? fmtKg(kg) + ' kg' : '', t: 1} : null; }
+      if (tm){ const sec = parseInt(p.reps) || 0, kg = numKg(p.kg); return sec ? {kg: sec, reps: tm === 1 && kg ? fmtKg(kg) + ' kg' : '', t: 1} : null; }
       const kg = numKg(p.kg); return kg === null ? null : {kg, reps: p.reps}; });
     const valid = sets.filter(Boolean); if (!valid.length) return;
     out.push({d: l.date, sets, t: tm, best: valid.reduce((a, b) => b.kg > a.kg ? b : a)});
   }));
   const lastT = out.length ? out[out.length - 1].t : false;
-  const res = out.filter(r => r.t === lastT); res.unit = lastT ? 's' : 'kg';
+  const res = out.filter(r => r.t === lastT); res.unit = lastT === 1 ? 's' : lastT === 2 ? 'reps' : 'kg';
   return res;
 }
 function planExFor(st, libId){ for (const d of DAYS){ const ex = st.days[d.k].ex.find(e => e.items.includes(libId)); if (ex) return ex; } return null; }
@@ -1850,7 +1919,7 @@ function spark(ser){
   return `<svg class="spk" viewBox="0 0 84 26" aria-hidden="true"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--accent)"/></svg>`;
 }
 function chartLines(mode, data, unit){
-  if (mode === 'max') return [{name: unit === 's' ? 'Maior tempo' : 'Maior carga', short:'', color:'var(--accent)', vals: data.map(s => s.best)}];
+  if (mode === 'max') return [{name: unit === 's' ? 'Maior tempo' : unit === 'reps' ? 'Mais repetições' : 'Maior carga', short:'', color:'var(--accent)', vals: data.map(s => s.best)}];
   const n = Math.min(6, Math.max(...data.map(s => s.sets.length)));
   return Array.from({length: n}, (_, k) => ({name:'Série ' + (k + 1), short:'S' + (k + 1), color: SC[k], vals: data.map(s => s.sets[k] || null)}));
 }
@@ -2041,7 +2110,7 @@ function studentView(){
     body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
       <div id="finish-area"><button class="btn block" type="button" data-act="finish">Finalizar treino</button></div>`;
   }
@@ -2090,12 +2159,12 @@ function exCard(st, ex, i){
       const v = (s.parts && s.parts[pi]) || {}, lp = refPart(refs[pi], curType, ord);
       return `<div class="part ${conj ? 'withl' : ''}">${conj ? `<span class="plabel">${L(pi)}</span>` : ''}
         <span class="target">${esc(tgtFmt(tp[pi] || tp[0] || '', measOf(ex, pi)))}</span>
-        <label class="fld"><input id="kg-${ex.id}-${si}-${pi}" inputmode="decimal" autocomplete="off" aria-label="Carga série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="kg" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.kg || '')}" placeholder="${esc((lp && lp.kg) || '')}"><span>kg</span></label>
+        ${nkOf(ex, pi) ? '<span class="fld nokg">sem carga</span>' : `<label class="fld"><input id="kg-${ex.id}-${si}-${pi}" inputmode="decimal" autocomplete="off" aria-label="Carga série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="kg" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.kg || '')}" placeholder="${esc((lp && lp.kg) || '')}"><span>kg</span></label>`}
         <label class="fld"><input id="rp-${ex.id}-${si}-${pi}" inputmode="numeric" autocomplete="off" aria-label="${measOf(ex, pi) === 'tempo' ? 'Segundos' : 'Repetições'} série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="reps" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.reps || '')}" placeholder="${esc((lp && lp.reps) || '')}"><span>${measOf(ex, pi) === 'tempo' ? 'seg' : 'reps'}</span></label>
       </div>`;
     }).join('');
     return `<div class="set ${s.done ? 'done' : ''} ${ps.some((_, pi) => prs.has(si + '-' + pi)) ? 'pr' : ''}" id="set-${ex.id}-${si}"><span class="sn">${dot(stypeOf(ex, si))}${si + 1}</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div>
-      <button class="chk" type="button" data-act="set" data-ex="${ex.id}" data-set="${si}" aria-pressed="${!!s.done}" aria-label="Concluir série ${si + 1}">${ICON_CHECK}${ICON_TROPHY}</button></div>`;
+      <button class="chk" type="button" data-act="set" data-ex="${ex.id}" data-set="${si}" aria-pressed="${!!s.done}" aria-label="Concluir série ${si + 1}">${ICON_CHECK}${ICON_TROPHY}</button></div>` + tecSub(ex, si, s, ps.length, conj);
   }).join('');
   const how = ps.filter(p => p.instructions).map((p, k) => `<p>${conj ? `<span class="ab">${L(used.indexOf(p.id))}</span>` : ''}${esc(p.instructions)}</p>`).join('');
   const vids = ps.map((p, k) => {
@@ -2229,13 +2298,14 @@ function editEx(ex, i, n){
     <div class="grid4">
       <label>Método<select id="e-method-${ex.id}" data-ef="method" data-ex="${ex.id}">${db.methods.map(m => `<option value="${m.id}" ${ex.method === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>
       <label>Intervalo<input id="e-rest-${ex.id}" data-ef="rest" data-ex="${ex.id}" value="${esc(ex.rest)}"></label>
-      ${ex.items.map((id, k) => `<label>Medida${ex.items.length > 1 ? ' ' + L(k) : ''}<select id="e-meas-${ex.id}-${k}" data-meas="${k}" data-ex="${ex.id}"><option value="reps" ${measOf(ex, k) === 'reps' ? 'selected' : ''}>Séries × repetições</option><option value="tempo" ${measOf(ex, k) === 'tempo' ? 'selected' : ''}>Séries × tempo (seg)</option></select></label>`).join('')}
+      ${ex.items.map((id, k) => `<label>Medida${ex.items.length > 1 ? ' ' + L(k) : ''}<select id="e-meas-${ex.id}-${k}" data-meas="${k}" data-ex="${ex.id}">${measOpts(ex, k)}</select></label>`).join('')}
     </div>
+    ${tecBox(ex)}
     <div class="sered"><span class="lbl2">Séries</span>
       ${ex.series.map((s, k) => `<div class="serow">${dot(s.type)}<span class="sn3">${k + 1}</span>
         <select id="sr-t-${ex.id}-${k}" data-srt="${k}" data-ex="${ex.id}" aria-label="Tipo da série ${k + 1}">${Object.entries(STYPES).map(([t, o]) => `<option value="${t}" ${s.type === t ? 'selected' : ''}>${o.l}</option>`).join('')}</select>
         <input id="sr-r-${ex.id}-${k}" data-srr="${k}" data-ex="${ex.id}" value="${esc(s.reps)}" aria-label="Meta da série ${k + 1}" placeholder="${ex.items.every((_, j) => measOf(ex, j) === 'tempo') ? 'Segundos (ex.: 30 a 45)' : 'Reps'}">
-        <button type="button" class="icon" data-act="sr-del" data-ex="${ex.id}" data-i="${k}" ${ex.series.length < 2 ? 'disabled' : ''} aria-label="Remover série ${k + 1}">✕</button></div>`).join('')}
+        ${tecChip(ex, k)}<button type="button" class="icon" data-act="sr-del" data-ex="${ex.id}" data-i="${k}" ${ex.series.length < 2 ? 'disabled' : ''} aria-label="Remover série ${k + 1}">✕</button></div>`).join('')}
       <div class="tools"><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="trab">+ Série de trabalho</button><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="aq">+ Aquecimento</button><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="prep">+ Preparatória</button></div>
       <span class="hint">Aquecimento e preparatória entram antes das séries de trabalho. Em conjugado, separe as metas com + (12 a 15 + 12 a 15). ${ex.items.some((_, j) => measOf(ex, j) === 'tempo') ? 'Nas séries por tempo, escreva só os segundos (ex.: 30 a 45); o app mostra "s".' : ''}</span>
     </div>
@@ -2262,7 +2332,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => (p.kg || '–') + ' kg × ' + (p.reps || '–') + (e.meas && e.meas[pi] === 'tempo' ? ' s' : '')).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2289,7 +2359,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => (p.kg || '–') + ' kg × ' + (p.reps || '–') + (e.meas && e.meas[pi] === 'tempo' ? ' s' : '')).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2350,6 +2420,7 @@ function methodsView(){
     <div class="list mcols">${db.methods.map(m => { const u = methodUsage(m.id); return `<div class="edit-ex">
       <label>Nome<input id="m-name-${m.id}" data-mf="name" data-m="${m.id}" value="${esc(m.name)}"></label>
       <label>Explicação para o aluno<textarea id="m-desc-${m.id}" rows="2" data-mf="desc" data-m="${m.id}">${esc(m.desc)}</textarea></label>
+      ${m.id !== 'normal' && m.id !== 'conjugado' ? `<label>O que o aluno anota na série<select id="m-tec-${m.id}" data-mtec="${m.id}"><option value="" ${!m.tec ? 'selected' : ''}>Só a carga e as reps de sempre</option><option value="drop" ${m.tec === 'drop' ? 'selected' : ''}>Drops: carga e reps de cada drop</option><option value="blocos" ${m.tec === 'blocos' ? 'selected' : ''}>Blocos: reps de cada bloco</option></select></label>` : ''}
       <div class="tools"><span class="hint">${u ? 'Usado em ' + u + (u === 1 ? ' exercício' : ' exercícios') : 'Ainda não usado'}</span>${m.id !== 'normal' && !u ? `<button type="button" class="icon danger" data-act="m-del" data-v="${m.id}">Apagar</button>` : ''}</div>
     </div>`; }).join('')}</div>
     <button class="btn block ghost" type="button" data-act="m-new">+ Novo método</button>
@@ -2371,7 +2442,7 @@ const T = {el: document.getElementById('timer'), end: 0, total: 0, iv: null};
 let wake = null;
 async function keepAwake(){ try { if (!wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); } } catch(e){} }
 function startTimer(ex){
-  const sec = restSecs(ex.rest);
+  const sec = restSecs(ex.rest); audioUnlock();
   T.total = sec; T.end = Date.now() + sec * 1000;
   document.getElementById('tmeta').textContent = 'meta ' + ex.rest;
   T.el.hidden = false; T.el.classList.remove('over');
@@ -2384,7 +2455,7 @@ function tick(){
   if (left <= 0){
     clearInterval(T.iv); T.el.classList.add('over');
     document.getElementById('tlabel').textContent = 'Bora, próxima série';
-    try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch(e){}
+    if (left > -3){ restBeep(); try { navigator.vibrate && navigator.vibrate([300, 120, 300, 120, 300]); } catch(e){} }
   } else document.getElementById('tlabel').textContent = 'Descanso';
 }
 document.getElementById('tplus').addEventListener('click', () => {
@@ -2443,6 +2514,12 @@ document.addEventListener('click', e => {
     const p = document.getElementById('prog'); if (p) p.textContent = progText(stu().days[state.day]);
     save();
   }
+  else if (act === 'tec-apply'){ const f = findEx(b.dataset.ex); if (!f) return; f.ex.series.forEach(x => delete x.m);
+    const w = f.ex.series.map((x, i) => x.type === 'trab' ? i : -1).filter(i => i >= 0);
+    (v === 'all' ? w : [w.length ? w[w.length - 1] : f.ex.series.length - 1]).forEach(i => { if (f.ex.series[i]) f.ex.series[i].m = true; }); save(); render(); }
+  else if (act === 'tec-tog'){ const f = findEx(b.dataset.ex); if (!f) return; const x = f.ex.series[+b.dataset.i]; if (x){ if (x.m) delete x.m; else x.m = true; } save(); render(); }
+  else if (act === 'train-start'){ db.draftMeta = db.draftMeta || {}; db.draftMeta[draftKey()] = Date.now(); audioUnlock(); save(); render();
+    const l = document.querySelector('.list'); if (l) l.scrollIntoView({block: 'start', behavior: 'smooth'}); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -2457,9 +2534,13 @@ document.addEventListener('click', e => {
       const rec = dr[ex.id]; if (!rec) return;
       const used = usedItems(ex, rec);
       const sets = targets(ex).map((_, si) => { const s = (rec.sets || {})[si] || {};
-        return {done: !!s.done, type: stypeOf(ex, si), parts: used.map((_, pi) => ({kg: (s.parts && s.parts[pi] && s.parts[pi].kg) || '', reps: (s.parts && s.parts[pi] && s.parts[pi].reps) || ''}))}; });
+        return {done: !!s.done, type: stypeOf(ex, si), parts: used.map((_, pi) => { const sp = (s.parts && s.parts[pi]) || {}, o = {kg: sp.kg || '', reps: sp.reps || ''};
+          const sm = tecOfMeth(ex.method) && ex.series && ex.series[si] && ex.series[si].m;
+          if (sm && sp.drops && sp.drops.some(d => d && (d.kg || d.reps))) o.drops = sp.drops.slice(0, tecN(ex)).map(d => ({kg: (d && d.kg) || '', reps: (d && d.reps) || ''}));
+          if (sm && sp.blocks && sp.blocks.some(Boolean)) o.blocks = sp.blocks.slice(0, tecN(ex) - 1).map(x => x || '');
+          return o; })}; });
       const comment = (rec.comment || '').trim();
-      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), sets, comment});
+      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), nokg: ex.items.map((_, k) => nkOf(ex, k)), sets, comment});
     });
     if (!entries.length){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
@@ -2541,7 +2622,7 @@ document.addEventListener('click', e => {
     if (act === 'pick-new'){ l = newLibItem(state.picker.q.trim()); created = true; } else l = lib(v);
     const day = stu().days[state.editDay];
     if (String(state.picker.target).startsWith('swap:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId);
-      if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
+      if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } if (f.ex.nokg) f.ex.nokg[+k] = false; state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
       return; }
     if (String(state.picker.target).startsWith('alt:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId); if (f){ f.ex.alt = f.ex.alt || []; f.ex.alt[+k] = l.id; } }
     else if (state.picker.target === 'new'){ const ne = P([l.id], 3, l.defMeas === 'tempo' ? '30 a 45' : '10 a 12', '1:30 a 2:00'); ne.meas = [l.defMeas || 'reps']; day.ex.push(ne); }
@@ -2551,7 +2632,7 @@ document.addEventListener('click', e => {
   }
   else if (act === 'p-unpart'){
     const f = findEx(b.dataset.ex); const k = +b.dataset.i; if (!f) return;
-    f.ex.items.splice(k, 1); if (f.ex.meas) f.ex.meas.splice(k, 1);
+    f.ex.items.splice(k, 1); if (f.ex.meas) f.ex.meas.splice(k, 1); if (f.ex.nokg) f.ex.nokg.splice(k, 1);
     f.ex.series.forEach(s => { const ps = String(s.reps).split(/\s*\+\s*/); if (ps.length > 1) ps.splice(k, 1); s.reps = ps.join(' + '); });
     if (f.ex.items.length === 1 && f.ex.method === 'conjugado') f.ex.method = 'normal';
     save(); render();
@@ -2610,9 +2691,10 @@ document.addEventListener('change', e => {
   if (c === 'evo'){ state.evoLib = t.value; render(); return; }
   if (c === 'libm'){ state.libM = t.value; document.getElementById('lib-list').innerHTML = libList(); return; }
   if (t.dataset.led && state.logDraft){ state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].done = t.checked; return; }
-  if (t.dataset.meas !== undefined){ const f = findEx(t.dataset.ex); if (f){ f.ex.meas = f.ex.items.map((_, j) => j === +t.dataset.meas ? t.value : measOf(f.ex, j)); save(); render(); } return; }
+  if (t.dataset.mtec !== undefined){ const m = db.methods.find(x => x.id === t.dataset.mtec); if (m){ m.tec = t.value; save(); } return; }
+  if (t.dataset.meas !== undefined){ const f = findEx(t.dataset.ex); if (f){ const mk = +t.dataset.meas, mv = t.value; f.ex.meas = f.ex.items.map((_, j) => j === mk ? (mv.endsWith('tempo') ? 'tempo' : 'reps') : measOf(f.ex, j)); f.ex.nokg = f.ex.items.map((_, j) => j === mk ? mv.startsWith('s') : nkOf(f.ex, j)); save(); render(); } return; }
   if (t.dataset.srt !== undefined){ const f = findEx(t.dataset.ex); if (f){ f.ex.series[+t.dataset.srt].type = t.value; save(); render(); } return; }
-  if (t.dataset.ef === 'method' || t.dataset.ef === 'warmup'){ const f = findEx(t.dataset.ex); if (f){ f.ex[t.dataset.ef] = t.type === 'checkbox' ? t.checked : t.value; save(); if (t.dataset.ef === 'method') render(); } }
+  if (t.dataset.ef === 'method' || t.dataset.ef === 'warmup'){ const f = findEx(t.dataset.ex); if (f){ f.ex[t.dataset.ef] = t.type === 'checkbox' ? t.checked : t.value; save(); if (t.dataset.ef === 'method'){ if (tecOfMeth(f.ex.method) && !f.ex.series.some(x => x.m)){ const w = f.ex.series.map((x, i) => x.type === 'trab' ? i : -1).filter(i => i >= 0), li = w.length ? w[w.length - 1] : f.ex.series.length - 1; if (f.ex.series[li]) f.ex.series[li].m = true; save(); } render(); } } }
   if (t.dataset.ef === 'sets'){ render(); }
 });
 
@@ -2623,7 +2705,10 @@ document.addEventListener('input', e => {
     const rec = drEx(t.dataset.ex), si = +t.dataset.set, pi = +t.dataset.part;
     rec.sets[si] = rec.sets[si] || {parts: []};
     const s = rec.sets[si]; s.parts = s.parts || []; s.parts[pi] = s.parts[pi] || {};
-    s.parts[pi][t.dataset.in] = t.value.replace(',', '.');
+    const val = t.value.replace(',', '.'), P0 = s.parts[pi], kk = +t.dataset.k;
+    if (t.dataset.in === 'dkg' || t.dataset.in === 'dreps'){ P0.drops = P0.drops || []; P0.drops[kk] = P0.drops[kk] || {}; P0.drops[kk][t.dataset.in === 'dkg' ? 'kg' : 'reps'] = val; }
+    else if (t.dataset.in === 'blk'){ P0.blocks = P0.blocks || []; P0.blocks[kk] = val; }
+    else P0[t.dataset.in] = val;
     save(); return;
   }
   if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p]; p[t.dataset.le] = t.value.replace(',', '.'); return; }
