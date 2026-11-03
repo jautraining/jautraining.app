@@ -810,3 +810,167 @@ body.noscroll{overflow:hidden}
 .mobrow .nm small{display:block;font-weight:500;margin-top:2px}
 .mobrow .macts{display:flex;gap:6px}
 .mobf{grid-column:1/-1;display:grid;grid-template-columns:72px minmax(0,1fr) minmax(0,1.4fr);gap:8px}
+
+.libcats{margin:2px 0 4px}
+.libcats button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.libcats small{font-size:.68rem;font-weight:700;opacity:.65}
+.libgrp{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;margin:10px 0 0;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.libgrp span{color:var(--muted);font-weight:600;letter-spacing:.04em}
+.libgrp:first-child{margin-top:0}
+
+/* ================= layout novo: brilho vermelho, vidro e pílulas ================= */
+:root{
+  --bg:#F6F1F0 !important; --surface:#FFFFFF !important; --sunk:#F1EAE9 !important; --ink:#1A1212 !important; --muted:#6B5F5F !important; --line:rgba(29,21,21,.11) !important;
+  --band:#A50000 !important; --on-band:#FFFFFF !important; --accent:#C8141B !important; --fill:#C8141B !important; --on-fill:#FFFFFF !important; --soft:rgba(200,20,27,.08) !important;
+  --ok:#1E8F5A !important; --ok-soft:#E2F2E9 !important;
+  --m0:#E4D9D7 !important; --nb:#EEE7E6 !important; --m1:#EBA8A1 !important; --m2:#C8141B !important;
+  --t-aq:#1F9D55 !important; --t-prep:#E3A400 !important; --t-trab:#C8141B !important; --gold:#B7861F !important;
+  --c1:#C8141B !important; --c2:#2a78d6 !important; --c3:#eda100 !important; --c4:#6250d6 !important; --c5:#1baf7a !important; --c6:#eb6834 !important;
+  --glass:linear-gradient(160deg,#FFFFFF,#FFFCFB); --gline:rgba(29,21,21,.07);
+  --cardsh:0 1px 0 rgba(255,255,255,.9) inset,0 10px 28px rgba(80,10,10,.08);
+  --fieldbg:rgba(29,21,21,.05); --chipbg:rgba(29,21,21,.05); --iconbg:#FFFFFF;
+  --navbg:rgba(255,255,255,.94); --navline:rgba(29,21,21,.08); --navink:#1A1212;
+  --timerbg:rgba(255,255,255,.94);
+  --obov:rgba(29,21,21,.5); --obcard:#FFFFFF;
+  --ghostink:var(--accent);
+  --pagebg:radial-gradient(120% 34% at 50% 0%,rgba(200,20,27,.10) 0%,rgba(200,20,27,0) 70%),#F6F1F0;
+  --bandbg:radial-gradient(140% 130% at 50% -25%,#F25A44 0%,#C8141B 42%,#8E0000 100%);
+  --bandrad:0 0 28px 28px; --bandsh:0 14px 34px rgba(165,0,0,.22); --safetop:#A50000;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0B0707 !important; --surface:#171010 !important; --sunk:#211818 !important; --ink:#F7F0EF !important; --muted:#A89A99 !important; --line:rgba(255,255,255,.09) !important;
+  --band:#A50000 !important; --on-band:#FFFFFF !important; --accent:#F0463C !important; --fill:#C8141B !important; --on-fill:#FFFFFF !important; --soft:rgba(240,70,60,.14) !important;
+  --ok:#3FCB8A !important; --ok-soft:rgba(63,203,138,.14) !important;
+  --m0:#3A2D2C !important; --nb:#2C2221 !important; --m1:#83403B !important; --m2:#F0463C !important;
+  --t-aq:#45C97E !important; --t-prep:#F2C230 !important; --t-trab:#F0463C !important; --gold:#E2B04A !important;
+  --c1:#F0463C !important; --c2:#4C9BFF !important; --c3:#F5B800 !important; --c4:#9C8CFF !important; --c5:#2FC48D !important; --c6:#FF8A3D !important;
+  --glass:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.022)); --gline:rgba(255,255,255,.085);
+  --cardsh:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px rgba(0,0,0,.35);
+  --fieldbg:rgba(255,255,255,.06); --chipbg:rgba(255,255,255,.07); --iconbg:rgba(255,255,255,.06);
+  --navbg:rgba(18,12,12,.92); --navline:rgba(255,255,255,.1); --navink:#FFFFFF;
+  --timerbg:rgba(14,9,9,.86);
+  --obov:rgba(5,3,3,.82); --obcard:linear-gradient(160deg,#241818,#160F0F);
+  --ghostink:#FFFFFF;
+  --pagebg:radial-gradient(150% 80% at 50% -8%,rgba(240,70,60,.66) 0%,rgba(200,20,27,.44) 26%,rgba(140,0,0,.22) 50%,rgba(11,7,7,0) 80%),
+           radial-gradient(70% 40% at -10% 105%,rgba(165,0,0,.28) 0%,rgba(11,7,7,0) 70%),#0B0707;
+  --bandbg:transparent; --bandrad:0; --bandsh:none; --safetop:transparent;
+  color-scheme:dark;
+} }
+:root[data-theme="dark"]{
+  --bg:#0B0707 !important; --surface:#171010 !important; --sunk:#211818 !important; --ink:#F7F0EF !important; --muted:#A89A99 !important; --line:rgba(255,255,255,.09) !important;
+  --band:#A50000 !important; --on-band:#FFFFFF !important; --accent:#F0463C !important; --fill:#C8141B !important; --on-fill:#FFFFFF !important; --soft:rgba(240,70,60,.14) !important;
+  --ok:#3FCB8A !important; --ok-soft:rgba(63,203,138,.14) !important;
+  --m0:#3A2D2C !important; --nb:#2C2221 !important; --m1:#83403B !important; --m2:#F0463C !important;
+  --t-aq:#45C97E !important; --t-prep:#F2C230 !important; --t-trab:#F0463C !important; --gold:#E2B04A !important;
+  --c1:#F0463C !important; --c2:#4C9BFF !important; --c3:#F5B800 !important; --c4:#9C8CFF !important; --c5:#2FC48D !important; --c6:#FF8A3D !important;
+  --glass:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.022)); --gline:rgba(255,255,255,.085);
+  --cardsh:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px rgba(0,0,0,.35);
+  --fieldbg:rgba(255,255,255,.06); --chipbg:rgba(255,255,255,.07); --iconbg:rgba(255,255,255,.06);
+  --navbg:rgba(18,12,12,.92); --navline:rgba(255,255,255,.1); --navink:#FFFFFF;
+  --timerbg:rgba(14,9,9,.86);
+  --obov:rgba(5,3,3,.82); --obcard:linear-gradient(160deg,#241818,#160F0F);
+  --ghostink:#FFFFFF;
+  --pagebg:radial-gradient(150% 80% at 50% -8%,rgba(240,70,60,.66) 0%,rgba(200,20,27,.44) 26%,rgba(140,0,0,.22) 50%,rgba(11,7,7,0) 80%),
+           radial-gradient(70% 40% at -10% 105%,rgba(165,0,0,.28) 0%,rgba(11,7,7,0) 70%),#0B0707;
+  --bandbg:transparent; --bandrad:0; --bandsh:none; --safetop:transparent;
+  color-scheme:dark;
+}
+:root{--grad:linear-gradient(135deg,#F25A44 0%,#D7191F 45%,#8E0000 100%);--glow:0 10px 30px rgba(240,70,60,.38)}
+
+html{background:var(--bg)}
+body{background:transparent}
+body::before{background:var(--safetop)}
+#app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--pagebg)}
+
+/* topo: transparente sobre o brilho (escuro) ou faixa vermelha arredondada (claro) */
+.band{background:var(--bandbg);border-radius:var(--bandrad);box-shadow:var(--bandsh)}
+.band .wrap{padding-bottom:10px}
+.band .logo{filter:drop-shadow(0 6px 18px rgba(0,0,0,.3))}
+.modes{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.modes button[aria-pressed="true"]{background:#fff;color:#8A0000}
+.draftbadge{background:rgba(0,0,0,.2)}
+
+/* cards de vidro */
+.card,.ex,.restday,.attn,.loadrow,.fitem,.cardio,.cardioed,.photobtn,.copyp,.wstrip,.stu,.edit-ex,.picker,.libitem,.log,details.guide,.vidbox,.selbox{
+  background:var(--glass)!important;border:1px solid var(--gline)!important;border-radius:22px!important;box-shadow:var(--cardsh)}
+.ex.hasm,.edit-ex.hasm{border-color:rgba(240,70,60,.35)!important}
+.mband{background:linear-gradient(135deg,rgba(240,70,60,.2),rgba(165,0,0,.08))!important;border-radius:20px 20px 0 0}
+.exdone{background:var(--ok-soft)!important;border-color:transparent!important}
+.photobtn{border-style:solid!important}
+.photobtn svg,.cardio svg{color:var(--accent)}
+
+/* tutorial inicial: card sólido e fundo escurecido para ler bem */
+.obov{background:var(--obov)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.obcard{background:var(--obcard)!important;border:1px solid var(--gline);border-radius:24px!important;box-shadow:0 24px 60px rgba(0,0,0,.45)!important}
+
+/* textos */
+.eyebrow{color:var(--accent)}
+.hello h1{font-size:2rem;letter-spacing:-.01em}
+.dayhead{border-bottom-color:rgba(240,70,60,.55)!important}
+.dayhead h2{font-size:2.2rem}
+.num{background:var(--soft)!important;color:var(--accent)!important}
+.chip{background:var(--chipbg)!important;border:1px solid var(--gline)}
+
+/* botões em pílula com brilho */
+.btn{border-radius:999px;background:var(--grad);box-shadow:var(--glow)}
+.btn.ghost{background:transparent;box-shadow:none;border-color:rgba(240,70,60,.6);color:var(--ghostink)}
+.btn.quiet{background:var(--chipbg);box-shadow:none}
+.btn.sm{border-radius:999px}
+.icon{border-radius:999px!important;background:var(--iconbg)!important;border-color:var(--gline)!important}
+.linkbtn{color:var(--accent)}
+
+/* botão iniciar treino: card de destaque */
+.startbtn{border-radius:24px!important;padding:20px!important;min-height:84px;position:relative;overflow:hidden;color:#fff!important;
+  background:radial-gradient(120% 140% at 100% 0%,rgba(255,170,120,.35),rgba(255,170,120,0) 55%),var(--grad)!important;box-shadow:0 18px 44px rgba(240,70,60,.38)!important}
+.startbtn b{font-size:1.25rem}
+.startbtn .st-ic{width:46px;height:46px;background:rgba(0,0,0,.25)}
+
+/* dias da semana em pílulas */
+.week button{border-radius:18px!important;background:var(--glass)!important;border:1px solid var(--gline)!important;box-shadow:var(--cardsh)}
+.week button[aria-pressed="true"]{background:var(--grad)!important;border-color:transparent!important;box-shadow:var(--glow);color:#fff}
+.week button[aria-pressed="true"] .t{color:#fff}
+.wstrip{padding-block:14px}
+
+/* séries */
+.fld input{background:var(--fieldbg);border-color:transparent;border-radius:12px}
+.fld input:focus{border-color:rgba(240,70,60,.7)}
+.fld.nokg{border-color:var(--gline);border-radius:12px}
+.chk{border-radius:50%!important;width:40px!important;height:40px!important;background:var(--iconbg)!important;border:1px solid var(--line)!important}
+.set.done .chk,.chk[aria-pressed="true"]{background:linear-gradient(135deg,#3FCB8A,#1E8F5A)!important;border-color:transparent!important;color:#fff!important;box-shadow:0 6px 18px rgba(63,203,138,.35)}
+.set.pr .chk{background:linear-gradient(135deg,#F2C230,#C98A12)!important}
+.tecsub{border-left-color:rgba(240,70,60,.7)}
+.swapbtn{border-radius:16px!important}
+.tecchip[aria-pressed="true"]{background:var(--grad);border-color:transparent}
+
+/* timer de descanso: vidro */
+.timer{background:var(--timerbg)!important;color:var(--ink)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--gline)}
+.timer .tbar i{background:var(--grad)!important}
+.tbtns button{border-radius:999px!important;background:var(--chipbg)!important;color:var(--ink)!important;border:1px solid var(--gline)!important}
+
+/* aluno: menu flutuante embaixo */
+body:not(.pm) .band .tabs{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;
+  display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--navbg);border:1px solid var(--navline);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 14px 40px rgba(0,0,0,.28);max-width:calc(100% - 32px)}
+body:not(.pm) .band .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0!important;border-radius:999px;padding:8px 18px;
+  font-size:.6rem;letter-spacing:.06em;opacity:.72;color:var(--navink)}
+body:not(.pm) .band .tabs button[aria-pressed="true"]{opacity:1;background:var(--grad);color:#fff;box-shadow:0 6px 18px rgba(240,70,60,.45)}
+.tabs .ti{width:20px;height:20px;display:block}
+body.pm .tabs .ti{display:none}
+body:not(.pm) main.wrap{padding-bottom:112px}
+body:not(.pm):has(.timer:not([hidden])) .band .tabs{bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+body:not(.pm):has(.timer:not([hidden])) main.wrap{padding-bottom:200px}
+
+/* personal: abas em pílula */
+body.pm .tabs button{border-bottom:0!important;border-radius:999px;padding:8px 14px!important;margin-block:6px}
+body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
+
+/* tela de fim de treino e outros destaques da marca */
+.donecard,.sumhead{background:var(--grad)!important}
+.toast{border-radius:999px}
+.mpill{border-radius:999px}
+
+.mobcard{background:var(--glass)!important;border:1px solid var(--gline)!important;border-radius:22px!important;box-shadow:var(--cardsh)}
+.mobcard.done{background:var(--ok-soft)!important;border-color:transparent!important}
+.mobchk{border-radius:999px;border-color:var(--line)}
+.mobchk[aria-pressed="true"]{background:linear-gradient(135deg,#3FCB8A,#1E8F5A);border-color:transparent;box-shadow:0 6px 18px rgba(63,203,138,.3)}

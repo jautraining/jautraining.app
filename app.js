@@ -29,7 +29,7 @@ const N_OMB = 'Manter o abdômen sempre ativo, tronco estável e elevar os braç
 const N_TRI = 'Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir.';
 const N_COST = 'Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco.';
 
-function L(id, name, primary, secondary, instructions){ return {id, name, primary, secondary, instructions, video: '', custom: false}; }
+function L(id, name, primary, secondary, instructions){ return {id, name, primary, secondary, instructions, video: '', custom: false, cat: 'musc'}; }
 function seedLibrary(){ return withDefaults([
   L('agach-livre','Agachamento livre',['quadriceps','gluteos'],['adutores','lombar','abdomen'],N_AGACH),
   L('agach-hack','Agachamento hack',['quadriceps','gluteos'],['adutores'],N_AGACH),
@@ -755,7 +755,7 @@ async function enter(user){
   await openApp(!!c);
 }
 /* Biblioteca nova: renomeia o afundo reverso e acrescenta só os exercícios que faltam (por id e por nome). */
-const LIB_V = 4;
+const LIB_V = 5;
 function metUpgrade(){
   const T = {dropset: 'drop', restpause: 'blocos'};
   db.methods.forEach(m => { if (T[m.id] && m.tec === undefined) m.tec = T[m.id]; });
@@ -764,6 +764,8 @@ function metUpgrade(){
 function libUpgrade(){
   const v0 = db.settings.libVer || 0;
   if (v0 >= LIB_V) return false;
+  catUpgrade();
+  if (v0 >= 4){ db.settings.libVer = LIB_V; return true; }
   if (v0 >= 3){ metUpgrade(); db.settings.libVer = LIB_V; return true; }
   metUpgrade();
   const RENAME = {'afundo-reverso': ['Afundo reverso com halteres', 'Recuo com halteres']};
@@ -981,6 +983,13 @@ function mobHTML(d){
       return `<article class="mobcard ${ok ? 'done' : ''}" id="mob-${m.id}"><div class="mobh"><span class="num ${ok ? 'ok' : ''}">${ok ? ICON_CHECK : i + 1}</span><h3>${esc(l.name)}</h3></div>${vid}${meta ? `<p class="mobmeta">${meta}</p>` : ''}
         <button type="button" class="mobchk" data-act="mob-done" data-v="${m.id}" aria-pressed="${ok}">${ICON_CHECK}<span>${ok ? 'Feito' : 'Marcar como feito'}</span></button></article>`; }).join('')}</div></section>`;
 }
+
+const CATS = [['musc', 'Musculação'], ['mob', 'Mobilidade']];
+const catOf = l => l && l.cat === 'mob' ? 'mob' : 'musc';
+function pickCat(list, q){ const pc = state.picker && state.picker.target === 'mob' ? 'mob' : 'musc', c = list.filter(l => catOf(l) === pc); return q && !c.length ? list : c; }
+function libCats(){ const n = k => db.library.filter(l => !k || catOf(l) === k).length;
+  return `<div class="seg libcats" role="group" aria-label="Categoria">${[['', 'Todos'], ...CATS].map(([k, l]) => `<button type="button" data-act="libc" data-v="${k}" aria-pressed="${(state.libC || '') === k}">${l}<small>${n(k)}</small></button>`).join('')}</div>`; }
+function catUpgrade(){ let ch = false; db.library.forEach(l => { if (l.cat !== 'mob' && l.cat !== 'musc'){ l.cat = /^mob-/.test(l.id) ? 'mob' : 'musc'; ch = true; } }); return ch; }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -2051,9 +2060,14 @@ function evolution(st){
 }
 
 /* ---------- header ---------- */
+const TABI = {
+  treino: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  evolucao: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19h16M6 15l4-4 3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  perfil: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+};
 function header(){
   const tabs = state.mode === 'aluno'
-    ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${l}</button>`).join('')
+    ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
     : [['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
   return `<header class="band"><div class="wrap">
     <div class="band-top"><img class="logo" src="${LOGO}" alt="Jau Training, Online Strength Coaching" width="560" height="406">
@@ -2355,7 +2369,7 @@ function pickerHTML(t){
 }
 function pickResults(){
   const q = norm(state.picker.q.trim());
-  let items = db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q)))
+  let items = pickCat(db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q))), q)
     .sort((a, b) => (q ? (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) : 0) || a.name.localeCompare(b.name, 'pt'));
   items = items.slice(0, q ? 20 : 12);
   const exact = db.library.some(l => norm(l.name) === q);
@@ -2411,15 +2425,18 @@ function libraryView(){
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Biblioteca de exercícios</h2></div><span class="muted small">${db.library.length} exercícios</span></div>
     <div class="filters"><input id="lib-q" class="search" placeholder="Buscar exercício" value="${esc(state.libQ)}" autocomplete="off">
       <select id="lib-m" class="selbox" data-change="libm" aria-label="Filtrar por músculo"><option value="">Todos os músculos</option>${MUSCLES.map(([k, l]) => `<option value="${k}" ${state.libM === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício</button>
+    ${libCats()}
+    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício${state.libC === 'mob' ? ' de mobilidade' : ''}</button>
     <div class="list libcols" id="lib-list">${libList()}</div>
   </main>`;
 }
 function libList(){
   const q = norm(state.libQ.trim());
   const items = db.library.filter(l => (!q || norm(l.name).includes(q)) && (!state.libM || l.primary.includes(state.libM) || l.secondary.includes(state.libM))).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-  if (!items.length) return '<div class="empty">Nenhum exercício encontrado. Crie um novo.</div>';
-  return items.map(libItem).join('');
+  const vis = items.filter(l => !state.libC || catOf(l) === state.libC);
+  if (!vis.length) return '<div class="empty">Nenhum exercício encontrado. Crie um novo.</div>';
+  if (state.libC) return vis.map(libItem).join('');
+  return CATS.map(([k, n]) => { const g = vis.filter(l => catOf(l) === k); return g.length ? `<h3 class="libgrp">${n}<span>${g.length}</span></h3>` + g.map(libItem).join('') : ''; }).join('');
 }
 function libItem(l){
   const open = state.libOpen === l.id, u = usage(l.id), yt = ytId(l.video);
@@ -2430,6 +2447,7 @@ function libItem(l){
       <button type="button" class="icon" data-act="lib-open" data-v="${l.id}" aria-expanded="${open}">${open ? 'Fechar' : 'Editar'}</button></div>
     ${open ? `<div class="libed">
       <label>Nome<input id="l-name-${l.id}" data-lf="name" data-lib="${l.id}" value="${esc(l.name)}"></label>
+      <label>Categoria<select id="l-cat-${l.id}" data-lcat="${l.id}">${CATS.map(([k, n]) => `<option value="${k}" ${catOf(l) === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <div class="libgrid"><div style="display:grid;gap:12px;min-width:0">
         <label>Músculos principais</label>${chips('primary', '')}
         <label>Músculos auxiliares</label>${chips('secondary', 'sec')}
@@ -2512,7 +2530,7 @@ function arm(b, label, reset){
   return false;
 }
 function top(){ window.scrollTo(0, 0); }
-function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secondary: [], instructions: '', video: '', custom: true}; db.library.unshift(l); return l; }
+function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secondary: [], instructions: '', video: '', custom: true, cat: 'musc'}; db.library.unshift(l); return l; }
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -2563,6 +2581,7 @@ document.addEventListener('click', e => {
     const car0 = document.getElementById('mobcar'), sl = car0 ? car0.scrollLeft : 0; render();
     const car = document.getElementById('mobcar'); if (car){ car.scrollLeft = sl; const nx = on && document.getElementById('mob-' + v) && document.getElementById('mob-' + v).nextElementSibling; if (nx) setTimeout(() => car.scrollTo({left: nx.offsetLeft - car.offsetLeft - 16, behavior: 'smooth'}), 450); }
   }
+  else if (act === 'libc'){ state.libC = v; state.libOpen = null; render(); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -2664,7 +2683,7 @@ document.addEventListener('click', e => {
     let l, created = false;
     if (act === 'pick-new'){ l = newLibItem(state.picker.q.trim()); created = true; } else l = lib(v);
     const day = stu().days[state.editDay];
-    if (state.picker.target === 'mob'){ day.mob = day.mob || []; day.mob.push({id: uid(), lib: l.id, sets: '2', reps: l.defMeas === 'tempo' ? '30' : '10', meas: l.defMeas === 'tempo' ? 'tempo' : 'reps'}); state.picker = null; save(); render(); toast(created ? 'Criado na biblioteca. Ponha o vídeo por lá.' : l.name + ' adicionado à mobilidade'); return; }
+    if (state.picker.target === 'mob'){ if (created) l.cat = 'mob'; day.mob = day.mob || []; day.mob.push({id: uid(), lib: l.id, sets: '2', reps: l.defMeas === 'tempo' ? '30' : '10', meas: l.defMeas === 'tempo' ? 'tempo' : 'reps'}); state.picker = null; save(); render(); toast(created ? 'Criado na biblioteca. Ponha o vídeo por lá.' : l.name + ' adicionado à mobilidade'); return; }
     if (String(state.picker.target).startsWith('swap:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId);
       if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } if (f.ex.nokg) f.ex.nokg[+k] = false; state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
       return; }
@@ -2697,7 +2716,7 @@ document.addEventListener('click', e => {
   else if (act === 'p-del'){ if (!arm(b, 'Confirmar remoção', 'Remover')) return; const f = findEx(v); if (f){ f.list.splice(f.i, 1); save(); render(); toast('Exercício removido da ficha'); } }
   else if (act === 'go-lib'){ state.psec = 'lib'; state.libOpen = v; state.libQ = ''; state.libM = ''; render(); const el = document.getElementById('lib-' + v); if (el) el.scrollIntoView({block:'start'}); }
   else if (act === 'lib-open'){ state.libOpen = state.libOpen === v ? null : v; document.getElementById('lib-list').innerHTML = libList(); }
-  else if (act === 'lib-new'){ const l = newLibItem('Novo exercício'); state.libOpen = l.id; state.libQ = ''; state.libM = ''; save(); render(); const i = document.getElementById('l-name-' + l.id); if (i){ i.focus(); i.select(); } }
+  else if (act === 'lib-new'){ const l = newLibItem(state.libC === 'mob' ? 'Nova mobilidade' : 'Novo exercício'); if (state.libC === 'mob') l.cat = 'mob'; state.libOpen = l.id; state.libQ = ''; state.libM = ''; save(); render(); const i = document.getElementById('l-name-' + l.id); if (i){ i.focus(); i.select(); } }
   else if (act === 'lib-m'){
     const l = lib(b.dataset.lib), key = b.dataset.key, other = key === 'primary' ? 'secondary' : 'primary';
     const arr = l[key], ix = arr.indexOf(v);
@@ -2767,6 +2786,7 @@ document.addEventListener('input', e => {
     return; }
   if (t.dataset.tecn){ const f = findEx(t.dataset.tecn); if (f){ f.ex.tecN = t.value; save(); } return; }
   if (t.dataset.mob){ const d = stu().days[state.editDay], m = (d.mob || []).find(x => x.id === t.dataset.mob); if (m){ m[t.dataset.mbf] = t.value; save(); if (t.dataset.mbf === 'meas') render(); } return; }
+  if (t.dataset.lcat){ const l = lib(t.dataset.lcat); l.cat = t.value === 'mob' ? 'mob' : 'musc'; save(); const li = document.getElementById('lib-list'); if (li){ li.innerHTML = libList(); const el = document.getElementById('lib-' + l.id); if (el) el.scrollIntoView({block: 'center'}); } const c = document.querySelector('.libcats'); if (c) c.outerHTML = libCats(); return; }
   if (t.dataset.mf){ const m = meth(t.dataset.m); m[t.dataset.mf] = t.value; save(); return; }
   if (t.dataset.imp && state.imp){ state.imp.data[t.dataset.imp] = t.value; return; }
   if (t.dataset.impday && state.imp){ state.imp.data.dias[t.dataset.impday].titulo = t.value; return; }
