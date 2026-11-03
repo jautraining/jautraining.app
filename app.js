@@ -956,6 +956,34 @@ function themeApply(v){ const r = document.documentElement; if (v === 'light' ||
 themeApply(themeGet());
 function themeHTML(){ const v = themeGet();
   return `<section class="card themecard"><p class="eyebrow">Aparência</p><div class="seg" role="group" aria-label="Tema do app">${[['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([k, l]) => `<button type="button" data-act="theme" data-v="${k}" aria-pressed="${v === k}">${l}</button>`).join('')}</div><p class="muted small">Automático segue o modo claro ou escuro do seu celular. A escolha fica salva neste aparelho.</p></section>`; }
+
+function mobEditor(d){
+  const pk = state.picker, list = d.mob || [];
+  return `<section class="card mobed form"><div class="mobhd"><div><p class="eyebrow">Mobilidade</p><b>Antes dos exercícios</b></div><span class="hint">O aluno vê em cards que passam para o lado e só marca como feito.</span></div>
+    ${list.map((m, i) => { const l = lib(m.lib); return `<div class="mobrow"><span class="num">${i + 1}</span>
+      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Pôr vídeo</button>`}</small></span>
+      <span class="macts"><button type="button" class="icon" data-act="mob-up" data-v="${m.id}" ${i === 0 ? 'disabled' : ''} aria-label="Subir ${esc(l.name)}">↑</button><button type="button" class="icon" data-act="mob-del" data-v="${m.id}" aria-label="Remover ${esc(l.name)}">✕</button></span>
+      <div class="mobf"><label>Séries<input id="mb-s-${m.id}" inputmode="numeric" data-mob="${m.id}" data-mbf="sets" value="${esc(m.sets || '')}"></label>
+      <label>${m.meas === 'tempo' ? 'Segundos' : 'Reps'}<input id="mb-r-${m.id}" data-mob="${m.id}" data-mbf="reps" value="${esc(m.reps || '')}" placeholder="${m.meas === 'tempo' ? '30' : '10'}"></label>
+      <label>Medida<select id="mb-m-${m.id}" data-mob="${m.id}" data-mbf="meas"><option value="reps" ${m.meas !== 'tempo' ? 'selected' : ''}>Séries × reps</option><option value="tempo" ${m.meas === 'tempo' ? 'selected' : ''}>Séries × tempo</option></select></label></div></div>`; }).join('')}
+    ${pk && pk.target === 'mob' ? pickerHTML('Adicionar mobilidade') : `<button class="icon" type="button" data-act="pick-open" data-v="mob">+ Adicionar mobilidade</button>`}
+  </section>`;
+}
+function mobHTML(d){
+  const list = (d.mob || []).filter(m => m && m.lib); if (!list.length) return '';
+  const dr = db.drafts[draftKey()] || {}, done = list.filter(m => dr['mob:' + m.id]).length;
+  return `<section class="mobsec" aria-label="Mobilidade"><div class="mobtop"><div><p class="eyebrow">Mobilidade</p><b>${done} de ${list.length} ${list.length === 1 ? 'feito' : 'feitos'}</b></div>${list.length > 1 ? '<span class="muted small">Arraste para o lado →</span>' : ''}</div>
+    <div class="mobcar" id="mobcar">${list.map((m, i) => { const l = lib(m.lib), ok = !!dr['mob:' + m.id], u = videoUrl(l);
+      const vid = u ? (ytId(l.video) ? `<button type="button" class="vcard" data-act="vid-open" data-v="${esc(l.id)}"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Ver execução</b><span>abre aqui no app</span></span></button>`
+          : `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Ver execução</b><span>abre em outra página</span></span></a>`)
+        : `<span class="vcard none"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Vídeo em breve</b><span>o personal ainda vai adicionar</span></span></span>`;
+      const meta = (m.sets ? `${esc(m.sets)} ${String(m.sets).trim() === '1' ? 'série' : 'séries'}` : '') + (m.reps ? `${m.sets ? ' × ' : ''}${esc(m.reps)}${m.meas === 'tempo' ? ' s' : ' reps'}` : '');
+      return `<article class="mobcard ${ok ? 'done' : ''}" id="mob-${m.id}"><div class="mobh"><span class="num ${ok ? 'ok' : ''}">${ok ? ICON_CHECK : i + 1}</span><h3>${esc(l.name)}</h3></div>${vid}${meta ? `<p class="mobmeta">${meta}</p>` : ''}
+        <button type="button" class="mobchk" data-act="mob-done" data-v="${m.id}" aria-pressed="${ok}">${ICON_CHECK}<span>${ok ? 'Feito' : 'Marcar como feito'}</span></button></article>`; }).join('')}</div></section>`;
+}
+const mobLog = (d, dr) => (d.mob || []).length ? {mob: d.mob.map(m => ({lib: m.lib, done: !!dr['mob:' + m.id]}))} : {};
+function mobLine(l){ if (!l.mob || !l.mob.length) return ''; const n = l.mob.filter(m => m.done).length;
+  return `<p class="mobline"><b>Mobilidade:</b> ${n} de ${l.mob.length} ${l.mob.length === 1 ? 'feito' : 'feitos'}${n && n < l.mob.length ? ' (' + esc(l.mob.filter(m => m.done).map(m => lib(m.lib).name).join(', ')) + ')' : ''}</p>`; }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -1004,7 +1032,7 @@ const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m
 function startHTML(d){
   const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
   return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}
-    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${d.ex.length} ${d.ex.length === 1 ? 'exercício' : 'exercícios'} · ${ns} séries</small></span></button>`;
+    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') + ' · ' + ns + ' séries' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : ''].filter(Boolean).join(' · ')}</small></span></button>`;
 }
 /* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
 let AC = null;
@@ -1478,7 +1506,7 @@ function feedItem(st, l){
 }
 
 /* ---------- copiar treino ---------- */
-function cloneDay(d){ return {title: d.title, cardio: JSON.parse(JSON.stringify(d.cardio || [])), ex: d.ex.map(e => Object.assign(JSON.parse(JSON.stringify(e)), {id: uid()}))}; }
+function cloneDay(d){ return {title: d.title, cardio: JSON.parse(JSON.stringify(d.cardio || [])), mob: (d.mob || []).map(m => Object.assign({}, m, {id: uid()})), ex: d.ex.map(e => Object.assign(JSON.parse(JSON.stringify(e)), {id: uid()}))}; }
 function cloneDays(days){ const o = {}; DAYS.forEach(x => o[x.k] = cloneDay(days[x.k] || {title:'', ex:[]})); return o; }
 function copyPanel(s){
   const c = state.copy; if (!c) return '';
@@ -2113,12 +2141,12 @@ function studentView(){
   const d = st.days[state.day] || {title:'', ex:[]};
   const df = {k: state.day, f: slotFull(st, state.day)};
   let body;
-  if (!d.ex.length){
+  if (!d.ex.length && !(d.mob || []).length){
     const isCardio = /barquinho|remo|cardio|corrida|bike/i.test(d.title);
     body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
       <div id="finish-area"><button class="btn block" type="button" data-act="finish">Finalizar treino</button></div>`;
   }
@@ -2288,6 +2316,7 @@ function editView(){
     <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button></div>
     ${copyPanel(s)}
     ${cardioEditor(d)}
+    ${mobEditor(d)}
     <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Escolha o exercício alternativo') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
     ${pk && pk.target === 'new' ? pickerHTML('Adicionar exercício da biblioteca') : `<button class="btn block ghost" type="button" data-act="pick-open" data-v="new">+ Adicionar exercício</button>`}
     </div></div>
@@ -2341,7 +2370,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${mobLine(l)}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2368,7 +2397,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${mobLine(l)}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2530,6 +2559,13 @@ document.addEventListener('click', e => {
   else if (act === 'train-start'){ db.draftMeta = db.draftMeta || {}; db.draftMeta[draftKey()] = Date.now(); audioUnlock(); save(); render();
     const l = document.querySelector('.list'); if (l) l.scrollIntoView({block: 'start', behavior: 'smooth'}); }
   else if (act === 'theme'){ try { localStorage.setItem(THEME_KEY, v); } catch(e){} themeApply(v); render(); }
+  else if (act === 'mob-del'){ const d = stu().days[state.editDay]; d.mob = (d.mob || []).filter(m => m.id !== v); save(); render(); }
+  else if (act === 'mob-up'){ const d = stu().days[state.editDay], a = d.mob || [], i = a.findIndex(m => m.id === v); if (i > 0){ [a[i - 1], a[i]] = [a[i], a[i - 1]]; save(); render(); } }
+  else if (act === 'mob-done'){
+    touchStart(); const dd = draft(), k = 'mob:' + v, on = !dd[k]; if (on) dd[k] = {done: true}; else delete dd[k]; save();
+    const car0 = document.getElementById('mobcar'), sl = car0 ? car0.scrollLeft : 0; render();
+    const car = document.getElementById('mobcar'); if (car){ car.scrollLeft = sl; const nx = on && document.getElementById('mob-' + v) && document.getElementById('mob-' + v).nextElementSibling; if (nx) setTimeout(() => car.scrollTo({left: nx.offsetLeft - car.offsetLeft - 16, behavior: 'smooth'}), 450); }
+  }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -2552,9 +2588,9 @@ document.addEventListener('click', e => {
       const comment = (rec.comment || '').trim();
       if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), nokg: ex.items.map((_, k) => nkOf(ex, k)), sets, comment});
     });
-    if (!entries.length){ toast('Marque ou preencha pelo menos uma série'); return; }
+    if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
-    st.logs.push({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries});
+    st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, mobLog(d, dr)));
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
@@ -2631,6 +2667,7 @@ document.addEventListener('click', e => {
     let l, created = false;
     if (act === 'pick-new'){ l = newLibItem(state.picker.q.trim()); created = true; } else l = lib(v);
     const day = stu().days[state.editDay];
+    if (state.picker.target === 'mob'){ day.mob = day.mob || []; day.mob.push({id: uid(), lib: l.id, sets: '2', reps: l.defMeas === 'tempo' ? '30' : '10', meas: l.defMeas === 'tempo' ? 'tempo' : 'reps'}); state.picker = null; save(); render(); toast(created ? 'Criado na biblioteca. Ponha o vídeo por lá.' : l.name + ' adicionado à mobilidade'); return; }
     if (String(state.picker.target).startsWith('swap:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId);
       if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } if (f.ex.nokg) f.ex.nokg[+k] = false; state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
       return; }
@@ -2732,6 +2769,7 @@ document.addEventListener('input', e => {
     if (t.dataset.lf === 'video'){ const s = document.getElementById('l-vst-' + l.id); if (s) s.innerHTML = videoStatus(l); }
     return; }
   if (t.dataset.tecn){ const f = findEx(t.dataset.tecn); if (f){ f.ex.tecN = t.value; save(); } return; }
+  if (t.dataset.mob){ const d = stu().days[state.editDay], m = (d.mob || []).find(x => x.id === t.dataset.mob); if (m){ m[t.dataset.mbf] = t.value; save(); if (t.dataset.mbf === 'meas') render(); } return; }
   if (t.dataset.mf){ const m = meth(t.dataset.m); m[t.dataset.mf] = t.value; save(); return; }
   if (t.dataset.imp && state.imp){ state.imp.data[t.dataset.imp] = t.value; return; }
   if (t.dataset.impday && state.imp){ state.imp.data.dias[t.dataset.impday].titulo = t.value; return; }

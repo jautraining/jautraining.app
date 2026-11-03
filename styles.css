@@ -784,3 +784,31 @@ body.noscroll{overflow:hidden}
 
 .themecard{display:grid;gap:10px}
 .themecard .seg{margin:0}
+
+.mobsec{display:grid;gap:10px;margin:2px 0 14px}
+.mobtop{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.mobtop b{font-size:.95rem}
+.mobcar{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px;scroll-padding-inline:16px;overscroll-behavior-x:contain}
+.mobcar::-webkit-scrollbar{display:none}
+.mobcard{flex:0 0 82%;max-width:340px;scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.mobcard:only-child{flex-basis:100%;max-width:none}
+.mobcard.done{border-color:var(--ok);background:var(--ok-soft)}
+.mobh{display:flex;align-items:center;gap:10px;min-width:0}
+.mobh h3{margin:0;font-size:.92rem;text-transform:uppercase;letter-spacing:.02em;line-height:1.25}
+.mobh .num{flex:none}
+.num.ok{background:var(--ok)!important;color:#fff!important}
+.num.ok svg{width:14px;height:14px}
+.mobmeta{margin:0;font-weight:700;font-size:.95rem}
+.mobchk{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--line);background:transparent;border-radius:12px;padding:11px;font-weight:700;color:var(--ink);margin-top:auto}
+.mobchk svg{width:16px;height:16px}
+.mobchk[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.mobed{display:grid;gap:10px}
+.mobed.form{max-width:none}
+.mobhd{display:flex;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;align-items:flex-end}
+.mobrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px 10px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+.mobrow .nm{font-weight:700;min-width:0}
+.mobrow .nm small{display:block;font-weight:500;margin-top:2px}
+.mobrow .macts{display:flex;gap:6px}
+.mobf{grid-column:1/-1;display:grid;grid-template-columns:72px minmax(0,1fr) minmax(0,1.4fr);gap:8px}
+.mobline{margin:8px 0 0;font-size:.85rem;color:var(--muted)}
+.mobline b{color:var(--ink)}
