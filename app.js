@@ -953,7 +953,7 @@ const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
 const nkE = (e, pi) => !!(e && e.nokg && e.nokg[pi]);
-const TEC = {drop: {l: 'Drop', def: 2}, blocos: {l: 'Blocos', def: 3}};
+const TEC = {drop: {l: 'Drop', def: 1}, blocos: {l: 'Blocos', def: 3}};
 const tecOfMeth = id => { const m = db.methods.find(x => x.id === id); return (m && TEC[m.tec]) ? m.tec : ''; };
 const tecN = ex => { const tec = tecOfMeth(ex.method), n = parseInt(ex.tecN); return Math.max(tec === 'blocos' ? 2 : 1, Math.min(6, n || (TEC[tec] ? TEC[tec].def : 2))); };
 function partVol(p, kg, r){
@@ -989,7 +989,7 @@ function tecSub(ex, si, s, np, conj){
     const at = (k, extra) => `data-k="${k}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"${extra || ''}`;
     if (tec === 'drop') for (let d = 0; d < n; d++){ const dv = (v.drops && v.drops[d]) || {};
       out.push(`<div class="tecrow"><span class="tl">${pre}Drop ${d + 1}</span>${nkOf(ex, pi) ? '' : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}" data-in="dkg" ${at(d)} value="${esc(dv.kg || '')}"><span>kg</span></label>`}<label class="fld"><input id="dr-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições do drop ${d + 1}, série ${si + 1}" data-in="dreps" ${at(d)} value="${esc(dv.reps || '')}"><span>reps</span></label></div>`); }
-    else out.push(`<div class="tecrow"><span class="tl">${pre}Blocos 2${n > 2 ? ' a ' + n : ''}</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º"><span>reps</span></label>`).join('')}</div></div>`);
+    else out.push(`<p class="tecnote">${pre}Na linha de cima: carga e reps do 1º bloco. Aqui: as reps dos blocos seguintes.</p><div class="tecrow"><span class="tl">${pre}Blocos seguintes</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º bloco"><span>reps</span></label>`).join('')}</div></div>`);
   }
   return `<div class="tecsub" id="tsub-${ex.id}-${si}">${out.join('')}</div>`;
 }
@@ -2721,6 +2721,7 @@ document.addEventListener('input', e => {
   if (t.dataset.lf){ const l = lib(t.dataset.lib); l[t.dataset.lf] = t.value; save();
     if (t.dataset.lf === 'video'){ const s = document.getElementById('l-vst-' + l.id); if (s) s.innerHTML = videoStatus(l); }
     return; }
+  if (t.dataset.tecn){ const f = findEx(t.dataset.tecn); if (f){ f.ex.tecN = t.value; save(); } return; }
   if (t.dataset.mf){ const m = meth(t.dataset.m); m[t.dataset.mf] = t.value; save(); return; }
   if (t.dataset.imp && state.imp){ state.imp.data[t.dataset.imp] = t.value; return; }
   if (t.dataset.impday && state.imp){ state.imp.data.dias[t.dataset.impday].titulo = t.value; return; }
