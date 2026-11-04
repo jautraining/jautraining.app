@@ -1581,32 +1581,169 @@ async function pdfText(file){
   }
   return pages.join('\n\n');
 }
-function buildImportPrompt(text){
-  return `Você converte fichas de treino de musculação (texto extraído de um PDF, as colunas de tabelas aparecem separadas por "|") em JSON para um app de personal trainer.
-Responda SOMENTE com um objeto JSON neste formato:
-{"aluno":"nome do aluno ou vazio","protocolo":"ex.: Protocolo 11 (ou vazio)","foco":"objetivo/foco do treino ou vazio","cardio":"orientações de cardio ou vazio",
- "organizacao":"dias|sequencia","dias":{"seg":{"titulo":"nome do treino do dia","exercicios":[EX],"cardios":[CARDIO]},"ter":{...},"qua":{...},"qui":{...},"sex":{...},"sab":{...},"dom":{...}}}
-EX = {"itens":[{"nome":"nome do exercício como está no PDF","lib":"id da biblioteca ou null","medida":"reps|tempo","musculos":{"principais":[],"auxiliares":[]}}],"metodo":"id do método","series":[{"tipo":"aq|prep|trab","reps":"10 a 12"}],"intervalo":"2:00 a 2:30","obs":"instrução de execução do exercício"}
-CARDIO = {"modalidade":"ex.: Esteira inclinada","duracao":"ex.: 20 min","intensidade":"ex.: moderada","quando":"antes|depois|separado|livre","obs":""}
-Regras:
-- Cardio prescrito para um dia vai em "cardios" daquele dia (pode haver mais de um). O "cardio" do topo é só a orientação geral de cardio, em texto.
-- Use exatamente as chaves seg, ter, qua, qui, sex, sab, dom. Dia de descanso ou só cardio: "exercicios":[] com o título que aparece (ex.: "Descanso"). Dia sem nada na ficha: título vazio.
-- Se a ficha usar treinos A/B/C (sem dias da semana), use "organizacao":"sequencia" e coloque A em seg, B em ter e assim por diante. Com dias da semana, "organizacao":"dias".
-- Séries: uma entrada por série, na ordem de execução. "3 séries de 10 a 12" vira 3 entradas tipo "trab" com reps "10 a 12". "1x 10 a 12 / 2x 8 a 10" vira 1 entrada "10 a 12" e 2 entradas "8 a 10". Uma série de aquecimento (ex.: "realizar 1 série de aquecimento com 12 reps") vira uma entrada tipo "aq" no início, com as reps indicadas. Série preparatória ou de reconhecimento de carga vira "prep".
-- Exercício medido por tempo (prancha, isometria, "30 seg", "40s"): "medida":"tempo" e, nas séries, "reps" só com os segundos (ex.: "30 a 45"). Nos demais, "medida":"reps".
-- Conjugados (bi-set, ou dois exercícios unidos por "+"): um único exercício com 2 itens, metodo "conjugado" e reps de cada série no formato "12 a 15 + 12 a 15".
-- metodo: use um destes ids: ${db.methods.map(m => m.id + ' (' + m.name + ')').join(', ')}. Na dúvida, "normal".
-- lib: o id da biblioteca abaixo que seja o MESMO exercício (mesmo movimento e equipamento). Se nenhum for o mesmo, use null e preencha "musculos" usando só estas chaves: ${MUSCLES.map(m => m[0]).join(', ')}.
-- intervalo: o descanso indicado, no formato do PDF. obs: só a instrução de execução daquele exercício, sem repetir séries e repetições.
-- Ignore textos gerais: boas-vindas, regras da consultoria, orientações gerais, assinatura e registro profissional.
-Biblioteca (id: nome):
-${db.library.map(l => l.id + ': ' + l.name).join('\n')}
-
-Texto do PDF (entre <<< e >>>):
-<<<
-${text}
->>>`;
+/* Leitura de ficha em PDF sem IA: usa a posição dos textos nas tabelas do modelo da Jau Training.
+   pages = [{items: [{s, x, y, w}]}]  (x, y = canto esquerdo e topo do texto, y crescendo para baixo) */
+const FP_DAYS = {segunda: 'seg', terca: 'ter', quarta: 'qua', quinta: 'qui', sexta: 'sex', sabado: 'sab', domingo: 'dom'};
+const FP_KEEP = new Set(['rdl', 'vtom', 'w', 'y', 't', 'ii', 'iii', 'mmii', 'mmss', 'abs', 'trx', 'hiit']);
+function fpNorm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+function fpCase(t){
+  const s = String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const out = s.split(' ').map(w => FP_KEEP.has(fpNorm(w)) ? w.toUpperCase() : w).join(' ');
+  return out.charAt(0).toUpperCase() + out.slice(1);
 }
+const fpCx = i => i.x + i.w / 2;
+function fpLineStr(items){ // junta os pedaços da mesma linha: sem espaço quando estão colados (o Canva separa letras às vezes)
+  let out = '', end = null;
+  items.slice().sort((a, b) => a.x - b.x).forEach(i => { const t = i.s; if (end !== null){ const gap = i.x - end; out += gap > 2.5 ? ' ' : ''; } out += t; end = i.x + i.w; });
+  return out.replace(/\s+/g, ' ').trim();
+}
+function fpLines(items){ // agrupa em linhas (mesma altura)
+  const rows = [];
+  items.slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach(i => { const r = rows.find(r => Math.abs(r.y - i.y) < 4); if (r) r.items.push(i); else rows.push({y: i.y, items: [i]}); });
+  return rows.map(r => ({y: r.y, items: r.items.sort((a, b) => a.x - b.x), s: fpLineStr(r.items)}));
+}
+const fpJoin = items => fpLines(items).map(l => l.s).filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+function fpHeaders(items, names){
+  const H = {};
+  items.forEach(i => { const n = fpNorm(i.s); names.forEach(k => { if (n === k) (H[k] = H[k] || []).push(i); }); });
+  return H;
+}
+function fpCleanTime(t){ // "20 seg a 30 seg" -> "20 a 30"
+  return t.replace(/\b(seg|segundos?|s)\b\.?/gi, '').replace(/\s+/g, ' ').replace(/\s+a\s*$/, '').trim();
+}
+const FP_ISTIME = t => /\bseg|segundo|\d\s*s\b|\bmin\b/i.test(t);
+function fpMethod(t, nItems, methods){
+  const n = fpNorm(t).replace(/\s+/g, ' ');
+  if (!n || n === '*' || n === '-') return nItems > 1 ? 'conjugado' : 'normal';
+  if (/conjug|bi-?set|tri-?set/.test(n)) return 'conjugado';
+  if (/pre-?ativ/.test(n)) return nItems > 1 ? 'conjugado' : 'normal';
+  if (/drop/.test(n)) return 'dropset';
+  if (/rest/.test(n)) return 'restpause';
+  if (/cluster/.test(n)) return 'cluster';
+  if (/piram/.test(n)) return 'piramide';
+  if (/isometr/.test(n)) return 'isometria';
+  const m = (methods || []).find(m => fpNorm(m.name) === n || fpNorm(m.id) === n);
+  return m ? m.id : (nItems > 1 ? 'conjugado' : 'normal');
+}
+function fpRows(items, anchors){ // cada bloco de texto de uma coluna vai para a linha da tabela (âncora = coluna SÉRIES) mais perto
+  const rows = anchors.map(a => ({a, items: []}));
+  const byCol = {};
+  items.forEach(i => { if (!anchors.includes(i)) (byCol[i.c] = byCol[i.c] || []).push(i); });
+  Object.values(byCol).forEach(list => {
+    const lines = fpLines(list), blocks = [];
+    lines.forEach(l => { const b = blocks[blocks.length - 1]; if (b && l.y - b.last < 34) { b.lines.push(l); b.last = l.y; } else blocks.push({lines: [l], last: l.y}); });
+    blocks.forEach(b => { const cy = (b.lines[0].y + b.last) / 2; let best = null, bd = 1e9;
+      rows.forEach(r => { const d = Math.abs(r.a.y - cy); if (d < bd){ bd = d; best = r; } });
+      if (best && bd < 200) b.lines.forEach(l => best.items.push(...l.items)); });
+  });
+  return rows;
+}
+function fpWorkout(page, H){
+  const h = k => H[k][0], hx = k => fpCx(h(k));
+  const top = h('exercicio').y + 8, items = page.items.filter(i => i.y > top);
+  const intC = hx('intervalo');
+  const cols = ['metodo', 'series', 'repeticoes', 'intervalo'];
+  const col = i => { if (H.observacoes && i.x >= intC + 40) return 'obs';
+    let b = null, bd = 1e9; ['exercicio', ...cols].forEach(c => { const d = Math.abs(fpCx(i) - hx(c)); if (d < bd){ bd = d; b = c; } }); return b === 'exercicio' ? 'nome' : b; };
+  const tagged = items.map(i => Object.assign({}, i, {c: col(i)}));
+  const anchors = tagged.filter(i => i.c === 'series' && /^\d+\s*x/i.test(i.s.trim()));
+  return fpRows(tagged, anchors).map(r => {
+    const by = c => r.items.filter(i => i.c === c);
+    const nome = fpJoin(by('nome'));
+    const repLines = fpLines(by('repeticoes')).map(l => l.s);
+    return {nome, metodo: fpJoin(by('metodo')), series: r.a.s.trim(), reps: repLines, intervalo: fpJoin(by('intervalo')), obs: fpJoin(by('obs'))};
+  }).filter(r => r.nome);
+}
+function fpMobTables(page, H){
+  const exs = (H.exercicio || []).slice().sort((a, b) => a.x - b.x);
+  return exs.map((eh, ti) => {
+    const left = eh.x - 150, right = ti + 1 < exs.length ? exs[ti + 1].x - 150 : 1e9;
+    const inT = i => i.x >= left && i.x < right;
+    const ser = (H.series || []).find(s => inT(s) && Math.abs(s.y - eh.y) < 6), rep = (H.reps || H.repeticoes || []).find(s => inT(s) && Math.abs(s.y - eh.y) < 6);
+    if (!ser || !rep) return null;
+    const label = page.items.filter(i => inT(i) && i.y < eh.y - 4 && i.y > eh.y - 140 && /[a-z]/i.test(i.s)).sort((a, b) => b.y - a.y)[0];
+    const items = page.items.filter(i => inT(i) && i.y > eh.y + 8).map(i => Object.assign({}, i, {c: i.x < ser.x - 10 ? 'nome' : (Math.abs(fpCx(i) - fpCx(ser)) < Math.abs(fpCx(i) - fpCx(rep)) ? 'series' : 'reps')}));
+    const anchors = items.filter(i => i.c === 'series' && /^\d+\s*x/i.test(i.s.trim()));
+    const list = fpRows(items, anchors).map(r => ({nome: fpJoin(r.items.filter(i => i.c === 'nome')), series: r.a.s.trim(), reps: fpJoin(r.items.filter(i => i.c === 'reps'))})).filter(r => r.nome);
+    return {label: label ? label.s.trim() : '', list};
+  }).filter(t => t && t.list.length);
+}
+function fpSeriesFromRow(r, nItems){
+  const n = Math.max(1, ...(r.series.match(/\d+/g) || ['3']).map(Number));
+  let groups = [];
+  const lines = r.reps.filter(Boolean);
+  if (lines.length && lines.every(l => /^\d+\s*x\s+\S/i.test(l))) groups = lines.map(l => { const m = l.match(/^(\d+)\s*x\s+(.+)$/i); return {n: +m[1], t: m[2]}; });
+  else { const t = lines.join(' ').replace(/\s+/g, ' ').trim(); const m = t.match(/^(\d+)\s*x\s+(.+)$/i); groups = [{n: m ? +m[1] : n, t: m ? m[2] : (t || '10 a 12')}]; }
+  // medida por exercício (tempo quando a meta tem "seg")
+  const meas = Array.from({length: nItems}, (_, k) => groups.some(g => FP_ISTIME((g.t.split(/\s*\+\s*/)[k] || g.t.split(/\s*\+\s*/)[0] || ''))) ? 'tempo' : 'reps');
+  const clean = t => t.split(/\s*\+\s*/).map((p, k) => meas[k] === 'tempo' ? fpCleanTime(p) : p.trim()).join(' + ');
+  const series = [];
+  groups.forEach(g => { for (let i = 0; i < g.n; i++) series.push({tipo: 'trab', reps: clean(g.t)}); });
+  return {series, meas};
+}
+function parseFicha(pages, fileName, methods){
+  const out = {aluno: '', protocolo: '', foco: '', cardio: '', organizacao: 'dias', dias: {}};
+  Object.values(FP_DAYS).forEach(k => out.dias[k] = {titulo: '', exercicios: [], cardios: [], mob: []});
+  const fn = String(fileName || '').replace(/\.pdf$/i, '').replace(/_/g, ' ');
+  const pm = fn.match(/protocolo\s*(\d+)/i); if (pm) out.protocolo = 'Protocolo ' + pm[1];
+  const nm = fn.split(/\s+-\s+/); if (nm.length > 1) out.aluno = nm.slice(1).join(' - ').trim();
+  const schedTitles = {}, mobTables = [];
+  let seqIdx = 0;
+  pages.forEach(page => {
+    const lines = fpLines(page.items);
+    // nome do aluno, foco e cardio
+    lines.forEach((l, i) => {
+      const n = fpNorm(l.s);
+      if (/^bem-?vind[ao]/.test(n) && lines[i + 1] && !out._nameFromPdf){ out.aluno = lines[i + 1].s; out._nameFromPdf = true; }
+      if (/^neste protocolo nosso foco/.test(n) && !out.foco){ const f = []; for (let j = i + 1; j < lines.length && !/^cref|^orienta/.test(fpNorm(lines[j].s)); j++) f.push(lines[j].s.replace(/;$/, '')); out.foco = f.join('; '); }
+      if (/^orientacoes de cardio/.test(n) && !out.cardio){ const f = []; for (let j = i + 1; j < lines.length && !/^neste protocolo|^cref/.test(fpNorm(lines[j].s)); j++) f.push(lines[j].s); out.cardio = f.join(' '); }
+    });
+    const H = fpHeaders(page.items, ['exercicio', 'metodo', 'series', 'repeticoes', 'intervalo', 'observacoes', 'reps']);
+    if (H.exercicio && H.metodo && H.series && H.repeticoes && H.intervalo){
+      // página de treino: dia e título ficam acima do cabeçalho
+      const hy = H.exercicio[0].y, above = lines.filter(l => l.y < hy - 4 && !/^cref/.test(fpNorm(l.s)));
+      let key = null, title = '';
+      above.forEach((l, i) => { const n = fpNorm(l.s).replace(/-?\s*feira/, '').trim();
+        if (FP_DAYS[n]){ key = FP_DAYS[n]; title = above.slice(i + 1).map(x => x.s).join(' '); }
+        const t = n.match(/^treino\s+([a-g])\b/); if (!key && t){ key = Object.values(FP_DAYS)['abcdefg'.indexOf(t[1])]; out.organizacao = 'sequencia'; title = above.slice(i + 1).map(x => x.s).join(' ') || l.s; } });
+      if (!key){ key = Object.values(FP_DAYS)[seqIdx] || 'seg'; title = above.map(x => x.s).join(' '); }
+      seqIdx++;
+      const day = out.dias[key]; if (title) day.titulo = title;
+      fpWorkout(page, H).forEach(r => {
+        const names = r.nome.replace(/\s*\+\s*/g, ' + ').split(' + ').map(s => s.trim()).filter(Boolean);
+        const {series, meas} = fpSeriesFromRow(r, names.length);
+        let obs = r.obs;
+        const wm = obs.match(/fazer\s+(?:uma|1)\s+s[ée]rie\s+de\s+aquecimento\s+com\s+(\d+)\s*(?:reps?|repeti[çc][õo]es)?\.?/i);
+        if (wm){ series.unshift({tipo: 'aq', reps: wm[1]}); obs = obs.replace(wm[0], '').trim(); }
+        day.exercicios.push({itens: names.map((n, k) => ({nome: fpCase(n), medida: meas[k]})), metodo: /drop\s+na\s+[úu]ltima/i.test(r.obs) && names.length === 1 ? 'dropset' : fpMethod(r.metodo, names.length, methods), metodoTxt: r.metodo,
+          series, intervalo: r.intervalo.replace(/\s+/g, ' '), obs: obs.replace(/\s+/g, ' ').trim(), dropUltima: /drop\s+na\s+[úu]ltima/i.test(r.obs)});
+      });
+    } else if (H.exercicio && H.series && (H.reps || H.repeticoes) && !H.metodo){
+      fpMobTables(page, H).forEach(t => mobTables.push(t));
+    } else {
+      // quadro da semana: dia em cima, treino embaixo
+      const heads = page.items.filter(i => { const n = fpNorm(i.s).replace(/-$/, ''); return FP_DAYS[n]; });
+      heads.forEach(hd => { const k = FP_DAYS[fpNorm(hd.s).replace(/-$/, '')];
+        const below = page.items.filter(i => i !== hd && i.y > hd.y + 40 && i.y < hd.y + 320 && Math.abs(fpCx(i) - fpCx(hd)) < 90 && !/^feira$/i.test(i.s.trim()) && !FP_DAYS[fpNorm(i.s).replace(/-$/, '')]);
+        const t = fpJoin(below); if (t && !/^(neste|orienta)/i.test(fpNorm(t))) schedTitles[k] = t; });
+    }
+  });
+  Object.keys(schedTitles).forEach(k => { if (!out.dias[k].titulo) out.dias[k].titulo = schedTitles[k]; });
+  // mobilidade: tabela "INFERIORES" vai para os dias de inferiores, "SUPERIORES" para os de superiores
+  const INF = /inferior|glute|gluteo|posterior|perna|quadr|mmii/, SUP = /superior|costa|ombro|peit|bicep|tricep|braco|dorsal|mmss/;
+  mobTables.forEach(t => {
+    const lab = fpNorm(t.label), dk = FP_DAYS[lab.replace(/-?\s*feira/, '').trim()];
+    const targets = Object.keys(out.dias).filter(k => { const d = out.dias[k]; if (!d.exercicios.length) return false;
+      if (dk) return k === dk; const tt = fpNorm(d.titulo);
+      if (INF.test(lab)) return INF.test(tt) && !(SUP.test(tt) && !INF.test(tt)); if (SUP.test(lab)) return SUP.test(tt); return true; });
+    targets.forEach(k => t.list.forEach(m => {
+      const reps = m.reps.replace(/\s+/g, ' ').trim(), tempo = FP_ISTIME(reps) && /^\d+(\s*a\s*\d+)?\s*(seg|s)\.?$/i.test(reps);
+      out.dias[k].mob.push({nome: fpCase(m.nome), series: (m.series.match(/\d+/) || ['1'])[0], reps: tempo ? fpCleanTime(reps) : reps, medida: tempo ? 'tempo' : 'reps'}); }));
+  });
+  delete out._nameFromPdf;
+  return out;
+}
+
 const STOP = new Set(['com', 'de', 'da', 'do', 'das', 'dos', 'na', 'no', 'em', 'e', 'a', 'o', 'para', 'p']);
 const toks = n => new Set(norm(n).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(t => t && !STOP.has(t)));
 function fuzzyLib(name){
@@ -1623,51 +1760,49 @@ function normalizeImport(raw){
       ex = ex || {};
       const itens = (Array.isArray(ex.itens) ? ex.itens : []).filter(i => i && str(i.nome)).map(i => {
         const lid = db.library.some(l => l.id === i.lib) ? i.lib : null, mus = i.musculos || {};
-        return {nome: str(i.nome), meas: i.medida === 'tempo' ? 'tempo' : 'reps', choice: lid || fuzzyLib(i.nome) || '__new',
+        return {nome: str(i.nome), meas: i.medida === 'tempo' ? 'tempo' : 'reps', choice: lid || libMatch(i.nome, 'musc') || '__new',
           prim: (Array.isArray(mus.principais) ? mus.principais : []).filter(k => MNAME[k]), sec: (Array.isArray(mus.auxiliares) ? mus.auxiliares : []).filter(k => MNAME[k])}; });
       if (!itens.length) return null;
       let series = (Array.isArray(ex.series) ? ex.series : []).map(sr => ({type: ['aq', 'prep', 'trab'].includes(sr && sr.tipo) ? sr.tipo : 'trab', reps: str(sr && sr.reps) || '10 a 12'}));
       if (!series.length) series = [1, 2, 3].map(() => ({type: 'trab', reps: '10 a 12'}));
       let metodo = db.methods.some(m => m.id === ex.metodo) ? ex.metodo : 'normal';
       if (itens.length > 1 && metodo === 'normal') metodo = 'conjugado';
-      return {itens, metodo, series, intervalo: str(ex.intervalo) || '1:30 a 2:00', obs: str(ex.obs)};
-    }).filter(Boolean), cardios: (Array.isArray(d.cardios) ? d.cardios : []).map(c => ({mod: str(c && c.modalidade), dur: str(c && c.duracao), int: str(c && c.intensidade), when: ['antes', 'depois', 'separado', 'livre'].includes(c && c.quando) ? c.quando : 'livre', obs: str(c && c.obs)})).filter(c => c.mod || c.dur || c.obs)}; });
+      return {itens, metodo, series, intervalo: str(ex.intervalo) || '1:30 a 2:00', obs: str(ex.obs), drop: !!ex.dropUltima};
+    }).filter(Boolean), cardios: (Array.isArray(d.cardios) ? d.cardios : []).map(c => ({mod: str(c && c.modalidade), dur: str(c && c.duracao), int: str(c && c.intensidade), when: ['antes', 'depois', 'separado', 'livre'].includes(c && c.quando) ? c.quando : 'livre', obs: str(c && c.obs)})).filter(c => c.mod || c.dur || c.obs), mob: (Array.isArray(d.mob) ? d.mob : []).filter(m => m && str(m.nome)).map(m => ({nome: str(m.nome), sets: str(m.series) || '1', reps: str(m.reps), meas: m.medida === 'tempo' ? 'tempo' : 'reps', choice: libMatch(m.nome, 'mob') || '__new'}))}; });
   return out;
 }
-function importErr(e){
-  const c = e && e.code;
-  if (c === 'not_granted' || c === 'sampling_disabled') return 'O uso do Claude não foi permitido neste app, então não dá pra ler o PDF com IA. Você pode permitir no aviso que aparece ao tentar de novo.';
-  if (c === 'rate_limited') return 'Muitas leituras seguidas ou limite de uso atingido. Espere um pouco e tente de novo.';
-  if (c === 'invalid_json' || c === 'empty_completion') return 'O Claude respondeu, mas não consegui montar a ficha com a resposta. Tente de novo.';
-  if (c === 'prompt_too_large') return 'Esse PDF tem texto demais para ler de uma vez. Tente enviar só as páginas da ficha.';
-  if (c === 'session_expired') return 'Sua sessão no Claude expirou. Entre de novo e tente outra vez.';
-  return 'Algo deu errado na leitura. Tente de novo em instantes.';
+async function pdfPages(file){
+  const lib = await loadPdfJs();
+  const doc = await lib.getDocument({data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, disableFontFace: true}).promise;
+  const pages = [];
+  for (let p = 1; p <= doc.numPages; p++){
+    const pg = await doc.getPage(p), vp = pg.getViewport({scale: 1}), tc = await pg.getTextContent();
+    pages.push({items: tc.items.filter(i => i.str && i.str.trim()).map(i => ({s: i.str, x: i.transform[4], y: vp.height - i.transform[5], w: i.width || 0}))});
+  }
+  return pages;
+}
+function libMatch(name, cat){
+  const n = norm(name), pool = db.library.filter(l => !cat || catOf(l) === cat);
+  const ex = pool.find(l => norm(l.name) === n) || db.library.find(l => norm(l.name) === n); if (ex) return ex.id;
+  const a = toks(name); let best = null, bs = 0;
+  pool.forEach(l => { const b = toks(l.name); let inter = 0; a.forEach(t => { if (b.has(t)) inter++; }); const sc = inter / (a.size + b.size - inter || 1); if (sc > bs){ bs = sc; best = l.id; } });
+  return bs >= 0.75 ? best : (cat === 'mob' ? null : fuzzyLib(name));
 }
 async function runImport(){
   const im = state.imp; if (!im || !impFile) return;
   im.fileName = impFile.name; im.stage = 'reading'; render(); top();
-  let text = '';
-  try { text = await pdfText(impFile); }
-  catch(e){ im.stage = 'error'; im.err = 'Não consegui abrir esse arquivo. Confira se é o PDF da ficha e tente de novo.'; render(); return; }
-  if (text.replace(/---.*?---|[\s|]/g, '').length < 60){ im.stage = 'error'; im.err = 'Esse PDF parece ser uma imagem (foto ou escaneado), sem texto para ler. Exporte a ficha do Canva como PDF normal e tente de novo.'; render(); return; }
-  let sample = null;
-  try { sample = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch(e){ sample = null; }
-  if (!sample){ im.stage = 'error'; im.err = 'A leitura com IA só funciona com o app aberto dentro do Claude.'; render(); return; }
+  let pages = null;
+  try { pages = await pdfPages(impFile); }
+  catch(e){ im.stage = 'error'; im.err = navigator.onLine === false ? 'Sem internet. O leitor de PDF precisa de conexão na primeira vez.' : 'Não consegui abrir esse arquivo. Confira se é o PDF da ficha e tente de novo.'; render(); return; }
   if (state.imp !== im) return;
-  im.stage = 'thinking'; render();
-  impCtl = new AbortController();
-  try {
-    const raw = await sample.json(buildImportPrompt(text.slice(0, 150000)), {signal: impCtl.signal});
-    if (state.imp !== im) return;
-    im.data = normalizeImport(raw);
-    const n = DAYS.reduce((a, x) => a + im.data.dias[x.k].exercicios.length + im.data.dias[x.k].cardios.length, 0);
-    if (!n){ im.stage = 'error'; im.err = 'Não encontrei exercícios nesse PDF. Confira se é o arquivo da ficha.'; render(); return; }
-    im.stage = 'review'; render(); top();
-  } catch(e){
-    if (state.imp !== im) return;
-    if (e && e.code === 'cancelled'){ im.stage = 'pick'; render(); return; }
-    im.stage = 'error'; im.err = importErr(e); render();
-  }
+  const chars = pages.reduce((a, p) => a + p.items.reduce((b, i) => b + i.s.trim().length, 0), 0);
+  if (chars < 60){ im.stage = 'error'; im.err = 'Esse PDF parece ser uma imagem (foto ou escaneado), sem texto para ler. Exporte a ficha do Canva como PDF normal e tente de novo.'; render(); return; }
+  let raw = null;
+  try { raw = parseFicha(pages, impFile.name, db.methods); } catch(e){ console.error('import', e); raw = null; }
+  im.data = normalizeImport(raw);
+  const n = DAYS.reduce((a, x) => a + im.data.dias[x.k].exercicios.length, 0);
+  if (!n){ im.stage = 'error'; im.err = 'Não reconheci as tabelas de treino nesse PDF. A leitura funciona com o modelo de ficha da Jau Training (colunas Exercício, Método, Séries, Repetições, Intervalo e Observações).'; render(); return; }
+  im.useObs = true; im.stage = 'review'; render(); top();
 }
 function seriesSummary(ex){
   const g = []; ex.series.forEach(x => { const last = g[g.length - 1]; if (last && last.type === x.type && last.r === x.reps) last.n++; else g.push({type: x.type, n: 1, r: x.reps}); });
@@ -1678,7 +1813,7 @@ function importView(){
   const back = '<button class="back" type="button" data-act="imp-cancel">← Voltar</button>';
   const head = '<div class="sectionhead"><div><p class="eyebrow">Importar ficha</p><h2>Do PDF para o app</h2></div></div>';
   if (im.stage === 'pick') return `<main class="wrap v-narrow">${back}${head}
-    <p class="note">Envie a ficha em PDF, como as que você faz no Canva. O Claude lê o arquivo, monta os dias, exercícios, séries e métodos e liga cada exercício à sua biblioteca. Você confere tudo antes de salvar.</p>
+    <p class="note">Envie a ficha em PDF do Canva, no seu modelo de sempre. O app lê o arquivo aqui mesmo, sem IA e sem custo: monta os dias, exercícios, séries, métodos, aquecimento e mobilidade e liga cada exercício à sua biblioteca. Você confere tudo antes de salvar.</p>
     <section class="card form">
       <label>Arquivo PDF<input id="imp-file" type="file" accept="application/pdf,.pdf"></label>
       ${impFile ? `<span class="small muted">Selecionado: ${esc(impFile.name)}</span>` : ''}
@@ -1686,8 +1821,8 @@ function importView(){
       <button class="btn" type="button" data-act="imp-go" ${impFile ? '' : 'disabled'}>Ler PDF e montar ficha</button>
     </section></main>`;
   if (im.stage === 'reading' || im.stage === 'thinking') return `<main class="wrap v-narrow">${head}
-    <section class="card impwait"><span class="spin" aria-hidden="true"></span><b>${im.stage === 'reading' ? 'Lendo o PDF…' : 'O Claude está montando a ficha…'}</b>
-      <p class="small muted">${im.stage === 'thinking' ? 'Costuma levar de 30 segundos a 2 minutos. Se aparecer um pedido de permissão para usar o Claude, é só permitir.' : esc(im.fileName || '')}</p>
+    <section class="card impwait"><span class="spin" aria-hidden="true"></span><b>Lendo o PDF…</b>
+      <p class="small muted">${esc(im.fileName || '')}</p>
       ${im.stage === 'thinking' ? '<button class="btn sm quiet" type="button" data-act="imp-stop">Parar</button>' : ''}</section></main>`;
   if (im.stage === 'error') return `<main class="wrap v-narrow">${back}${head}<section class="card"><b>Não deu certo</b><p class="small" style="margin-top:6px">${esc(im.err)}</p>
     <div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="imp-retry">Tentar de novo</button><button class="btn sm quiet" type="button" data-act="imp-cancel">Voltar</button></div></section></main>`;
@@ -1697,7 +1832,8 @@ function importView(){
   const libOpts = it => `<option value="__new" ${it.choice === '__new' ? 'selected' : ''}>+ Criar novo: ${esc(it.nome)}</option>` + db.library.slice().sort((a, b) => a.name.localeCompare(b.name, 'pt')).map(l => `<option value="${l.id}" ${it.choice === l.id ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
   return `<main class="wrap v-narrow">${back}
     <div class="sectionhead"><div><p class="eyebrow">Confira antes de salvar</p><h2>Ficha importada</h2></div><span class="muted small">${esc(im.fileName || '')}</span></div>
-    <p class="note">Confira principalmente o campo abaixo de cada nome: é o exercício da sua biblioteca ligado ao que está no PDF. Exercícios marcados como "Criar novo" entram na biblioteca com os músculos sugeridos. Depois de importar, tudo pode ser editado na ficha.</p>
+    <p class="note">Confira principalmente o campo abaixo de cada nome: é o exercício da sua biblioteca ligado ao que está no PDF. Os marcados como "Criar novo" entram na biblioteca; depois é só completar músculos e vídeo por lá. Tudo pode ser editado na ficha depois.</p>
+    <label class="impobs"><input type="checkbox" id="imp-useobs" data-impobs="1" ${im.useObs !== false ? 'checked' : ''}> Usar as observações do PDF como observação do personal em cada exercício</label>
     <section class="card form">
       ${tgt ? `<p class="small"><b>Destino:</b> ${esc(tgt.name)}. A ficha atual será substituída; o histórico de cargas continua salvo.</p>` : `<label>Nome do aluno<input id="imp-aluno" data-imp="aluno" value="${esc(d.aluno)}" placeholder="Nome do aluno"></label>`}
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><label>Protocolo<input id="imp-proto" data-imp="protocolo" value="${esc(d.protocolo)}"></label><label>Foco<input id="imp-foco" data-imp="foco" value="${esc(d.foco)}"></label></div>
@@ -1706,11 +1842,13 @@ function importView(){
     <p class="impsum"><b>${nDays}</b> dias com treino · <b>${nEx}</b> exercícios · <b>${nNew}</b> ${nNew === 1 ? 'novo' : 'novos'} na biblioteca</p>
     ${DAYS.map(x => { const day = d.dias[x.k]; return `<section class="card impday">
       <div class="impdh"><span class="chip"><b>${x.l}</b></span><input id="imp-dt-${x.k}" data-impday="${x.k}" value="${esc(day.titulo)}" placeholder="Título do dia (ou vazio)" aria-label="Título de ${x.f}"></div>
+      ${(day.mob || []).length ? `<div class="impmob"><p class="eyebrow">Mobilidade · ${day.mob.length}</p>${day.mob.map((m, mi) => `<div class="impit"><span class="pdfn">${esc(m.nome)} <small class="muted">${esc(m.sets)}× ${esc(m.reps)}${m.meas === 'tempo' ? ' s' : ''}</small></span>
+          <select id="imp-m-${x.k}-${mi}" data-impmob="${x.k}|${mi}" class="${m.choice === '__new' ? 'isnew' : ''}" aria-label="Mobilidade da biblioteca para ${esc(m.nome)}">${libOpts(m)}</select></div>`).join('')}</div>` : ''}
       ${(day.cardios || []).length ? `<p class="impcd">${ICON_HEART}<span>Cardio: ${esc(day.cardios.map(cardioTxt).join(' · '))}</span></p>` : ''}
       ${day.exercicios.length ? day.exercicios.map((ex, ei) => `<div class="impex"><span class="num">${ei + 1}</span><div class="impb ${ex.itens.length > 1 ? 'conjgrp' : ''}">
           ${ex.itens.map((it, ii) => `<div class="impit"><span class="pdfn">${ex.itens.length > 1 ? `<span class="ab">${L(ii)}</span>` : ''}${esc(it.nome)}</span>
             <select id="imp-l-${x.k}-${ei}-${ii}" data-implib="${x.k}|${ei}|${ii}" class="${it.choice === '__new' ? 'isnew' : ''}" aria-label="Exercício da biblioteca para ${esc(it.nome)}">${libOpts(it)}</select></div>`).join('')}
-          <div class="impmeta">${methPill(ex.metodo)}<span class="rgs">${seriesSummary(ex)}</span><span class="sx">desc. ${esc(ex.intervalo)}</span></div></div>
+          <div class="impmeta">${methPill(ex.metodo)}${ex.drop ? '<span class="sx">drop na última série</span>' : ''}<span class="rgs">${seriesSummary(ex)}</span><span class="sx">desc. ${esc(ex.intervalo)}</span></div></div>
         <button class="icon" type="button" data-act="imp-del" data-v="${x.k}|${ei}" aria-label="Remover exercício">✕</button></div>`).join('') : '<p class="small muted">Sem exercícios (descanso ou cardio).</p>'}
     </section>`; }).join('')}
     <div class="row"><button class="btn" type="button" data-act="imp-save">Importar ficha</button><button class="btn quiet" type="button" data-act="imp-cancel">Cancelar</button></div>
@@ -1724,9 +1862,14 @@ function saveImport(){
       const items = ex.itens.map(it => {
         if (it.choice !== '__new' && db.library.some(l => l.id === it.choice)) return it.choice;
         const key = norm(it.nome); if (created[key]) return created[key];
-        const l = newLibItem(it.nome); l.primary = it.prim.slice(); l.secondary = it.sec.filter(k => !it.prim.includes(k)); l.instructions = ex.obs; nNew++;
+        const l = newLibItem(it.nome); l.primary = it.prim.slice(); l.secondary = it.sec.filter(k => !it.prim.includes(k)); nNew++;
         created[key] = l.id; return l.id; });
-      return {id: uid(), items, method: ex.metodo, meas: ex.itens.map(it => it.meas || 'reps'), series: ex.series.map(x2 => ({type: x2.type, reps: x2.reps})), rest: ex.intervalo, notes: '', alt: []}; })}; });
+      const series = ex.series.map(x2 => ({type: x2.type, reps: x2.reps}));
+      if (ex.metodo === 'dropset'){ const w = series.map((x2, i) => x2.type === 'trab' ? i : -1).filter(i => i >= 0); if (w.length) series[w[w.length - 1]].m = true; }
+      return {id: uid(), items, method: ex.metodo, meas: ex.itens.map(it => it.meas || 'reps'), series, rest: ex.intervalo, notes: im.useObs !== false ? ex.obs : '', alt: [], tecN: ex.metodo === 'dropset' ? 1 : undefined}; }),
+      mob: (dd.mob || []).map(m => { let lid = m.choice !== '__new' && db.library.some(l => l.id === m.choice) ? m.choice : null;
+        if (!lid){ const key = norm(m.nome); lid = created[key]; if (!lid){ const l = newLibItem(m.nome); l.cat = 'mob'; created[key] = l.id; lid = l.id; nNew++; } }
+        return {id: uid(), lib: lid, sets: m.sets, reps: m.reps, meas: m.meas}; })}; });
   let st = db.students.find(x => x.id === im.target);
   if (st){ st.days = days; st.schedule = d.org; if (d.protocolo) st.protocol = d.protocolo; if (d.foco) st.focus = d.foco; if (d.cardio) st.cardio = d.cardio; }
   else { st = {id: uid(), name: d.aluno || 'Aluno importado', protocol: d.protocolo || 'Protocolo 1', focus: d.foco, cardio: d.cardio, privNotes: '', schedule: d.org, days, logs: [], last: null}; db.students.push(st); }
@@ -2266,7 +2409,7 @@ function trainerView(){
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
     ${attentionHTML()}
-    <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button></div>
+    <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
@@ -2324,7 +2467,7 @@ function editView(){
     </aside><div class="edmain">
     <nav class="week" aria-label="Dia para editar">${DAYS.map(x => `<button type="button" data-act="p-day" data-v="${x.k}" aria-pressed="${x.k === state.editDay}"><span class="d">${slotShort(s, x.k)}</span><span class="t">${esc(shortTitle(s.days[x.k].title))}</span></button>`).join('')}</nav>
     <div class="form"><label>${isSeq(s) ? 'Nome do ' + slotFull(s, state.editDay) : 'Nome do treino de ' + slotFull(s, state.editDay).toLowerCase()}<input id="f-dtitle" data-dt="1" value="${esc(d.title)}" placeholder="Ex.: Inferiores Completo, Descanso"></label></div>
-    <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button></div>
+    <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button><button class="icon" type="button" data-act="imp-start" data-v="${s.id}">${ICON_UP}Importar PDF</button></div>
     ${copyPanel(s)}
     ${cardioEditor(d)}
     ${mobEditor(d)}
@@ -2748,6 +2891,8 @@ document.addEventListener('change', e => {
   if (c === 'cpst'){ if (state.copy){ state.copy.sid = t.value; render(); } return; }
   if (c === 'imptarget'){ if (state.imp) state.imp.target = t.value; return; }
   if (t.id === 'imp-file'){ impFile = t.files && t.files[0] || null; render(); return; }
+  if (t.dataset.impobs){ state.imp.useObs = t.checked; return; }
+  if (t.dataset.impmob){ const [k, mi] = t.dataset.impmob.split('|'); state.imp.data.dias[k].mob[+mi].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
   if (t.dataset.implib){ const [k, ei, ii] = t.dataset.implib.split('|'); state.imp.data.dias[k].exercicios[+ei].itens[+ii].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
   if (c === 'viewas'){ state.sid = t.value; state.evoLib = null; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); return; }
   if (t.dataset.sched !== undefined){ const st = stu(); st.schedule = t.value; if (st.schedule === 'seq' && !st.perWeek) st.perWeek = String(seqSlots(st).length || 3); save(); render(); return; }

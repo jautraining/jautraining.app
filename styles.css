@@ -974,3 +974,8 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .mobcard.done{background:var(--ok-soft)!important;border-color:transparent!important}
 .mobchk{border-radius:999px;border-color:var(--line)}
 .mobchk[aria-pressed="true"]{background:linear-gradient(135deg,#3FCB8A,#1E8F5A);border-color:transparent;box-shadow:0 6px 18px rgba(63,203,138,.3)}
+
+.impobs{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;margin:4px 0 2px;cursor:pointer}
+.impobs input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.impmob{display:grid;gap:8px;padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
+.impmob .eyebrow{margin:0}
