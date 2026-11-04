@@ -990,6 +990,16 @@ function pickCat(list, q){ const pc = state.picker && state.picker.target === 'm
 function libCats(){ const n = k => db.library.filter(l => !k || catOf(l) === k).length;
   return `<div class="seg libcats" role="group" aria-label="Categoria">${[['', 'Todos'], ...CATS].map(([k, l]) => `<button type="button" data-act="libc" data-v="${k}" aria-pressed="${(state.libC || '') === k}">${l}<small>${n(k)}</small></button>`).join('')}</div>`; }
 function catUpgrade(){ let ch = false; db.library.forEach(l => { if (l.cat !== 'mob' && l.cat !== 'musc'){ l.cat = /^mob-/.test(l.id) ? 'mob' : 'musc'; ch = true; } }); return ch; }
+
+function exLibEditor(ex){
+  if (!state.exLib || state.exLib.split(':')[0] !== ex.id) return '';
+  const k = +state.exLib.split(':')[1], id = ex.items[k]; if (!id) return '';
+  const l = lib(id), prev = state.libOpen; state.libOpen = l.id; const h = libItem(l); state.libOpen = prev;
+  const a = h.indexOf('<div class="libed">'), body = a > -1 ? h.slice(a, h.lastIndexOf('</article>')) : '';
+  const u = usage(l.id);
+  return `<div class="exlibed"><div class="exlibhd"><div><p class="eyebrow">Editando na biblioteca</p><b>${esc(l.name)}</b></div><button type="button" class="btn sm" data-act="exlib-close">Concluir</button></div>
+    <p class="hint">${u > 1 ? `Este exercício está em ${u} fichas: a mudança vale para todas. Para mudar só nesta ficha, use Copiar.` : 'A mudança fica salva na biblioteca.'}</p>${body}</div>`;
+}
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -1423,11 +1433,12 @@ const WHEN = {antes: 'Antes do treino', depois: 'Depois do treino', separado: 'E
 const CD_MODS = ['Esteira', 'Esteira inclinada', 'Caminhada', 'Corrida', 'Bicicleta', 'Bike de spinning', 'Elíptico', 'Escada', 'Remo', 'Natação', 'Pular corda', 'HIIT'];
 const cardioList = d => ((d && d.cardio) || []).filter(c => c.mod || c.dur || c.obs || c.int);
 const cardioTxt = c => [c.mod || 'Cardio', c.dur, c.when && c.when !== 'livre' ? (WHEN[c.when] || '').toLowerCase() : ''].filter(Boolean).join(' · ');
-function cardioCard(d){
+function cardioCard(d, cm){
   const cs = cardioList(d); if (!cs.length) return '';
   return `<section class="cardio" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b></div>
     ${cs.map(c => `<div class="cdi"><p class="cdm"><b>${esc(c.mod || 'Cardio')}</b>${c.dur ? `<span class="cdd">${esc(c.dur)}</span>` : ''}${WHEN[c.when] ? `<span class="cdw">${WHEN[c.when]}</span>` : ''}</p>
-      ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}</section>`;
+      ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}
+    ${cm ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="1" data-cardiocm="1" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(((db.drafts[draftKey()] || {}).__cardio || {}).comment || '')}</textarea></div>` : ''}</section>`;
 }
 function cardioSum(d){
   const cs = cardioList(d); if (!cs.length) return '';
@@ -1486,7 +1497,7 @@ function logStats(l){
   return {sets, vol: Math.round(vol)};
 }
 function feedView(){
-  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? x.l.entries.some(e => e.comment) : f === 'naolidos' ? !isSeen(x.l) : true);
+  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? (x.l.entries.some(e => e.comment) || !!x.l.cardioCmt) : f === 'naolidos' ? !isSeen(x.l) : true);
   const shown = items.slice(0, state.feedN), un = unreadCount();
   return `<main class="wrap">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Atividade dos alunos</h2></div><span class="muted small">${un ? un + (un === 1 ? ' treino não lido' : ' treinos não lidos') : 'Tudo lido'}</span></div>
@@ -1506,7 +1517,7 @@ function feedItem(st, l){
       ${seen ? '' : '<span class="fdot" title="Não lido"></span>'}</div>
     <p class="ftitle"><b>${esc(l.title || 'Treino')}</b> · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
     ${prs.length ? `<div class="fprs">${prs.map(p => `<span class="mpill gold">${ICON_TROPHY}${esc(lib(p.libId).name)}: ${esc(markTxt(p))}</span>`).join('')}</div>` : ''}
-    ${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
+    ${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
     <div class="row"><button type="button" class="btn sm quiet" data-act="feed-open" data-v="${st.id}" data-log="${l.id}">Ver treino completo</button><button type="button" class="linkbtn" data-act="feed-seen" data-v="${l.id}">${seen ? 'Marcar como não lido' : 'Marcar como lido'}</button></div>
   </article>`;
 }
@@ -2300,7 +2311,7 @@ function studentView(){
     body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
       <div id="finish-area"><button class="btn block" type="button" data-act="finish">Finalizar treino</button></div>`;
   }
@@ -2417,7 +2428,7 @@ function trainerView(){
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
     <div class="stugrid">${db.students.slice().sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
-      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length : 0;
+      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
       <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
@@ -2485,8 +2496,9 @@ function editEx(ex, i, n){
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
       <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
       <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Pôr vídeo</button>`}
-      <button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
+      <button type="button" class="icon exl" data-act="exlib-edit" data-v="${ex.id}:${k}" aria-pressed="${state.exLib === ex.id + ':' + k}">Editar</button><button type="button" class="icon exl" data-act="exlib-copy" data-v="${ex.id}:${k}">Copiar</button><button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
       ${ex.items.length > 1 ? `<button type="button" class="icon" data-act="p-unpart" data-ex="${ex.id}" data-i="${k}" aria-label="Tirar ${esc(l.name)} do conjugado">✕</button>` : ''}</span></div>`; }).join('')}</div>
+    ${exLibEditor(ex)}
     <div class="grid4">
       <label>Método<select id="e-method-${ex.id}" data-ef="method" data-ex="${ex.id}">${db.methods.map(m => `<option value="${m.id}" ${ex.method === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>
       <label>Intervalo<input id="e-rest-${ex.id}" data-ef="rest" data-ex="${ex.id}" value="${esc(ex.rest)}"></label>
@@ -2524,7 +2536,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2551,7 +2563,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2725,6 +2737,15 @@ document.addEventListener('click', e => {
     const car = document.getElementById('mobcar'); if (car){ car.scrollLeft = sl; const nx = on && document.getElementById('mob-' + v) && document.getElementById('mob-' + v).nextElementSibling; if (nx) setTimeout(() => car.scrollTo({left: nx.offsetLeft - car.offsetLeft - 16, behavior: 'smooth'}), 450); }
   }
   else if (act === 'libc'){ state.libC = v; state.libOpen = null; render(); }
+  else if (act === 'exlib-edit'){ state.exLib = state.exLib === v ? null : v; render(); const e = document.querySelector('.exlibed'); if (e) e.scrollIntoView({block: 'center'}); }
+  else if (act === 'exlib-close'){ state.exLib = null; render(); }
+  else if (act === 'exlib-copy'){
+    const [exId, k] = v.split(':'), f = findEx(exId); if (!f) return;
+    const o = lib(f.ex.items[+k]), c = JSON.parse(JSON.stringify(o)); c.id = 'c-' + uid(); c.name = o.name + ' (cópia)'; c.custom = true; if (!c.cat) c.cat = 'musc';
+    db.library.push(c); f.ex.items[+k] = c.id; state.exLib = exId + ':' + k; save(); render();
+    const i = document.getElementById('l-name-' + c.id); if (i){ i.scrollIntoView({block: 'center'}); i.focus(); i.select(); }
+    toast('Cópia criada e colocada nesta ficha. Mude o nome e o que precisar.');
+  }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -2749,7 +2770,7 @@ document.addEventListener('click', e => {
     });
     if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
-    st.logs.push({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries});
+    const cc = ((dr.__cardio || {}).comment || '').trim(); st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, cc ? {cardioCmt: cc} : {}));
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
@@ -2819,7 +2840,7 @@ document.addEventListener('click', e => {
   else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; st.protocol = nextProto(from); st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O histórico do ${from || 'protocolo anterior'} continua salvo.`); }
   else if (act === 'p-open'){ state.sid = v; state.mode = 'aluno'; state.stab = 'treino'; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); top(); }
   else if (act === 'p-back'){ state.pview = 'list'; state.picker = null; render(); top(); }
-  else if (act === 'p-day'){ state.editDay = v; state.picker = null; render(); }
+  else if (act === 'p-day'){ state.exLib = null; state.editDay = v; state.picker = null; render(); }
   else if (act === 'pick-open'){ state.picker = {target: v, q: ''}; render(); const q = document.getElementById('pick-q'); if (q){ q.focus(); q.scrollIntoView({block:'center'}); } }
   else if (act === 'pick-close'){ state.picker = null; render(); }
   else if (act === 'pick' || act === 'pick-new'){
@@ -2864,7 +2885,7 @@ document.addEventListener('click', e => {
     const l = lib(b.dataset.lib), key = b.dataset.key, other = key === 'primary' ? 'secondary' : 'primary';
     const arr = l[key], ix = arr.indexOf(v);
     if (ix > -1) arr.splice(ix, 1); else { arr.push(v); const o = l[other].indexOf(v); if (o > -1) l[other].splice(o, 1); }
-    save(); const el = document.getElementById('lib-' + l.id); if (el) el.outerHTML = libItem(l);
+    save(); if (state.pview === 'edit' && state.exLib){ render(); return; } const el = document.getElementById('lib-' + l.id); if (el) el.outerHTML = libItem(l);
   }
   else if (act === 'lib-copy'){
     const o = db.library.find(l => l.id === v); if (!o) return;
@@ -2921,6 +2942,7 @@ document.addEventListener('input', e => {
   }
   if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p]; p[t.dataset.le] = t.value.replace(',', '.'); return; }
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
+  if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
   if (t.id === 'pick-q'){ state.picker.q = t.value; document.getElementById('pick-res').innerHTML = pickResults(); return; }
   if (t.id === 'stu-q'){ const q = norm(t.value.trim()); let any = false; document.querySelectorAll('article.stu').forEach(r => { r.hidden = !!q && !r.dataset.name.includes(q); if (!r.hidden) any = true; }); const n = document.getElementById('stu-none'); if (n) n.hidden = any; return; }

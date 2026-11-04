@@ -979,3 +979,11 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .impobs input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
 .impmob{display:grid;gap:8px;padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
 .impmob .eyebrow{margin:0}
+
+.exlibed{border:1px solid var(--accent);border-radius:16px;padding:14px;display:grid;gap:10px;background:var(--soft)}
+.exlibhd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.exlibhd b{display:block;font-size:1rem}
+.exlibed .libed > .tools:last-child{display:none}
+.exlibed .hint{margin:0}
+.iacts .icon.exl{font-size:.74rem}
+.cardiocmt{margin-bottom:8px}
