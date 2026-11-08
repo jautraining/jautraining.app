@@ -422,7 +422,7 @@ function save(){ clearTimeout(saveT); saveT = setTimeout(() => { cacheWrite(); s
 let db = emptyDb();
 
 const state = {mode:'aluno', sid: undefined, day: todayKey, dayPicked:false, feedF:'todos', feedN:20, copy:null, imp:null, sumOpen:false, obStep:0, newOpen:false, sdataOpen:false, volOpen:false, openEx:{}, editLog:null, logDraft:null, histN:5, stab:'treino', evoLib:null, evoMode:'serie', fperiod:'semana',
-  psec:'alunos', pview:'list', ptab:'hist', editDay:'seg', picker:null, libOpen:null, libQ:'', libM:''};
+  psec:'painel', pview:'list', ptab:'hist', editDay:'seg', picker:null, libOpen:null, libQ:'', libM:''};
 const app = document.getElementById('app');
 
 /* ---------- nuvem: login, banco de dados e sincronização ---------- */
@@ -805,7 +805,7 @@ async function logout(){
   try { localStorage.removeItem(cacheKey()); } catch(e){}
   clearTimeout(SYNC.timer); clearTimeout(SYNC.retryT);
   db = emptyDb(); SYNC.synced = {}; SYNC.ver = {}; SYNC.since = {}; SYNC.fullAt = 0; AUTH.user = null; AUTH.profile = null; AUTH.screen = 'auth'; AUTH.view = 'login'; AUTH.err = AUTH.msg = '';
-  state.done = null; state.sid = undefined; state.psec = 'alunos'; state.pview = 'list'; state.stab = 'treino';
+  state.done = null; state.sid = undefined; state.psec = 'painel'; state.pview = 'list'; state.stab = 'treino';
   setSync('ok'); render(); top();
 }
 function authErr(e){
@@ -999,6 +999,100 @@ function exLibEditor(ex){
   const u = usage(l.id);
   return `<div class="exlibed"><div class="exlibhd"><div><p class="eyebrow">Editando na biblioteca</p><b>${esc(l.name)}</b></div><button type="button" class="btn sm" data-act="exlib-close">Concluir</button></div>
     <p class="hint">${u > 1 ? `Este exercício está em ${u} fichas: a mudança vale para todas. Para mudar só nesta ficha, use Copiar.` : 'A mudança fica salva na biblioteca.'}</p>${body}</div>`;
+}
+
+const ICON_CLOCK = '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const clk = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(ss).padStart(2, '0'); };
+const durTxt = s => { const m = Math.max(1, Math.round(s / 60)); return m >= 60 ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') : m + ' min'; };
+const wElapsed = () => { const m = (db.draftMeta || {})[draftKey()]; return m ? Math.max(0, Math.floor((Date.now() - m) / 1000)) : 0; };
+function wclockHTML(){ const s = wElapsed(); return `<span class="wclock ${s >= 3600 ? 'long' : ''}" id="wclock" title="Tempo de treino">${ICON_CLOCK}<span>${clk(s)}</span></span>`; }
+setInterval(() => { const e = document.getElementById('wclock'); if (!e) return; const s = wElapsed(); e.lastChild.textContent = clk(s); e.classList.toggle('long', s >= 3600); }, 1000);
+const day0 = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const daysTo = iso => Math.round((new Date(iso + 'T12:00') - new Date(isoToday() + 'T12:00')) / 864e5);
+function panInfo(){
+  const t0 = day0(new Date()), tk = dayKeyOf(new Date());
+  return db.students.map(s => {
+    const fs = freqStats(s), a = alertFor(s), last = s.logs.length ? s.logs.reduce((m, l) => l.date > m.date ? l : m) : null;
+    const idle = last ? Math.round((t0 - day0(last.date)) / 864e5) : null, today = !!last && dayKeyOf(new Date(last.date)) === tk;
+    const p = planState(s), due = s.planDue ? daysTo(s.planDue) : null;
+    const todayKey = DAYS[(new Date().getDay() + 6) % 7].k;
+    const planned = isSeq(s) ? fs.plan > 0 && fs.week < fs.plan : !!(s.days[todayKey] && s.days[todayKey].ex.length);
+    return {s, fs, a, last, idle, today, p, due, planned};
+  });
+}
+const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Vencendo'], ['semtreinar', 'Sem treinar']];
+const panMatch = (x, f) => f === 'atencao' ? !!x.a : f === 'vencendo' ? (x.p === 'hoje' || x.p === 'vencido' || x.p === 'breve') : f === 'semtreinar' ? (x.idle === null || x.idle >= 7) : true;
+function panList(){
+  const q = norm((state.panQ || '').trim()), f = state.panF || 'todos';
+  const list = panInfo().filter(x => panMatch(x, f) && (!q || norm(x.s.name).includes(q)))
+    .sort((a, b) => (b.a ? 1 : 0) - (a.a ? 1 : 0) || (a.idle === null ? 1e9 : a.idle) - (b.idle === null ? 1e9 : b.idle) || a.s.name.localeCompare(b.s.name, 'pt'));
+  if (!list.length) return '<p class="muted small" style="padding:8px 4px">Nenhum aluno aqui.</p>';
+  return list.map(x => { const n = Math.max(x.fs.plan, x.fs.week, 1);
+    const tag = x.p === 'vencido' ? '<span class="ptag red">Venceu</span>' : x.p === 'hoje' ? '<span class="ptag red">Vence hoje</span>' : x.idle !== null && x.idle >= 4 ? `<span class="ptag amber">${x.idle}d sem treinar</span>` : !x.last ? '<span class="ptag">Sem treinos</span>' : x.today ? '<span class="ptag green">Treinou hoje</span>' : '';
+    return `<button type="button" class="pstu" data-act="pan-open" data-v="${x.s.id}"><span class="pn"><b>${esc(x.s.name)}</b><small>${esc(x.s.protocol || '')}</small></span>
+      <span class="pm">${x.last ? 'Último treino ' + esc(whenTxt(x.last.date)) : 'Ainda não treinou'}${x.s.planDue ? ' · vence ' + esc(dueBR(x.s.planDue)) : ''}</span>
+      <span class="pbars" title="${x.fs.week} de ${x.fs.plan} treinos nesta semana">${Array.from({length: n}, (_, i) => `<i class="${i < x.fs.week ? 'on' : ''}"></i>`).join('')}</span>${tag}</button>`; }).join('');
+}
+function panChart(){
+  const days = Array.from({length: 14}, (_, i) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - 13 + i); return d; });
+  const by = {}; db.students.forEach(s => { const seen = new Set(); s.logs.forEach(l => { const k = dayKeyOf(new Date(l.date)); if (!seen.has(k)){ seen.add(k); by[k] = (by[k] || 0) + 1; } }); });
+  const vals = days.map(d => by[dayKeyOf(d)] || 0), mx = Math.max(1, ...vals), tk = dayKeyOf(new Date());
+  return `<div class="pchart" role="img" aria-label="Alunos que treinaram por dia nos últimos 14 dias">${days.map((d, i) => { const v = vals[i], isT = dayKeyOf(d) === tk;
+    return `<div class="pcol ${isT ? 'today' : ''}"><span class="pv">${v || ''}</span><span class="pbar"><i style="height:${Math.round(v / mx * 100)}%"></i></span><span class="pl">${isT ? 'Hoje' : i % 2 === 1 ? '' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0')}</span></div>`; }).join('')}</div>`;
+}
+function panDue(){
+  const list = db.students.filter(s => s.planDue).map(s => ({s, d: daysTo(s.planDue)})).sort((a, b) => a.d - b.d);
+  if (!list.length) return '<p class="muted small">Nenhum vencimento cadastrado. Coloque a data em Editar ficha › Dados do aluno.</p>';
+  return `<table class="ptable"><thead><tr><th>Aluno</th><th>Vence</th><th>Situação</th></tr></thead><tbody>${list.map(({s, d}) => `<tr data-act="pan-open" data-v="${s.id}"><td><b>${esc(s.name)}</b></td><td>${esc(dueBR(s.planDue))}</td>
+    <td><span class="pdue ${d < 0 || d === 0 ? 'red' : d <= 5 ? 'amber' : ''}">${d < 0 ? 'Venceu há ' + (-d) + (d === -1 ? ' dia' : ' dias') : d === 0 ? 'Vence hoje' : 'Faltam ' + d + (d === 1 ? ' dia' : ' dias')}</span></td></tr>`).join('')}</tbody></table>`;
+}
+function panFeed(){
+  const items = allLogs().slice(0, 14);
+  if (!items.length) return '<p class="muted small">Os treinos finalizados pelos alunos aparecem aqui.</p>';
+  return items.map(({st, l}) => { const nc = l.entries.filter(e => e.comment).length + (l.cardioCmt ? 1 : 0) + (l.effortMsg ? 1 : 0);
+    return `<button type="button" class="pact ${isSeen(l) ? '' : 'unread'}" data-act="feed-open" data-v="${st.id}" data-log="${l.id}"><span class="pai">${ICON_CHECK}</span>
+      <span class="pat"><b>${esc(st.name)}</b><small>Terminou ${esc(l.title || 'o treino')}${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''}${nc ? ' · ' + nc + (nc === 1 ? ' observação' : ' observações') : ''}</small></span>
+      <span class="paw">${esc(whenTxt(l.date))}</span></button>`; }).join('');
+}
+function panelView(){
+  const info = panInfo(), f = state.panF || 'todos';
+  const done = info.filter(x => x.today), wait = info.filter(x => !x.today && x.planned);
+  const cnt = k => info.filter(x => panMatch(x, k)).length;
+  return `<main class="wrap v-painel">
+    <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Visão geral</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'} · ${new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: '2-digit', month: '2-digit'})}</span></div>
+    <div class="panel">
+      <section class="card pcolL"><input id="pan-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno" value="${esc(state.panQ || '')}">
+        <div class="pfil">${PANF.map(([k, l]) => `<button type="button" data-act="pan-f" data-v="${k}" aria-pressed="${f === k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
+        <div class="plist" id="pan-list">${panList()}</div></section>
+      <div class="pcolM">
+        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
+          ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
+          ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
+        <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
+        <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
+      </div>
+      <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
+    </div>
+  </main>`;
+}
+
+const EFF = [[1, 'Muito leve', 'sobrou muito', '😌', '#2FC48D'], [2, 'Leve', 'deu para fazer bem', '🙂', '#8BC34A'], [3, 'Normal', 'esforço na medida', '😐', '#F2C230'], [4, 'Pesado', 'puxado, mas fechou', '😣', '#FF8A3D'], [5, 'Exaustivo', 'no limite', '🥵', '#F0463C']];
+const effOf = n => EFF.find(x => x[0] === n);
+const effTxt = n => { const e = effOf(n); return e ? e[1] : ''; };
+const effChip = n => { const e = effOf(n); return e ? `<span class="effchip" style="--ec:${e[4]}">${e[3]} ${e[1]}</span>` : ''; };
+function effortView(st){
+  const l = st.logs.find(x => x.id === state.done.logId); if (!l){ state.done.step = null; return doneView(st); }
+  const sel = state.done.eff || 0;
+  return `<main class="wrap v-narrow"><section class="effort">
+    <p class="eyebrow">Treino concluído${l.title ? ' · ' + esc(l.title) : ''}</p><h2 class="serif">Como foi o treino?</h2>
+    <p class="muted">Escolha o esforço do treino de hoje. Seu personal usa essa nota para ajustar o próximo.</p>
+    <div class="efflist" role="radiogroup" aria-label="Esforço do treino">${EFF.map(([n, t, s, e, c]) => `<button type="button" class="effopt" role="radio" data-act="eff-pick" data-v="${n}" aria-checked="${sel === n}" style="--ec:${c}"><span class="effemo" aria-hidden="true">${e}</span><span class="efft"><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>
+    <label class="effmsg" for="eff-msg">Quer contar algo ao personal? (opcional)</label>
+    <textarea id="eff-msg" rows="3" data-effmsg="1" placeholder="Ex.: senti o ombro no supino, o leg press estava ocupado...">${esc(state.done.msg || '')}</textarea>
+    <p class="small muted">Ele recebe junto com a nota.</p>
+    <button class="btn block" type="button" data-act="eff-save" ${sel ? '' : 'disabled'}>Salvar e ver o resumo</button>
+    <button class="linkbtn effskip" type="button" data-act="eff-skip">Pular</button>
+  </section></main>`;
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -1284,7 +1378,7 @@ function doneView(st){
   return `<main class="wrap">
     <section class="card stkcard">
       <div><p class="eyebrow">Treino concluído</p><h2 class="stk-h">Mandou bem, ${esc(st.name.split(' ')[0])}!</h2>
-        <p class="small muted">${f.week}º treino da semana${f.streak ? ' · ' + f.streak + (f.streak === 1 ? ' semana' : ' semanas') + ' de sequência' : ''}</p></div>
+        <p class="small muted">${f.week}º treino da semana${f.streak ? ' · ' + f.streak + (f.streak === 1 ? ' semana' : ' semanas') + ' de sequência' : ''}${l.dur ? ' · ' + durTxt(l.dur) + ' de treino' : ''}</p></div>
       <div class="stk-car" id="stk-car" role="group" aria-label="Modelos da imagem. Arraste para o lado para trocar.">
         <div class="stk-prev stk-slide"><img id="stk-img-center" alt="Imagem do treino, modelo centralizado" hidden><p class="small stk-wait">Gerando imagem…</p></div>
         <div class="stk-prev stk-slide"><img id="stk-img-left" alt="Imagem do treino, modelo alinhado à esquerda" hidden><p class="small stk-wait">Gerando imagem…</p></div>
@@ -1497,7 +1591,7 @@ function logStats(l){
   return {sets, vol: Math.round(vol)};
 }
 function feedView(){
-  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? (x.l.entries.some(e => e.comment) || !!x.l.cardioCmt) : f === 'naolidos' ? !isSeen(x.l) : true);
+  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? (x.l.entries.some(e => e.comment) || !!x.l.cardioCmt || !!x.l.effortMsg) : f === 'naolidos' ? !isSeen(x.l) : true);
   const shown = items.slice(0, state.feedN), un = unreadCount();
   return `<main class="wrap">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Atividade dos alunos</h2></div><span class="muted small">${un ? un + (un === 1 ? ' treino não lido' : ' treinos não lidos') : 'Tudo lido'}</span></div>
@@ -1515,9 +1609,9 @@ function feedItem(st, l){
     <div class="fhead"><span class="fav" aria-hidden="true">${esc(st.name.trim().charAt(0).toUpperCase())}</span>
       <div class="fwho"><b>${esc(st.name)}</b><span>${esc(whenTxt(l.date))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</span></div>
       ${seen ? '' : '<span class="fdot" title="Não lido"></span>'}</div>
-    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b> · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
+    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''} · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
     ${prs.length ? `<div class="fprs">${prs.map(p => `<span class="mpill gold">${ICON_TROPHY}${esc(lib(p.libId).name)}: ${esc(markTxt(p))}</span>`).join('')}</div>` : ''}
-    ${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
+    ${l.effortMsg ? `<div class="cmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
     <div class="row"><button type="button" class="btn sm quiet" data-act="feed-open" data-v="${st.id}" data-log="${l.id}">Ver treino completo</button><button type="button" class="linkbtn" data-act="feed-seen" data-v="${l.id}">${seen ? 'Marcar como não lido' : 'Marcar como lido'}</button></div>
   </article>`;
 }
@@ -2222,7 +2316,7 @@ const TABI = {
 function header(){
   const tabs = state.mode === 'aluno'
     ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
-    : [['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
+    : [['painel','Painel'], ['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
   return `<header class="band"><div class="wrap">
     <div class="band-top"><img class="logo" src="${LOGO}" alt="Jau Training, Online Strength Coaching" width="560" height="406">
     ${isP() ? `<div class="modes" role="group" aria-label="Visão">
@@ -2294,7 +2388,7 @@ function studentView(){
   const st = stu();
   if (!st) return `<main class="wrap"><div class="empty">Nenhum aluno cadastrado ainda. Vá em Personal para adicionar.</div></main>`;
   const preview = isP() ? `<p class="previewbar">Você está vendo o app como ${esc(st.name.split(' ')[0])}. Treinos registrados aqui entram no histórico do aluno.</p>` : '';
-  if (state.done) return doneView(st);
+  if (state.done) return state.done.step === 'eff' ? effortView(st) : doneView(st);
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
@@ -2325,7 +2419,7 @@ function studentView(){
     }).join('')}</nav>`}
     <header class="dayhead">
       <div><p class="eyebrow">${df.f}${seq ? (state.day === nxt ? ' · próximo da sequência' : '') : (state.day === todayKey ? ' · hoje' : '')}</p><h2 class="serif">${esc(d.title || '—')}</h2></div>
-      ${d.ex.length ? `<span class="prog" id="prog">${progText(d)}</span>` : ''}
+      <div class="dhr">${trainOpen() ? wclockHTML() : ''}${d.ex.length ? `<span class="prog" id="prog">${progText(d)}</span>` : ''}</div>
     </header>
     ${body}${guide()}
     <p class="foot">Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, CREF RJ-056749</p>
@@ -2411,6 +2505,7 @@ function guide(){
 
 /* ---------- personal: alunos ---------- */
 function trainerView(){
+  if (state.psec === 'painel' && state.pview === 'list') return panelView();
   if (state.psec === 'lib') return libraryView();
   if (state.psec === 'feed') return feedView();
   if (state.psec === 'metodos') return methodsView();
@@ -2428,7 +2523,7 @@ function trainerView(){
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
     <div class="stugrid">${db.students.slice().sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
-      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) : 0;
+      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
       <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
@@ -2536,7 +2631,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2563,7 +2658,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2642,7 +2737,7 @@ function render(){
   document.body.classList.toggle('pm', state.mode !== 'aluno');
   app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView());
   drawCharts();
-  if (state.done && state.mode === 'aluno') renderSticker();
+  if (state.done && state.mode === 'aluno' && state.done.step !== 'eff') renderSticker();
 }
 
 /* ---------- timer ---------- */
@@ -2690,7 +2785,7 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
-  if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'alunos'; } render(); top(); }
+  if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
   else if (act === 'stab'){ state.done = null; state.editLog = null; state.stab = v; render(); top(); }
   else if (act === 'psec'){ state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
   else if (act === 'day'){ state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
@@ -2746,6 +2841,14 @@ document.addEventListener('click', e => {
     const i = document.getElementById('l-name-' + c.id); if (i){ i.scrollIntoView({block: 'center'}); i.focus(); i.select(); }
     toast('Cópia criada e colocada nesta ficha. Mude o nome e o que precisar.');
   }
+  else if (act === 'pan-f'){ state.panF = v; render(); }
+  else if (act === 'pan-open'){ state.sid = v; state.psec = 'alunos'; state.pview = 'track'; state.ptab = 'hist'; render(); top(); }
+  else if (act === 'eff-pick'){ const m = document.getElementById('eff-msg'); if (m) state.done.msg = m.value; state.done.eff = +v; render(); }
+  else if (act === 'eff-save' || act === 'eff-skip'){
+    const st = stu(), l = st.logs.find(x => x.id === state.done.logId), m = document.getElementById('eff-msg');
+    if (l && act === 'eff-save' && state.done.eff){ l.effort = state.done.eff; const t = ((m && m.value) || '').trim(); if (t) l.effortMsg = t; else delete l.effortMsg; dataVer++; save(); }
+    state.done.step = null; render(); top();
+  }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -2770,11 +2873,11 @@ document.addEventListener('click', e => {
     });
     if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
-    const cc = ((dr.__cardio || {}).comment || '').trim(); st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, cc ? {cardioCmt: cc} : {}));
+    const cc = ((dr.__cardio || {}).comment || '').trim(); const dur = start ? Math.round((Date.now() - start) / 1000) : 0; st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, cc ? {cardioCmt: cc} : {}, dur >= 60 && dur <= 5 * 3600 ? {dur} : {}));
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
-    state.done = {logId: id, start, newAch}; state.dayPicked = false;
+    state.done = {logId: id, start, newAch, step: 'eff'}; state.dayPicked = false;
     render(); top();
   }
   else if (act === 'stk-go'){ const car = document.getElementById('stk-car'); if (car) car.scrollTo({left: +v * car.clientWidth, behavior: 'smooth'}); }
@@ -2942,11 +3045,13 @@ document.addEventListener('input', e => {
   }
   if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p]; p[t.dataset.le] = t.value.replace(',', '.'); return; }
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
+  if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
   if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
   if (t.id === 'pick-q'){ state.picker.q = t.value; document.getElementById('pick-res').innerHTML = pickResults(); return; }
   if (t.id === 'stu-q'){ const q = norm(t.value.trim()); let any = false; document.querySelectorAll('article.stu').forEach(r => { r.hidden = !!q && !r.dataset.name.includes(q); if (!r.hidden) any = true; }); const n = document.getElementById('stu-none'); if (n) n.hidden = any; return; }
   if (t.id === 'load-q'){ const q = norm(t.value.trim()); document.querySelectorAll('#load-list .loadrow').forEach(r => r.hidden = !!q && !r.dataset.name.includes(q)); return; }
+  if (t.id === 'pan-q'){ state.panQ = t.value; const l = document.getElementById('pan-list'); if (l) l.innerHTML = panList(); return; }
   if (t.id === 'lib-q'){ state.libQ = t.value; document.getElementById('lib-list').innerHTML = libList(); return; }
   if (t.dataset.lf){ const l = lib(t.dataset.lib); l[t.dataset.lf] = t.value; save();
     if (t.dataset.lf === 'video'){ const s = document.getElementById('l-vst-' + l.id); if (s) s.innerHTML = videoStatus(l); }
