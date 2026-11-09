@@ -1016,11 +1016,11 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .plabel{margin:12px 0 6px;font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .pchart{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:6px;align-items:end;height:190px}
 .pcol{display:grid;grid-template-rows:auto 1fr auto;height:100%;gap:4px;text-align:center;min-width:0}
-.pv{font-size:.68rem;font-weight:800;color:var(--muted);min-height:1em}
+.pcol .pv{font-size:.68rem;font-weight:800;color:var(--muted);min-height:1em}
 .pbar{display:flex;align-items:flex-end;height:100%}
 .pbar i{display:block;width:100%;min-height:3px;border-radius:6px 6px 3px 3px;background:var(--ink);opacity:.85}
 .pcol.today .pbar i{background:var(--accent);opacity:1}.pcol.today .pv,.pcol.today .pl{color:var(--accent)}
-.pl{font-size:.6rem;color:var(--muted);white-space:nowrap;min-height:1em}
+.pcol .pl{font-size:.6rem;color:var(--muted);white-space:nowrap;min-height:1em}
 .ptwrap{max-height:320px;overflow:auto}
 .ptable{width:100%;border-collapse:collapse;font-size:.82rem}
 .ptable th{text-align:left;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:800;padding:6px 8px;border-bottom:1px solid var(--line)}
