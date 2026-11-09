@@ -768,12 +768,13 @@ body.noscroll{overflow:hidden}
 .startbtn .st-ic{flex:none;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center}
 .startbtn .st-ic svg{width:18px;height:18px}
 .fld.nokg{display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:9px;min-height:36px;font-size:.66rem;color:var(--muted);font-weight:600}
-.tecsub{display:grid;gap:6px;margin:-2px 0 6px 42px;padding:8px 0 8px 12px;border-left:2px solid var(--accent)}
-.tecrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.tecrow .tl{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);min-width:70px}
-.tecrow .fld{width:84px}
-.blks{display:flex;gap:6px;flex-wrap:wrap}
-.blks .fld{width:104px}
+.tecflag{display:grid;grid-template-columns:34px minmax(0,1fr) 42px;gap:8px;margin:6px 0 -4px}
+.tecflag span{grid-column:2;justify-self:start;font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;line-height:1.5}
+.tecsub{display:grid;gap:6px;margin:0 0 4px}
+.set.tecx .tecarrow{justify-content:center;color:var(--accent);font-size:1rem;font-weight:800}
+.set.tecx .tecl{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.set.tecx .tecsp{width:42px}
+.fld.samekg{display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:9px;min-height:36px;font-size:.62rem;color:var(--muted);font-weight:600;text-align:center;line-height:1.1}
 .tecnote{margin:0;font-size:.72rem;color:var(--muted);line-height:1.35}
 .tecbox{border:1px dashed var(--line);border-radius:12px;padding:12px;display:grid;gap:10px}
 .tecrow1{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -939,7 +940,7 @@ body::before{background:var(--safetop)}
 .chk{border-radius:50%!important;width:40px!important;height:40px!important;background:var(--iconbg)!important;border:1px solid var(--line)!important}
 .set.done .chk,.chk[aria-pressed="true"]{background:linear-gradient(135deg,#3FCB8A,#1E8F5A)!important;border-color:transparent!important;color:#fff!important;box-shadow:0 6px 18px rgba(63,203,138,.35)}
 .set.pr .chk{background:linear-gradient(135deg,#F2C230,#C98A12)!important}
-.tecsub{border-left-color:rgba(240,70,60,.7)}
+.set.tecx .fld.samekg{border-color:var(--gline)}
 .swapbtn{border-radius:16px!important}
 .tecchip[aria-pressed="true"]{background:var(--grad);border-color:transparent}
 

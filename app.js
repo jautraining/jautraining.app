@@ -1254,17 +1254,26 @@ function tecBox(ex){
 }
 function tecChip(ex, k){ const tec = tecOfMeth(ex.method); if (!tec) return ''; const on = !!(ex.series[k] && ex.series[k].m); if (!on && ex.series[k] && ex.series[k].type !== 'trab') return '';
   return `<button type="button" class="tecchip" data-act="tec-tog" data-ex="${ex.id}" data-i="${k}" aria-pressed="${on}" aria-label="${TEC[tec].l} na série ${k + 1}">${TEC[tec].l}</button>`; }
+function tecOn(ex, si){ return !!tecOfMeth(ex.method) && !!(ex.series && ex.series[si] && ex.series[si].m); }
+function tecFlag(ex, si){ if (!tecOn(ex, si)) return ''; const m = db.methods.find(x => x.id === ex.method);
+  return `<div class="tecflag"><span>${esc(m ? m.name : TEC[tecOfMeth(ex.method)].l)}</span></div>`; }
 function tecSub(ex, si, s, np, conj){
-  const tec = tecOfMeth(ex.method); if (!tec || !(ex.series && ex.series[si] && ex.series[si].m)) return '';
-  const n = tecN(ex), L = k => String.fromCharCode(65 + k), out = [];
-  for (let pi = 0; pi < np; pi++){
-    const v = (s.parts && s.parts[pi]) || {}, pre = conj ? L(pi) + ' · ' : '';
-    const at = (k, extra) => `data-k="${k}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"${extra || ''}`;
-    if (tec === 'drop') for (let d = 0; d < n; d++){ const dv = (v.drops && v.drops[d]) || {};
-      out.push(`<div class="tecrow"><span class="tl">${pre}Drop ${d + 1}</span>${nkOf(ex, pi) ? '' : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}" data-in="dkg" ${at(d)} value="${esc(dv.kg || '')}"><span>kg</span></label>`}<label class="fld"><input id="dr-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições do drop ${d + 1}, série ${si + 1}" data-in="dreps" ${at(d)} value="${esc(dv.reps || '')}"><span>reps</span></label></div>`); }
-    else out.push(`<div class="tecrow"><span class="tl">${pre}Blocos seguintes</span><div class="blks">${Array.from({length: n - 1}, (_, b) => `<label class="fld"><input id="bk-${ex.id}-${si}-${pi}-${b}" inputmode="numeric" autocomplete="off" aria-label="Repetições do bloco ${b + 2}, série ${si + 1}" data-in="blk" ${at(b)} value="${esc((v.blocks && v.blocks[b]) || '')}" placeholder="${b + 2}º bloco"><span>reps</span></label>`).join('')}</div></div>`);
+  if (!tecOn(ex, si)) return '';
+  const tec = tecOfMeth(ex.method), dr = tec === 'drop', n = tecN(ex), L = k => String.fromCharCode(65 + k), rows = [];
+  const cnt = dr ? n : n - 1;
+  for (let d = 0; d < cnt; d++){
+    const lbl = dr ? 'Drop ' + (d + 1) : (d + 2) + 'º bloco';
+    const cells = Array.from({length: np}, (_, pi) => {
+      const v = (s.parts && s.parts[pi]) || {}, at = `data-k="${d}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"`;
+      const kgCell = !dr ? '<span class="fld samekg" aria-hidden="true">mesma carga</span>' : nkOf(ex, pi) ? '<span class="fld nokg">sem carga</span>'
+        : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="dkg" ${at} value="${esc(((v.drops && v.drops[d]) || {}).kg || '')}"><span>kg</span></label>`;
+      const rv = dr ? (((v.drops && v.drops[d]) || {}).reps || '') : ((v.blocks && v.blocks[d]) || '');
+      const repCell = `<label class="fld"><input id="${dr ? 'dr' : 'bk'}-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições ${dr ? 'do drop ' + (d + 1) : 'do ' + (d + 2) + 'º bloco'}, série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="${dr ? 'dreps' : 'blk'}" ${at} value="${esc(rv)}"><span>reps</span></label>`;
+      return `<div class="part ${conj ? 'withl' : ''}">${conj ? `<span class="plabel">${L(pi)}</span>` : ''}<span class="target tecl">${lbl}</span>${kgCell}${repCell}</div>`;
+    }).join('');
+    rows.push(`<div class="set tecx ${s.done ? 'done' : ''}"><span class="sn tecarrow" aria-hidden="true">↳</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div><span class="tecsp"></span></div>`);
   }
-  return `<div class="tecsub" id="tsub-${ex.id}-${si}">${out.join('')}</div>`;
+  return `<div class="tecsub" id="tsub-${ex.id}-${si}">${rows.join('')}</div>`;
 }
 const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
 function startHTML(d){
@@ -2586,7 +2595,7 @@ function exCard(st, ex, i){
         <label class="fld"><input id="rp-${ex.id}-${si}-${pi}" inputmode="numeric" autocomplete="off" aria-label="${measOf(ex, pi) === 'tempo' ? 'Segundos' : 'Repetições'} série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="reps" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.reps || '')}" placeholder="${esc((lp && lp.reps) || '')}"><span>${measOf(ex, pi) === 'tempo' ? 'seg' : 'reps'}</span></label>
       </div>`;
     }).join('');
-    return `<div class="set ${s.done ? 'done' : ''} ${ps.some((_, pi) => prs.has(si + '-' + pi)) ? 'pr' : ''}" id="set-${ex.id}-${si}"><span class="sn">${dot(stypeOf(ex, si))}${si + 1}</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div>
+    return tecFlag(ex, si) + `<div class="set ${s.done ? 'done' : ''} ${ps.some((_, pi) => prs.has(si + '-' + pi)) ? 'pr' : ''}" id="set-${ex.id}-${si}"><span class="sn">${dot(stypeOf(ex, si))}${si + 1}</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div>
       <button class="chk" type="button" data-act="set" data-ex="${ex.id}" data-set="${si}" aria-pressed="${!!s.done}" aria-label="Concluir série ${si + 1}">${ICON_CHECK}${ICON_TROPHY}</button></div>` + tecSub(ex, si, s, ps.length, conj);
   }).join('');
   const how = ps.filter(p => p.instructions).map((p, k) => `<p>${conj ? `<span class="ab">${L(used.indexOf(p.id))}</span>` : ''}${esc(p.instructions)}</p>`).join('');
