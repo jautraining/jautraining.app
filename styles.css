@@ -1056,3 +1056,10 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .bkcard .bkt{display:grid;gap:3px;min-width:0;flex:1 1 260px}.bkcard .eyebrow{margin:0}
 .bkcard.due{border-color:rgba(242,194,48,.55)!important}
 .bkcard.due b{color:var(--t-prep)}
+
+.pfblist{display:grid;gap:8px}
+.pfbrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.pfbt{display:grid;gap:2px;min-width:0}.pfbt b{font-size:.84rem;text-transform:uppercase;letter-spacing:.02em}.pfbt small{font-size:.72rem;color:var(--muted)}
+.pfbform{display:grid;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--line)}
+.pfbform textarea{width:100%;border:1px solid var(--line);background:var(--fieldbg, var(--bg));color:var(--ink);border-radius:12px;padding:10px;font:inherit;resize:vertical}
+.fblog{display:grid;gap:4px;margin-top:-2px}.fblog p{margin:0;font-size:.82rem;display:flex;gap:8px}.fblog p b{flex:none}

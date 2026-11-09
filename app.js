@@ -1028,7 +1028,7 @@ function panList(){
     .sort((a, b) => (b.a ? 1 : 0) - (a.a ? 1 : 0) || (a.idle === null ? 1e9 : a.idle) - (b.idle === null ? 1e9 : b.idle) || a.s.name.localeCompare(b.s.name, 'pt'));
   if (!list.length) return '<p class="muted small" style="padding:8px 4px">Nenhum aluno aqui.</p>';
   return list.map(x => { const n = Math.max(x.fs.plan, x.fs.week, 1);
-    const tag = x.p === 'vencido' ? '<span class="ptag red">Venceu</span>' : x.p === 'hoje' ? '<span class="ptag red">Vence hoje</span>' : x.idle !== null && x.idle >= 4 ? `<span class="ptag amber">${x.idle}d sem treinar</span>` : !x.last ? '<span class="ptag">Sem treinos</span>' : x.today ? '<span class="ptag green">Treinou hoje</span>' : '';
+    const tag = x.p === 'vencido' ? '<span class="ptag red">Venceu</span>' : x.p === 'hoje' ? '<span class="ptag red">Vence hoje</span>' : x.idle !== null && x.idle >= 4 ? `<span class="ptag amber">${x.idle}d sem treinar</span>` : !x.last ? '<span class="ptag">Sem treinos</span>' : x.today ? '<span class="ptag green">Treinou hoje</span>' : (fbState(x.s) || {}).due ? '<span class="ptag">Feedback</span>' : '';
     return `<button type="button" class="pstu" data-act="pan-open" data-v="${x.s.id}"><span class="pn"><b>${esc(x.s.name)}</b><small>${esc(x.s.protocol || '')}</small></span>
       <span class="pm">${x.last ? 'Último treino ' + esc(whenTxt(x.last.date)) : 'Ainda não treinou'}${x.s.planDue ? ' · vence ' + esc(dueBR(x.s.planDue)) : ''}</span>
       <span class="pbars" title="${x.fs.week} de ${x.fs.plan} treinos nesta semana">${Array.from({length: n}, (_, i) => `<i class="${i < x.fs.week ? 'on' : ''}"></i>`).join('')}</span>${tag}</button>`; }).join('');
@@ -1068,6 +1068,7 @@ function panelView(){
         <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
           ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
           ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
+        ${fbHTML()}
         <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
         <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
       </div>
@@ -1138,6 +1139,35 @@ async function doBackup(b){
     toast(navigator.onLine === false ? 'Sem internet. O backup precisa de conexão.' : 'Não consegui gerar o backup. Tente de novo.');
     b.disabled = false; b.textContent = t0;
   }
+}
+
+const fbEvery = s => { const v = s.fbEvery === undefined || s.fbEvery === '' ? 14 : +s.fbEvery; return v > 0 ? v : 0; };
+function fbState(s){
+  const ev = fbEvery(s); if (!ev) return null;
+  if (!s.fbLast) return {due: true, first: true, d: 0, ev};
+  const next = new Date(s.fbLast + 'T12:00'); next.setDate(next.getDate() + ev);
+  const iso = next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0') + '-' + String(next.getDate()).padStart(2, '0');
+  const d = daysTo(iso); return {due: d <= 0, d, ev, next: iso};
+}
+const fbFreq = ev => ev === 7 ? 'semanal' : ev === 14 ? 'quinzenal' : 'a cada ' + ev + ' dias';
+function fbHTML(){
+  const all = db.students.map(s => ({s, f: fbState(s)})).filter(x => x.f);
+  const due = all.filter(x => x.f.due).sort((a, b) => (a.f.first ? 1 : 0) - (b.f.first ? 1 : 0) || a.f.d - b.f.d);
+  const soon = all.filter(x => !x.f.due && x.f.d <= 3).sort((a, b) => a.f.d - b.f.d);
+  return `<section class="card pfb"><div class="phd"><p class="eyebrow">Feedbacks</p><span class="muted small">${due.length ? due.length + (due.length === 1 ? ' pendente' : ' pendentes') : 'em dia'}</span></div>
+    ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
+        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar</button>`}</div>
+        ${state.fbOpen === s.id ? `<div class="pfbform"><textarea id="fb-note" rows="2" placeholder="Anotação do feedback (opcional): como o aluno está, o que ajustar..."></textarea>
+          <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}`).join('')}</div>${due.length > 6 && !state.fbAll ? `<button type="button" class="linkbtn" data-act="fb-all">Ver todos os ${due.length}</button>` : ''}`
+      : '<p class="muted small">Nenhum feedback pendente. Tudo em dia!</p>'}
+    ${soon.length ? `<p class="plabel">Próximos dias</p><div class="pchips">${soon.map(({s, f}) => `<span class="pchip">${esc(s.name.split(' ')[0])} · ${f.d === 1 ? 'amanhã' : 'em ' + f.d + ' dias'}</span>`).join('')}</div>` : ''}
+  </section>`;
+}
+function fbEditHTML(s){
+  const ev = s.fbEvery === undefined || s.fbEvery === '' ? '14' : String(s.fbEvery), log = (s.fbLog || []).slice(-5).reverse();
+  return `<label>Feedback do aluno <span class="hint">O painel avisa quando é hora de pedir o feedback.${s.fbLast ? ' Último: ' + esc(dueBR(s.fbLast)) + '.' : ''}</span>
+      <select id="f-fbevery" data-sf="fbEvery">${[['7', 'Semanal'], ['14', 'Quinzenal'], ['0', 'Desligado']].map(([v, l]) => `<option value="${v}" ${ev === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    ${log.length ? `<div class="fblog"><span class="hint">Últimos feedbacks</span>${log.map(x => `<p><b>${esc(dueBR(x.d))}</b>${x.t ? esc(x.t) : '<span class="muted">sem anotação</span>'}</p>`).join('')}</div>` : ''}`;
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2599,6 +2629,7 @@ function editView(){
     <div class="form">
       <label>Nome<input id="f-name" data-sf="name" value="${esc(s.name)}"></label>
       <div class="duerow"><label>Vencimento do plano <span class="hint">${s.planDue ? (planState(s) === 'vencido' ? 'Vencido. O aluno vê o aviso "Seu plano venceu".' : planState(s) === 'hoje' ? 'Vence hoje. O aluno vê o aviso.' : 'Em dia.') : 'Opcional.'}</span><input id="f-due" type="date" data-sf="planDue" data-rerender="1" value="${esc(s.planDue || '')}"></label><button type="button" class="icon" data-act="due-plus">+1 mês</button></div>
+      ${fbEditHTML(s)}
       <label>E-mail de acesso <span class="hint">O aluno cria a conta no app com este e-mail e a ficha aparece pra ele. ${s.userId ? 'Situação: app ativo.' : s.email ? 'Situação: ainda não criou a conta.' : ''}</span><input id="f-email" type="email" inputmode="email" data-sf="email" value="${esc(s.email || '')}" placeholder="aluno@email.com"></label>
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
         <label>Organização dos treinos<select id="f-sched" data-sched="1"><option value="fixo" ${isSeq(s) ? '' : 'selected'}>Dias fixos da semana</option><option value="seq" ${isSeq(s) ? 'selected' : ''}>Sequência A, B, C (sem dia fixo)</option></select></label>
@@ -2896,6 +2927,12 @@ document.addEventListener('click', e => {
     state.done.step = null; render(); top();
   }
   else if (act === 'bk-go'){ doBackup(b); }
+  else if (act === 'fb-open'){ state.fbOpen = v; render(); const t = document.getElementById('fb-note'); if (t) t.focus(); }
+  else if (act === 'fb-all'){ state.fbAll = true; render(); }
+  else if (act === 'fb-cancel'){ state.fbOpen = null; render(); }
+  else if (act === 'fb-save'){ const s = db.students.find(x => x.id === v); if (!s) return; const t = ((document.getElementById('fb-note') || {}).value || '').trim();
+    s.fbLast = isoToday(); (s.fbLog = s.fbLog || []).push({d: s.fbLast, t}); if (s.fbLog.length > 60) s.fbLog = s.fbLog.slice(-60);
+    state.fbOpen = null; save(); render(); toast('Feedback de ' + s.name.split(' ')[0] + ' registrado. Próximo em ' + fbEvery(s) + ' dias.'); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
