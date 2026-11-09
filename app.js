@@ -1073,6 +1073,7 @@ function panelView(){
       </div>
       <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
     </div>
+    ${bkHTML()}
   </main>`;
 }
 
@@ -1093,6 +1094,50 @@ function effortView(st){
     <button class="btn block" type="button" data-act="eff-save" ${sel ? '' : 'disabled'}>Salvar e ver o resumo</button>
     <button class="linkbtn effskip" type="button" data-act="eff-skip">Pular</button>
   </section></main>`;
+}
+
+const BK_TABLES = [['students', 'id'], ['student_private', 'student_id'], ['logs', 'id'], ['library', 'id'], ['methods', 'id'], ['settings', 'key'], ['profiles', 'id'], ['feed_seen', 'log_id']];
+let jszipP = null;
+function loadZip(){
+  if (jszipP) return jszipP;
+  jszipP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    el.onload = () => window.JSZip ? res(window.JSZip) : rej(new Error('zip')); el.onerror = () => { jszipP = null; rej(new Error('zip')); }; document.head.appendChild(el); });
+  return jszipP;
+}
+function toCSV(rows){
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  const cell = v => { if (v === null || v === undefined) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return [cols.join(','), ...rows.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n');
+}
+const BK_KEY = 'jau-backup-em';
+const bkLast = () => { try { return +localStorage.getItem(BK_KEY) || 0; } catch(e){ return 0; } };
+function bkHTML(){
+  const t = bkLast(), d = t ? Math.floor((Date.now() - t) / 864e5) : null, cloud = typeof sb !== 'undefined' && !!sb;
+  return `<section class="card bkcard ${d === null || d >= 30 ? 'due' : ''}"><div class="bkt"><p class="eyebrow">Backup</p>
+    <b>${d === null ? 'Nenhum backup feito neste aparelho' : d === 0 ? 'Último backup: hoje' : 'Último backup: há ' + d + (d === 1 ? ' dia' : ' dias')}</b>
+    <span class="small muted">${cloud ? 'Baixa as 8 tabelas do banco em CSV, num arquivo só (.zip).' : 'Baixa uma cópia dos dados deste rascunho.'} Faça uma vez por mês e guarde no computador.</span></div>
+    <button type="button" class="btn sm" data-act="bk-go">Baixar backup</button></section>`;
+}
+async function doBackup(b){
+  const name = 'jau-backup-' + isoToday(), t0 = b.textContent;
+  b.disabled = true; b.textContent = 'Preparando…';
+  try {
+    let blob, file;
+    if (typeof sb !== 'undefined' && sb){
+      if (typeof hasPending === 'function' && hasPending()) await runSync();
+      const Z = await loadZip(), zip = new Z(), info = [];
+      for (const [t, pk] of BK_TABLES){ const rows = await fetchAll(t, pk); zip.file(t + '.csv', toCSV(rows)); info.push(t + ': ' + rows.length + (rows.length === 1 ? ' linha' : ' linhas')); }
+      zip.file('LEIA-ME.txt', 'Backup do app Jau Training\r\nGerado em ' + new Date().toLocaleString('pt-BR') + '\r\n\r\n' + info.join('\r\n') + '\r\n\r\nCada arquivo .csv é uma tabela do Supabase, no mesmo formato do "Export table as CSV".\r\n');
+      blob = await zip.generateAsync({type: 'blob'}); file = name + '.zip';
+    } else { blob = new Blob([JSON.stringify(db)], {type: 'application/json'}); file = name + '.json'; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    try { localStorage.setItem(BK_KEY, String(Date.now())); } catch(e){}
+    toast('Backup baixado: ' + file); render();
+  } catch(e){
+    console.error('backup', e);
+    toast(navigator.onLine === false ? 'Sem internet. O backup precisa de conexão.' : 'Não consegui gerar o backup. Tente de novo.');
+    b.disabled = false; b.textContent = t0;
+  }
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2536,6 +2581,7 @@ function trainerView(){
         <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p>
+    ${bkHTML()}
     ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
     ${accountHTML()}
@@ -2849,6 +2895,7 @@ document.addEventListener('click', e => {
     if (l && act === 'eff-save' && state.done.eff){ l.effort = state.done.eff; const t = ((m && m.value) || '').trim(); if (t) l.effortMsg = t; else delete l.effortMsg; dataVer++; save(); }
     state.done.step = null; render(); top();
   }
+  else if (act === 'bk-go'){ doBackup(b); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
