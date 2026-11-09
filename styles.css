@@ -1062,4 +1062,14 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .pfbt{display:grid;gap:2px;min-width:0}.pfbt b{font-size:.84rem;text-transform:uppercase;letter-spacing:.02em}.pfbt small{font-size:.72rem;color:var(--muted)}
 .pfbform{display:grid;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--line)}
 .pfbform textarea{width:100%;border:1px solid var(--line);background:var(--fieldbg, var(--bg));color:var(--ink);border-radius:12px;padding:10px;font:inherit;resize:vertical}
+.pfbname{all:unset;cursor:pointer;font-weight:800;font-size:.84rem;text-transform:uppercase;letter-spacing:.02em}.pfbname:hover{color:var(--accent);text-decoration:underline}
+.fbtab .phd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fbst{margin:4px 0 0;font-weight:700;font-size:.92rem}.fbst.due{color:var(--accent)}
+.fbhist{display:grid;margin-top:6px}
+.fbitem{display:grid;gap:6px;padding:14px 0;border-top:1px solid var(--line)}
+.fbitem textarea{width:100%;border:1px solid var(--line);background:var(--fieldbg, var(--bg));color:var(--ink);border-radius:12px;padding:10px;font:inherit;resize:vertical}
+.fbihd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fbd{margin:0;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.fbt{margin:0;white-space:pre-wrap;line-height:1.5}
+.fbdel{margin-left:auto;color:var(--accent)}
 .fblog{display:grid;gap:4px;margin-top:-2px}.fblog p{margin:0;font-size:.82rem;display:flex;gap:8px}.fblog p b{flex:none}

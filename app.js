@@ -1155,7 +1155,7 @@ function fbHTML(){
   const due = all.filter(x => x.f.due).sort((a, b) => (a.f.first ? 1 : 0) - (b.f.first ? 1 : 0) || a.f.d - b.f.d);
   const soon = all.filter(x => !x.f.due && x.f.d <= 3).sort((a, b) => a.f.d - b.f.d);
   return `<section class="card pfb"><div class="phd"><p class="eyebrow">Feedbacks</p><span class="muted small">${due.length ? due.length + (due.length === 1 ? ' pendente' : ' pendentes') : 'em dia'}</span></div>
-    ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
+    ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><button type="button" class="pfbname" data-act="fb-hist" data-v="${s.id}" title="Ver histórico de feedbacks">${esc(s.name)}</button><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
         ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar</button>`}</div>
         ${state.fbOpen === s.id ? `<div class="pfbform"><textarea id="fb-note" rows="2" placeholder="Anotação do feedback (opcional): como o aluno está, o que ajustar..."></textarea>
           <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}`).join('')}</div>${due.length > 6 && !state.fbAll ? `<button type="button" class="linkbtn" data-act="fb-all">Ver todos os ${due.length}</button>` : ''}`
@@ -1167,7 +1167,22 @@ function fbEditHTML(s){
   const ev = s.fbEvery === undefined || s.fbEvery === '' ? '14' : String(s.fbEvery), log = (s.fbLog || []).slice(-5).reverse();
   return `<label>Feedback do aluno <span class="hint">O painel avisa quando é hora de pedir o feedback.${s.fbLast ? ' Último: ' + esc(dueBR(s.fbLast)) + '.' : ''}</span>
       <select id="f-fbevery" data-sf="fbEvery">${[['7', 'Semanal'], ['14', 'Quinzenal'], ['0', 'Desligado']].map(([v, l]) => `<option value="${v}" ${ev === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-    ${log.length ? `<div class="fblog"><span class="hint">Últimos feedbacks</span>${log.map(x => `<p><b>${esc(dueBR(x.d))}</b>${x.t ? esc(x.t) : '<span class="muted">sem anotação</span>'}</p>`).join('')}</div>` : ''}`;
+    ${log.length ? `<div class="fblog"><span class="hint">Últimos feedbacks</span>${log.map(x => `<p><b>${esc(dueBR(x.d))}</b>${x.t ? esc(x.t) : '<span class="muted">sem anotação</span>'}</p>`).join('')}<button type="button" class="linkbtn" data-act="fb-hist" data-v="${s.id}">Ver histórico completo</button></div>` : ''}`;
+}
+function fbTab(s){
+  const f = fbState(s), log = (s.fbLog || []).map((x, i) => ({...x, i})).reverse(), open = state.fbOpen === s.id;
+  const status = !f ? 'Lembrete desligado' : f.first ? 'Primeiro feedback pendente' : f.d < 0 ? 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias') : f.d === 0 ? 'Feedback é hoje' : f.d === 1 ? 'Próximo feedback amanhã' : 'Próximo feedback em ' + f.d + ' dias (' + dueBR(f.next) + ')';
+  return `<section class="card fbtab"><div class="phd"><div><p class="eyebrow">Feedbacks${f ? ' · ' + fbFreq(f.ev) : ''}</p><p class="fbst ${f && f.due ? 'due' : ''}">${status}</p></div>
+      ${open ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar feedback</button>`}</div>
+    ${open ? `<div class="pfbform"><textarea id="fb-note" rows="3" placeholder="O que o aluno contou: como está se sentindo, dores, rotina, o que ajustar..."></textarea>
+      <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}
+    ${log.length ? `<div class="fbhist">${log.map(x => state.fbEdit === x.i ? `<div class="fbitem"><p class="fbd">${esc(dateBR(x.d + 'T12:00', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}))}</p>
+          <textarea id="fb-edit" rows="3">${esc(x.t || '')}</textarea><div class="row"><button type="button" class="btn sm" data-act="fb-esave" data-v="${x.i}">Salvar</button><button type="button" class="btn sm quiet" data-act="fb-ecancel">Cancelar</button>
+          <button type="button" class="linkbtn fbdel" data-act="fb-del" data-v="${x.i}">${state.fbDel === x.i ? 'Toque de novo para apagar' : 'Apagar'}</button></div></div>`
+        : `<div class="fbitem"><div class="fbihd"><p class="fbd">${esc(dateBR(x.d + 'T12:00', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}))}</p><button type="button" class="icon" data-act="fb-edit" data-v="${x.i}">Editar</button></div>
+          <p class="fbt">${x.t ? esc(x.t) : '<span class="muted">Sem anotação.</span>'}</p></div>`).join('')}</div>`
+      : `<div class="empty">Nenhum feedback registrado ainda. Quando você conversar com ${esc(s.name.split(' ')[0])}, toque em "Registrar feedback" e anote o que ele contou. Fica tudo guardado aqui.</div>`}
+  </section>`;
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2741,8 +2756,8 @@ function trackView(){
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button></div>
-    ${state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button></div>
+    ${state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
   </main>`;
 }
 
@@ -2928,6 +2943,13 @@ document.addEventListener('click', e => {
   }
   else if (act === 'bk-go'){ doBackup(b); }
   else if (act === 'fb-open'){ state.fbOpen = v; render(); const t = document.getElementById('fb-note'); if (t) t.focus(); }
+  else if (act === 'fb-hist'){ state.sid = v; state.psec = 'alunos'; state.pview = 'track'; state.ptab = 'fb'; state.fbOpen = null; state.fbEdit = null; render(); top(); }
+  else if (act === 'fb-edit'){ state.fbEdit = +v; state.fbDel = null; render(); const t = document.getElementById('fb-edit'); if (t) t.focus(); }
+  else if (act === 'fb-ecancel'){ state.fbEdit = null; state.fbDel = null; render(); }
+  else if (act === 'fb-esave'){ const s = stu(), x = (s.fbLog || [])[+v]; if (x){ x.t = ((document.getElementById('fb-edit') || {}).value || '').trim(); save(); toast('Feedback atualizado.'); } state.fbEdit = null; render(); }
+  else if (act === 'fb-del'){ if (state.fbDel !== +v){ state.fbDel = +v; render(); return; }
+    const s = stu(); s.fbLog.splice(+v, 1); s.fbLast = s.fbLog.length ? s.fbLog.reduce((m, x) => x.d > m ? x.d : m, '') : undefined; if (!s.fbLast) delete s.fbLast;
+    state.fbEdit = null; state.fbDel = null; save(); render(); toast('Feedback apagado.'); }
   else if (act === 'fb-all'){ state.fbAll = true; render(); }
   else if (act === 'fb-cancel'){ state.fbOpen = null; render(); }
   else if (act === 'fb-save'){ const s = db.students.find(x => x.id === v); if (!s) return; const t = ((document.getElementById('fb-note') || {}).value || '').trim();
