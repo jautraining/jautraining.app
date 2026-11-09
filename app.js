@@ -1068,7 +1068,6 @@ function panelView(){
         <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
           ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
           ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
-        ${fbHTML()}
         <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
         <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
       </div>
@@ -1114,7 +1113,7 @@ const BK_KEY = 'jau-backup-em';
 const bkLast = () => { try { return +localStorage.getItem(BK_KEY) || 0; } catch(e){ return 0; } };
 function bkHTML(){
   const t = bkLast(), d = t ? Math.floor((Date.now() - t) / 864e5) : null, cloud = typeof sb !== 'undefined' && !!sb;
-  return `<section class="card bkcard ${d === null || d >= 30 ? 'due' : ''}"><div class="bkt"><p class="eyebrow">Backup</p>
+  return `<section class="card bkcard ${d === null || d >= 30 ? 'bkdue' : ''}"><div class="bkt"><p class="eyebrow">Backup</p>
     <b>${d === null ? 'Nenhum backup feito neste aparelho' : d === 0 ? 'Último backup: hoje' : 'Último backup: há ' + d + (d === 1 ? ' dia' : ' dias')}</b>
     <span class="small muted">${cloud ? 'Baixa as 8 tabelas do banco em CSV, num arquivo só (.zip).' : 'Baixa uma cópia dos dados deste rascunho.'} Faça uma vez por mês e guarde no computador.</span></div>
     <button type="button" class="btn sm" data-act="bk-go">Baixar backup</button></section>`;
@@ -1183,6 +1182,45 @@ function fbTab(s){
           <p class="fbt">${x.t ? esc(x.t) : '<span class="muted">Sem anotação.</span>'}</p></div>`).join('')}</div>`
       : `<div class="empty">Nenhum feedback registrado ainda. Quando você conversar com ${esc(s.name.split(' ')[0])}, toque em "Registrar feedback" e anote o que ele contou. Fica tudo guardado aqui.</div>`}
   </section>`;
+}
+
+const PLANS = [['mensal', 'Mensal', 1], ['bimestral', 'Bimestral', 2], ['trimestral', 'Trimestral', 3], ['semestral', 'Semestral', 6], ['anual', 'Anual', 12]];
+const planOf = s => PLANS.find(p => p[0] === s.plan);
+const planMonths = s => (planOf(s) || [0, '', 1])[2];
+const planLbl = s => (planOf(s) || [0, ''])[1];
+const renLbl = s => planMonths(s) === 1 ? '+1 mês' : '+' + planMonths(s) + ' meses';
+function renewPlan(s){ for (let i = 0; i < planMonths(s); i++) s.planDue = addMonth(s.planDue); }
+const anamOk = s => s.anam === 'ok';
+const alRenew = s => !!s.planDue && daysTo(s.planDue) <= 7;
+const alPass = s => !state.alF || (state.alF === 'ativos' ? anamOk(s) : state.alF === 'anam' ? !anamOk(s) : alRenew(s));
+const AL_F = {ativos: 'Alunos ativos', anam: 'Anamnese pendente', renov: 'Para renovação'};
+function alBoxes(){
+  const all = db.students, at = all.filter(anamOk).length, pend = all.length - at, ren = all.filter(alRenew).length;
+  const box = (k, n, sub) => `<button type="button" class="albox ${k}" data-act="al-f" data-v="${k}" aria-pressed="${state.alF === k}"><b>${n}</b><span>${AL_F[k]}</span><small>${sub}</small></button>`;
+  return `<div class="alboxes">${box('ativos', at, 'anamnese respondida')}${box('anam', pend, pend ? 'falta responder' : 'todos responderam')}${box('renov', ren, 'vencido ou vence em 7 dias')}</div>`;
+}
+function alDueTxt(s){ const d = daysTo(s.planDue); return d < 0 ? 'Venceu há ' + (-d) + (d === -1 ? ' dia' : ' dias') : d === 0 ? 'Vence hoje' : d === 1 ? 'Vence amanhã' : 'Vence em ' + d + ' dias'; }
+function alDetail(){
+  if (state.alF === 'renov'){
+    const l = db.students.filter(alRenew).sort((a, b) => daysTo(a.planDue) - daysTo(b.planDue));
+    return `<section class="card aldet"><div class="phd"><p class="eyebrow">Para renovação</p><button type="button" class="linkbtn small" data-act="al-f" data-v="renov">Fechar</button></div>
+      ${l.length ? `<div class="pfblist">${l.map(s => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small><span class="alplan ${s.plan ? '' : 'none'}">${s.plan ? planLbl(s) : 'Plano não definido'}</span> · ${alDueTxt(s)} · ${esc(dueBR(s.planDue))}</small></span>
+        <button type="button" class="btn sm" data-act="al-renew" data-v="${s.id}">Renovar ${renLbl(s)}</button></div>`).join('')}</div>` : '<p class="muted small">Nenhum plano vencido ou vencendo nos próximos 7 dias.</p>'}
+      <p class="hint">Renovar soma ao vencimento o período do plano do aluno (mensal +1 mês, trimestral +3 meses...). O tipo de plano fica nos dados do aluno.</p></section>`;
+  }
+  if (state.alF === 'anam'){
+    const l = db.students.filter(s => !anamOk(s)).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+    return `<section class="card aldet"><div class="phd"><p class="eyebrow">Anamnese pendente</p><button type="button" class="linkbtn small" data-act="al-f" data-v="anam">Fechar</button></div>
+      ${l.length ? `<div class="pfblist">${l.map(s => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small>${s.plan ? planLbl(s) + ' · ' : ''}${s.logs.length ? s.logs.length + (s.logs.length === 1 ? ' treino' : ' treinos') : 'ainda sem treinos'}</small></span>
+        <button type="button" class="btn sm quiet" data-act="al-anam" data-v="${s.id}">Marcar como respondida</button></div>`).join('')}</div>` : '<p class="muted small">Todos os alunos já responderam a anamnese.</p>'}
+      <p class="hint">Quando o aluno responder a anamnese, marque aqui. Ele passa a contar como aluno ativo.</p></section>`;
+  }
+  return '';
+}
+function alFilLine(){
+  if (!state.alF) return '';
+  const n = db.students.filter(alPass).length;
+  return `<p class="alfil">Mostrando: <b>${AL_F[state.alF]}</b> (${n}) <button type="button" class="linkbtn" data-act="al-f" data-v="${state.alF}">Ver todos</button></p>${n ? '' : '<p class="empty">Nenhum aluno neste filtro.</p>'}`;
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2604,18 +2642,18 @@ function trainerView(){
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    ${attentionHTML()}
+    <div class="alay"><div class="amain">${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
     <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
-      <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label>
+      <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
-    <div class="stugrid">${db.students.slice().sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
+    ${alFilLine()}<div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div>${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -2625,7 +2663,7 @@ function trainerView(){
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
         <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
     </article>`;}).join('')}</div>
-    <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p>
+    <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
     ${bkHTML()}
     ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
@@ -2643,7 +2681,8 @@ function editView(){
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
     <div class="form">
       <label>Nome<input id="f-name" data-sf="name" value="${esc(s.name)}"></label>
-      <div class="duerow"><label>Vencimento do plano <span class="hint">${s.planDue ? (planState(s) === 'vencido' ? 'Vencido. O aluno vê o aviso "Seu plano venceu".' : planState(s) === 'hoje' ? 'Vence hoje. O aluno vê o aviso.' : 'Em dia.') : 'Opcional.'}</span><input id="f-due" type="date" data-sf="planDue" data-rerender="1" value="${esc(s.planDue || '')}"></label><button type="button" class="icon" data-act="due-plus">+1 mês</button></div>
+      <div class="duerow"><label>Vencimento do plano <span class="hint">${s.planDue ? (planState(s) === 'vencido' ? 'Vencido. O aluno vê o aviso "Seu plano venceu".' : planState(s) === 'hoje' ? 'Vence hoje. O aluno vê o aviso.' : 'Em dia.') : 'Opcional.'}</span><input id="f-due" type="date" data-sf="planDue" data-rerender="1" value="${esc(s.planDue || '')}"></label><button type="button" class="icon" data-act="due-plus">${renLbl(s)}</button></div>
+      <div class="grid2al"><label>Plano<select id="f-plan" data-sf="plan"><option value="">Não definido</option>${PLANS.map(([k, l]) => `<option value="${k}" ${s.plan === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label><label>Anamnese<select id="f-anam" data-sf="anam"><option value="" ${anamOk(s) ? '' : 'selected'}>Pendente</option><option value="ok" ${anamOk(s) ? 'selected' : ''}>Respondida</option></select></label></div>
       ${fbEditHTML(s)}
       <label>E-mail de acesso <span class="hint">O aluno cria a conta no app com este e-mail e a ficha aparece pra ele. ${s.userId ? 'Situação: app ativo.' : s.email ? 'Situação: ainda não criou a conta.' : ''}</span><input id="f-email" type="email" inputmode="email" data-sf="email" value="${esc(s.email || '')}" placeholder="aluno@email.com"></label>
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
@@ -2955,6 +2994,9 @@ document.addEventListener('click', e => {
   else if (act === 'fb-save'){ const s = db.students.find(x => x.id === v); if (!s) return; const t = ((document.getElementById('fb-note') || {}).value || '').trim();
     s.fbLast = isoToday(); (s.fbLog = s.fbLog || []).push({d: s.fbLast, t}); if (s.fbLog.length > 60) s.fbLog = s.fbLog.slice(-60);
     state.fbOpen = null; save(); render(); toast('Feedback de ' + s.name.split(' ')[0] + ' registrado. Próximo em ' + fbEvery(s) + ' dias.'); }
+  else if (act === 'al-f'){ state.alF = state.alF === v ? '' : v; render(); }
+  else if (act === 'al-anam'){ const s = db.students.find(x => x.id === v); if (!s) return; s.anam = 'ok'; save(); render(); toast('Anamnese de ' + s.name.split(' ')[0] + ' marcada como respondida.'); }
+  else if (act === 'al-renew'){ const s = db.students.find(x => x.id === v); if (!s) return; renewPlan(s); save(); render(); toast('Plano de ' + s.name.split(' ')[0] + ' renovado até ' + dueBR(s.planDue) + '.'); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -3029,7 +3071,7 @@ document.addEventListener('click', e => {
   else if (act === 'done-close'){ state.done = null; render(); top(); }
   else if (act === 'swap'){ const rec = drEx(b.dataset.ex); rec.swap = rec.swap || {}; const k = +b.dataset.i; rec.swap[k] = !rec.swap[k]; save(); render(); }
   else if (act === 'alt-del'){ const f = findEx(b.dataset.ex); if (f && f.ex.alt){ f.ex.alt[+b.dataset.i] = null; save(); render(); } }
-  else if (act === 'due-plus'){ const s = stu(); s.planDue = addMonth(s.planDue); save(); render(); toast('Novo vencimento: ' + dueBR(s.planDue)); }
+  else if (act === 'due-plus'){ const s = stu(); renewPlan(s); save(); render(); toast('Novo vencimento: ' + dueBR(s.planDue)); }
   else if (act === 'vid-open'){ openVideo(v); }
   else if (act === 'vid-close'){ closeVideo(); }
   else if (act === 'st-del'){ if (!arm(b, 'Toque de novo para remover o aluno e o histórico', 'Remover aluno')) return; db.students = db.students.filter(x => x.id !== v); state.sid = db.students[0] && db.students[0].id; state.pview = 'list'; save(); render(); top(); toast('Aluno removido'); }
@@ -3116,7 +3158,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
-  if (e.target.id === 'f-due'){ render(); return; }
+  if (e.target.id === 'f-due' || e.target.id === 'f-plan' || e.target.id === 'f-anam'){ render(); return; }
   const t = e.target, c = t.dataset.change;
   if (c === 'cpst'){ if (state.copy){ state.copy.sid = t.value; render(); } return; }
   if (c === 'imptarget'){ if (state.imp) state.imp.target = t.value; return; }
@@ -3194,7 +3236,7 @@ document.addEventListener('submit', e => {
   const days = {}; DAYS.forEach(x => days[x.k] = {title: x.k === 'dom' ? 'Descanso' : '', ex: []});
   const fromId = (document.getElementById('new-from') || {}).value, src = fromId && db.students.find(x => x.id === fromId);
   const em = ((document.getElementById('new-email') || {}).value || '').trim().toLowerCase();
-  const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
+  const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), plan: ((document.getElementById('new-plan') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
   db.students.push(s); save();
   state.sid = s.id; state.pview = 'edit'; state.editDay = 'seg'; state.newOpen = false; render(); top();
   toast(name.split(' ')[0] + ' adicionado. Monte a ficha.');
