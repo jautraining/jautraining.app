@@ -1038,7 +1038,7 @@ function panChart(){
   const by = {}; db.students.forEach(s => { const seen = new Set(); s.logs.forEach(l => { const k = dayKeyOf(new Date(l.date)); if (!seen.has(k)){ seen.add(k); by[k] = (by[k] || 0) + 1; } }); });
   const vals = days.map(d => by[dayKeyOf(d)] || 0), mx = Math.max(1, ...vals), tk = dayKeyOf(new Date());
   return `<div class="pchart" role="img" aria-label="Alunos que treinaram por dia nos últimos 14 dias">${days.map((d, i) => { const v = vals[i], isT = dayKeyOf(d) === tk;
-    return `<div class="pcol ${isT ? 'today' : ''}"><span class="pv">${v || ''}</span><span class="pbar"><i style="height:${Math.round(v / mx * 100)}%"></i></span><span class="pl">${isT ? 'Hoje' : i % 2 === 1 ? '' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0')}</span></div>`; }).join('')}</div>`;
+    return `<div class="pcol ${isT ? 'today' : ''}"><span class="pv">${v || ''}</span><span class="pbar"><i style="height:${Math.round(v / mx * 100)}%"></i></span><span class="pl ${i % 2 === 1 && !isT ? 'odd' : ''}">${isT ? 'Hoje' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0')}</span></div>`; }).join('')}</div>`;
 }
 function panDue(){
   const list = db.students.filter(s => s.planDue).map(s => ({s, d: daysTo(s.planDue)})).sort((a, b) => a.d - b.d);
@@ -1221,6 +1221,26 @@ function alFilLine(){
   if (!state.alF) return '';
   const n = db.students.filter(alPass).length;
   return `<p class="alfil">Mostrando: <b>${AL_F[state.alF]}</b> (${n}) <button type="button" class="linkbtn" data-act="al-f" data-v="${state.alF}">Ver todos</button></p>${n ? '' : '<p class="empty">Nenhum aluno neste filtro.</p>'}`;
+}
+
+function leTec(e, ei, x, si){
+  const tec = tecOfMeth(e.method); if (!tec) return '';
+  const pf = findEx(e.exId), pex = pf && pf.ex, dr = tec === 'drop';
+  const has = x.parts.some(p => (p.drops && p.drops.length) || (p.blocks && p.blocks.length));
+  let show = has || !!(pex && pex.series && pex.series[si] && pex.series[si].m);
+  if (!show && !(pex && pex.series && pex.series.some(z => z.m))){ const w = e.sets.map((z, i) => (z.type || 'trab') === 'trab' ? i : -1).filter(i => i >= 0); show = si === w[w.length - 1]; }
+  if (!show) return '';
+  const base = pex ? tecN(pex) : (dr ? 1 : 2), cnt = Math.max(1, dr ? base : base - 1, ...x.parts.map(p => dr ? (p.drops || []).length : (p.blocks || []).length));
+  let out = '';
+  for (let k = 0; k < cnt; k++){
+    out += `<div class="le-row lex"><span class="lexl">↳ ${dr ? 'Drop ' + (k + 1) : (k + 2) + 'º bloco'}</span>${x.parts.map((p, pi) => {
+      const at = `data-e="${ei}" data-s="${si}" data-p="${pi}" data-k="${k}"`, dv = (p.drops && p.drops[k]) || {};
+      if (!dr) return `<span class="fld samekg" aria-hidden="true">mesma carga</span><label class="fld"><input id="le-bk-${ei}-${si}-${pi}-${k}" inputmode="numeric" autocomplete="off" data-le="blk" ${at} value="${esc((p.blocks && p.blocks[k]) || '')}" aria-label="Repetições do ${k + 2}º bloco, série ${si + 1}"><span>reps</span></label>`;
+      return (nkE(e, pi) ? '<span class="fld nokg">sem carga</span>' : `<label class="fld"><input id="le-dk-${ei}-${si}-${pi}-${k}" inputmode="decimal" autocomplete="off" data-le="dkg" ${at} value="${esc(dv.kg || '')}" aria-label="Carga do drop ${k + 1}, série ${si + 1}"><span>kg</span></label>`)
+        + `<label class="fld"><input id="le-dr-${ei}-${si}-${pi}-${k}" inputmode="numeric" autocomplete="off" data-le="dreps" ${at} value="${esc(dv.reps || '')}" aria-label="Repetições do drop ${k + 1}, série ${si + 1}"><span>reps</span></label>`;
+    }).join('')}</div>`;
+  }
+  return `<div class="lexwrap"><span class="tecpill">${esc((db.methods.find(m => m.id === e.method) || {}).name || '')}</span>${out}</div>`;
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2781,7 +2801,7 @@ function logEditHTML(st, l){
     ${d.entries.map((e, ei) => `<div class="le"><b class="le-n">${esc(e.items.map(i => lib(i).name).join(' + '))}</b>
       ${e.sets.map((x, si) => `<div class="le-row">${dot(x.type || 'trab')}<span class="sn3">${si + 1}</span>
         ${x.parts.map((p, pi) => `<label class="fld"><input id="le-kg-${ei}-${si}-${pi}" inputmode="decimal" autocomplete="off" data-le="kg" data-e="${ei}" data-s="${si}" data-p="${pi}" value="${esc(p.kg)}" aria-label="Carga da série ${si + 1}"><span>kg</span></label><label class="fld"><input id="le-rp-${ei}-${si}-${pi}" inputmode="numeric" autocomplete="off" data-le="reps" data-e="${ei}" data-s="${si}" data-p="${pi}" value="${esc(p.reps)}" aria-label="Repetições da série ${si + 1}"><span>reps</span></label>`).join('')}
-        <label class="le-done"><input id="le-d-${ei}-${si}" type="checkbox" data-led="1" data-e="${ei}" data-s="${si}" ${x.done ? 'checked' : ''}> feita</label></div>`).join('')}
+        <label class="le-done"><input id="le-d-${ei}-${si}" type="checkbox" data-led="1" data-e="${ei}" data-s="${si}" ${x.done ? 'checked' : ''}> feita</label></div>${leTec(e, ei, x, si)}`).join('')}
       <textarea id="le-c-${ei}" class="le-c" rows="1" data-lec="${ei}" placeholder="Observação">${esc(e.comment || '')}</textarea></div>`).join('')}
     <div class="tools"><button class="btn sm" type="button" data-act="log-save">Salvar correção</button><button class="btn sm quiet" type="button" data-act="log-cancel">Cancelar</button><button class="icon danger" type="button" data-act="log-del" data-v="${l.id}">Excluir treino</button></div>
   </article>`;
@@ -3074,7 +3094,7 @@ document.addEventListener('click', e => {
   else if (act === 'finish-cancel'){ const fa = document.getElementById('finish-area'); if (fa) fa.innerHTML = '<button class="btn block" type="button" data-act="finish">Finalizar treino</button>'; }
   else if (act === 'log-edit'){ const l = stu().logs.find(x => x.id === v); if (!l) return; state.editLog = v; state.logDraft = JSON.parse(JSON.stringify(l)); render(); const el = document.getElementById('log-' + v); if (el) el.scrollIntoView({block:'start'}); }
   else if (act === 'log-cancel'){ state.editLog = null; state.logDraft = null; render(); }
-  else if (act === 'log-save'){ const st = stu(), l = st.logs.find(x => x.id === state.editLog); if (l && state.logDraft){ l.entries = state.logDraft.entries; dataVer++; save(); } state.editLog = null; state.logDraft = null; render(); toast('Treino corrigido. Gráficos e recordes atualizados.'); }
+  else if (act === 'log-save'){ const st = stu(), l = st.logs.find(x => x.id === state.editLog); if (l && state.logDraft){ state.logDraft.entries.forEach(e => e.sets.forEach(x => x.parts.forEach(p => { if (p.drops && !p.drops.some(d => d && (d.kg || d.reps))) delete p.drops; if (p.blocks && !p.blocks.some(Boolean)) delete p.blocks; }))); l.entries = state.logDraft.entries; dataVer++; save(); } state.editLog = null; state.logDraft = null; render(); toast('Treino corrigido. Gráficos e recordes atualizados.'); }
   else if (act === 'log-del'){ if (!arm(b, 'Toque de novo para excluir', 'Excluir treino')) return; const st = stu(); st.logs = st.logs.filter(x => x.id !== v); st.last = st.logs.reduce((m, x) => !m || x.date > m ? x.date : m, null); dataVer++; state.editLog = null; state.logDraft = null; save(); render(); toast('Treino excluído'); }
   else if (act === 'hist-more'){ state.histN += 10; render(); }
   else if (act === 'done-close'){ state.done = null; render(); top(); }
@@ -3200,7 +3220,10 @@ document.addEventListener('input', e => {
     else P0[t.dataset.in] = val;
     save(); return;
   }
-  if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p]; p[t.dataset.le] = t.value.replace(',', '.'); return; }
+  if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p], v = t.value.replace(',', '.'), k = +t.dataset.k;
+    if (t.dataset.le === 'dkg' || t.dataset.le === 'dreps'){ p.drops = p.drops || []; while (p.drops.length <= k) p.drops.push({kg: '', reps: ''}); p.drops[k] = p.drops[k] || {kg: '', reps: ''}; p.drops[k][t.dataset.le === 'dkg' ? 'kg' : 'reps'] = v; }
+    else if (t.dataset.le === 'blk'){ p.blocks = p.blocks || []; while (p.blocks.length <= k) p.blocks.push(''); p.blocks[k] = v; }
+    else p[t.dataset.le] = v; return; }
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
   if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
   if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
