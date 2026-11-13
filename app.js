@@ -1242,6 +1242,57 @@ function leTec(e, ei, x, si){
   }
   return `<div class="lexwrap"><span class="tecpill">${esc((db.methods.find(m => m.id === e.method) || {}).name || '')}</span>${out}</div>`;
 }
+
+const AUTO_FIN_H = 3;
+function buildEntries(d, dr, auto){
+  const entries = [];
+    d.ex.forEach(ex => {
+      const rec = dr[ex.id]; if (!rec) return;
+      const used = usedItems(ex, rec);
+      const sets = targets(ex).map((_, si) => { const s = (rec.sets || {})[si] || {};
+        return {done: !!s.done || (!!auto && (s.parts || []).some(p => p && p.reps)), type: stypeOf(ex, si), parts: used.map((_, pi) => { const sp = (s.parts && s.parts[pi]) || {}, o = {kg: sp.kg || '', reps: sp.reps || ''};
+          const sm = tecOfMeth(ex.method) && ex.series && ex.series[si] && ex.series[si].m;
+          if (sm && sp.drops && sp.drops.some(d => d && (d.kg || d.reps))) o.drops = sp.drops.slice(0, tecN(ex)).map(d => ({kg: (d && d.kg) || '', reps: (d && d.reps) || ''}));
+          if (sm && sp.blocks && sp.blocks.some(Boolean)) o.blocks = sp.blocks.slice(0, tecN(ex) - 1).map(x => x || '');
+          return o; })}; });
+      const comment = (rec.comment || '').trim();
+      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), nokg: ex.items.map((_, k) => nkOf(ex, k)), sets, comment});
+    });
+  return entries;
+}
+function autoFinish(){
+  const M = db.draftMeta; if (!M) return 0;
+  const lim = AUTO_FIN_H * 3600e3, now = Date.now(); let n = 0;
+  Object.keys(M).forEach(k => {
+    const t0 = M[k]; if (!t0 || now - t0 < lim) return;
+    const i = k.lastIndexOf('|'), sid = k.slice(0, i), day = k.slice(i + 1), st = db.students.find(s => s.id === sid);
+    if (!st){ if (db.students.length) delete M[k]; return; }
+    const d = st.days && st.days[day], dr = db.drafts[k];
+    if (d && dr){
+      const entries = buildEntries(d, dr, true), cc = ((dr.__cardio || {}).comment || '').trim();
+      if (entries.length || cc){
+        const last = Math.min((db.draftEdit || {})[k] || t0, t0 + lim), date = new Date(last).toISOString(), dur = Math.round((last - t0) / 1000);
+        st.logs = st.logs || [];
+        st.logs.push(Object.assign({id: uid(), date, day, title: d.title, protocol: st.protocol, entries, auto: 1}, cc ? {cardioCmt: cc} : {}, dur >= 60 && dur <= 5 * 3600 ? {dur} : {}));
+        if (!st.last || st.last < date) st.last = date;
+        (state.autoFin = state.autoFin || []).push({sid, day, title: d.title || '', date}); n++;
+      }
+    }
+    delete M[k]; delete db.drafts[k]; if (db.draftEdit) delete db.draftEdit[k];
+    if (state.sid === sid && state.day === day && state.sumOpen) state.sumOpen = false;
+  });
+  if (n){ if (typeof dataVer !== 'undefined') dataVer++; save(); }
+  return n;
+}
+function autoBanner(st){
+  const l = (state.autoFin || []).filter(x => x.sid === st.id); if (!l.length) return '';
+  return `<div class="autofin" role="status"><p><b>${l.length === 1 ? 'Treino finalizado automaticamente' : l.length + ' treinos finalizados automaticamente'}</b>
+    ${l.map(x => esc((x.title || 'Treino') + ' · ' + dateBR(x.date, {weekday: 'long', day: '2-digit', month: '2-digit'}))).join('<br>')}<br>
+    <span class="muted small">Ficou aberto por mais de ${AUTO_FIN_H} horas, então salvamos as cargas que estavam anotadas. Séries com repetições preenchidas contam como feitas.</span></p>
+    <button type="button" class="icon" data-act="auto-ok">Entendi</button></div>`;
+}
+setInterval(() => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} }, 60000);
+document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} });
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -1518,7 +1569,7 @@ function attentionHTML(){
     <p class="hint">Alerta quando o aluno fica 4 dias ou mais sem treinar, ou faz menos da metade do planejado nas últimas 2 semanas.</p></section>`;
 }
 function nextProto(p){ p = String(p || 'Protocolo 0'); const m = p.match(/(\d+)\s*$/); return m ? p.replace(/(\d+)\s*$/, String(+m[1] + 1)) : p + ' 2'; }
-function touchStart(){ db.draftMeta = db.draftMeta || {}; const k = draftKey(); if (!db.draftMeta[k]) db.draftMeta[k] = Date.now(); }
+function touchStart(){ db.draftMeta = db.draftMeta || {}; const k = draftKey(); if (!db.draftMeta[k]) db.draftMeta[k] = Date.now(); db.draftEdit = db.draftEdit || {}; db.draftEdit[k] = Date.now(); }
 function doneData(st){
   const l = st.logs.find(x => x.id === state.done.logId); if (!l) return null;
   let sets = 0, vol = 0;
@@ -2549,7 +2600,7 @@ function studentView(){
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   if (state.stab === 'evolucao') return `<main class="wrap">${hello}${evolution(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${hello}${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
@@ -2791,7 +2842,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.auto ? `<p class="effline autoline">Finalizado automaticamente</p>` : ''}${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2818,7 +2869,7 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      ${l.auto ? `<p class="effline autoline">Finalizado automaticamente</p>` : ''}${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
@@ -2892,7 +2943,7 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){
+function render(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
   app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView());
@@ -3026,6 +3077,7 @@ document.addEventListener('click', e => {
   else if (act === 'al-f'){ state.alF = state.alF === v ? '' : v; render(); }
   else if (act === 'al-anam'){ const s = db.students.find(x => x.id === v); if (!s) return; s.anam = 'ok'; save(); render(); toast('Anamnese de ' + s.name.split(' ')[0] + ' marcada como respondida.'); }
   else if (act === 'al-renew'){ const s = db.students.find(x => x.id === v); if (!s) return; renewPlan(s); save(); render(); toast('Plano de ' + s.name.split(' ')[0] + ' renovado até ' + dueBR(s.planDue) + '.'); }
+  else if (act === 'auto-ok'){ state.autoFin = (state.autoFin || []).filter(x => x.sid !== stu().id); render(); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -3036,18 +3088,7 @@ document.addEventListener('click', e => {
         return; }
     }
     const achBefore = new Set(unlocked(st).map(a => a.id));
-    d.ex.forEach(ex => {
-      const rec = dr[ex.id]; if (!rec) return;
-      const used = usedItems(ex, rec);
-      const sets = targets(ex).map((_, si) => { const s = (rec.sets || {})[si] || {};
-        return {done: !!s.done, type: stypeOf(ex, si), parts: used.map((_, pi) => { const sp = (s.parts && s.parts[pi]) || {}, o = {kg: sp.kg || '', reps: sp.reps || ''};
-          const sm = tecOfMeth(ex.method) && ex.series && ex.series[si] && ex.series[si].m;
-          if (sm && sp.drops && sp.drops.some(d => d && (d.kg || d.reps))) o.drops = sp.drops.slice(0, tecN(ex)).map(d => ({kg: (d && d.kg) || '', reps: (d && d.reps) || ''}));
-          if (sm && sp.blocks && sp.blocks.some(Boolean)) o.blocks = sp.blocks.slice(0, tecN(ex) - 1).map(x => x || '');
-          return o; })}; });
-      const comment = (rec.comment || '').trim();
-      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), nokg: ex.items.map((_, k) => nkOf(ex, k)), sets, comment});
-    });
+    buildEntries(d, dr).forEach(e => entries.push(e));
     if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
     const cc = ((dr.__cardio || {}).comment || '').trim(); const dur = start ? Math.round((Date.now() - start) / 1000) : 0; st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, cc ? {cardioCmt: cc} : {}, dur >= 60 && dur <= 5 * 3600 ? {dur} : {}));
