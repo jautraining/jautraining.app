@@ -1293,6 +1293,45 @@ function autoBanner(st){
 }
 setInterval(() => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} }, 60000);
 document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} });
+
+function libRefs(id){
+  let f = 0, h = 0;
+  db.students.forEach(s => { Object.values(s.days || {}).forEach(d => { (d.ex || []).forEach(e => { if ((e.items || []).includes(id) || (e.alt || []).includes(id)) f++; }); (d.mob || []).forEach(m => { if (m && m.lib === id) f++; }); });
+    (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if ((e.items || []).includes(id)) h++; })); });
+  return {f, h};
+}
+function libReplace(from, to){
+  const sw = a => (a || []).map(x => x === from ? to : x);
+  db.students.forEach(s => { Object.values(s.days || {}).forEach(d => { (d.ex || []).forEach(e => { e.items = sw(e.items); if (e.alt) e.alt = sw(e.alt); }); (d.mob || []).forEach(m => { if (m && m.lib === from) m.lib = to; }); });
+    (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if ((e.items || []).includes(from)) e.items = sw(e.items); })); });
+  if (typeof dataVer !== 'undefined') dataVer++;
+}
+const libDupKey = l => norm(l.name).replace(/[^a-z0-9]+/g, ' ').trim();
+function libDupes(){ const g = {}; db.library.forEach(l => { const k = libDupKey(l); (g[k] = g[k] || []).push(l); }); return Object.values(g).filter(x => x.length > 1); }
+function libDupHTML(){
+  const d = libDupes(); if (!d.length) return '';
+  return `<details class="dupes"><summary><b>${d.length === 1 ? '1 exercício aparece repetido' : d.length + ' exercícios aparecem repetidos'}</b><span class="muted small">Toque para ver e juntar</span></summary>
+    <div class="dupl">${d.map(g => `<div class="duprow"><span>${esc(g[0].name)} <small class="muted">× ${g.length}</small></span><span class="row">${g.map((l, i) => { const r = libRefs(l.id); return `<button type="button" class="icon" data-act="lib-dup" data-v="${l.id}">${i + 1}ª · ${r.f ? 'em ' + r.f + (r.f === 1 ? ' ficha' : ' fichas') : 'sem ficha'}</button>`; }).join('')}</span></div>`).join('')}</div>
+    <p class="hint">Abra a cópia que você quer tirar e toque em "Apagar". Escolha a outra como substituta: as fichas e o histórico passam para ela.</p></details>`;
+}
+function libDelHTML(l){
+  const r = libRefs(l.id);
+  if (!r.f && !r.h) return `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`;
+  if (state.libDel !== l.id) return `<button type="button" class="icon danger" data-act="lib-delopen" data-v="${l.id}">Apagar</button>`;
+  const k = libDupKey(l), others = db.library.filter(x => x.id !== l.id).sort((a, b) => (libDupKey(b) === k) - (libDupKey(a) === k) || (catOf(b) === catOf(l)) - (catOf(a) === catOf(l)) || a.name.localeCompare(b.name, 'pt'));
+  return `<div class="libdel"><p><b>${esc(l.name)}</b> está em ${[r.f ? r.f + (r.f === 1 ? ' ficha' : ' fichas') : '', r.h ? r.h + (r.h === 1 ? ' treino' : ' treinos') + ' do histórico' : ''].filter(Boolean).join(' e ')}. Escolha o exercício que fica no lugar:</p>
+    <select id="libdel-to" class="selbox" aria-label="Exercício que fica no lugar">${r.f ? '' : '<option value="">Nenhum (no histórico aparece "Exercício removido")</option>'}${others.map(x => `<option value="${x.id}">${esc(x.name)}${libDupKey(x) === k ? ' (mesmo nome)' : ''}</option>`).join('')}</select>
+    <div class="row"><button type="button" class="btn sm danger" data-act="lib-delgo" data-v="${l.id}">Substituir e apagar</button><button type="button" class="btn sm quiet" data-act="lib-delx">Cancelar</button></div></div>`;
+}
+function methDelHTML(m, u){
+  if (m.id === 'normal' || m.id === 'conjugado') return '';
+  const h = db.students.reduce((a, s) => a + (s.logs || []).reduce((b, l) => b + (l.entries || []).filter(e => e.method === m.id).length, 0), 0);
+  if (!u && !h) return `<button type="button" class="icon danger" data-act="m-del" data-v="${m.id}">Apagar</button>`;
+  if (state.mDel !== m.id) return `<button type="button" class="icon danger" data-act="m-delopen" data-v="${m.id}">Apagar</button>`;
+  return `<div class="libdel"><p>Os exercícios com <b>${esc(m.name)}</b> passam para:</p>
+    <select id="mdel-to" class="selbox" aria-label="Método que fica no lugar">${db.methods.filter(x => x.id !== m.id && x.id !== 'conjugado').map(x => `<option value="${x.id}" ${x.id === 'normal' ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <div class="row"><button type="button" class="btn sm danger" data-act="m-delgo" data-v="${m.id}">Trocar e apagar</button><button type="button" class="btn sm quiet" data-act="m-delx">Cancelar</button></div></div>`;
+}
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -2887,6 +2926,7 @@ function libraryView(){
     <div class="filters"><input id="lib-q" class="search" placeholder="Buscar exercício" value="${esc(state.libQ)}" autocomplete="off">
       <select id="lib-m" class="selbox" data-change="libm" aria-label="Filtrar por músculo"><option value="">Todos os músculos</option>${MUSCLES.map(([k, l]) => `<option value="${k}" ${state.libM === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     ${libCats()}
+    ${libDupHTML()}
     <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício${state.libC === 'mob' ? ' de mobilidade' : ''}</button>
     <div class="list libcols" id="lib-list">${libList()}</div>
   </main>`;
@@ -2916,7 +2956,7 @@ function libItem(l){
       <label>Como fazer<textarea id="l-ins-${l.id}" rows="3" data-lf="instructions" data-lib="${l.id}">${esc(l.instructions)}</textarea></label>
       <label>Vídeo do YouTube<input id="l-vid-${l.id}" type="url" data-lf="video" data-lib="${l.id}" value="${esc(l.video)}" placeholder="https://youtube.com/watch?v=... ou link de Shorts"></label>
       <span id="l-vst-${l.id}">${videoStatus(l)}</span>
-      <div class="tools"><button type="button" class="icon" data-act="lib-copy" data-v="${l.id}">Copiar exercício</button>${u ? `<span class="hint">Usado em ${u} ${u === 1 ? 'ficha' : 'fichas'}. Tire das fichas para poder apagar.</span>` : `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`}</div>
+      <div class="tools"><button type="button" class="icon" data-act="lib-copy" data-v="${l.id}">Copiar exercício</button>${libDelHTML(l)}</div>
     </div>` : ''}
   </article>`;
 }
@@ -2935,7 +2975,7 @@ function methodsView(){
       <label>Nome<input id="m-name-${m.id}" data-mf="name" data-m="${m.id}" value="${esc(m.name)}"></label>
       <label>Explicação para o aluno<textarea id="m-desc-${m.id}" rows="2" data-mf="desc" data-m="${m.id}">${esc(m.desc)}</textarea></label>
       ${m.id !== 'normal' && m.id !== 'conjugado' ? `<label>O que o aluno anota na série<select id="m-tec-${m.id}" data-mtec="${m.id}"><option value="" ${!m.tec ? 'selected' : ''}>Só a carga e as reps de sempre</option><option value="drop" ${m.tec === 'drop' ? 'selected' : ''}>Drops: carga e reps de cada drop</option><option value="blocos" ${m.tec === 'blocos' ? 'selected' : ''}>Blocos: reps de cada bloco</option></select></label>` : ''}
-      <div class="tools"><span class="hint">${u ? 'Usado em ' + u + (u === 1 ? ' exercício' : ' exercícios') : 'Ainda não usado'}</span>${m.id !== 'normal' && !u ? `<button type="button" class="icon danger" data-act="m-del" data-v="${m.id}">Apagar</button>` : ''}</div>
+      <div class="tools"><span class="hint">${u ? 'Usado em ' + u + (u === 1 ? ' exercício' : ' exercícios') : 'Ainda não usado'}</span>${methDelHTML(m, u)}</div>
     </div>`; }).join('')}</div>
     <button class="btn block ghost" type="button" data-act="m-new">+ Novo método</button>
   </main>`;
@@ -3218,6 +3258,22 @@ document.addEventListener('click', e => {
   }
   else if (act === 'lib-del'){ if (!arm(b, 'Toque de novo para apagar', 'Apagar da biblioteca')) return; db.library = db.library.filter(l => l.id !== v); state.libOpen = null; save(); document.getElementById('lib-list').innerHTML = libList(); toast('Exercício apagado'); }
   else if (act === 'm-new'){ const m = {id: 'm-' + uid(), name: 'Novo método', desc: ''}; db.methods.push(m); save(); render(); const i = document.getElementById('m-name-' + m.id); if (i){ i.focus(); i.select(); } }
+  else if (act === 'lib-dup'){ state.libOpen = v; state.libQ = ''; state.libC = ''; state.libM = ''; state.libDel = null; render(); const e = document.getElementById('lib-' + v); if (e) e.scrollIntoView({block: 'start'}); }
+  else if (act === 'lib-delopen'){ state.libDel = v; document.getElementById('lib-list').innerHTML = libList(); }
+  else if (act === 'lib-delx'){ state.libDel = null; document.getElementById('lib-list').innerHTML = libList(); }
+  else if (act === 'lib-delgo'){ const sel = document.getElementById('libdel-to'), to = sel ? sel.value : '', l = db.library.find(x => x.id === v); if (!l) return;
+    if (!arm(b, to ? 'Toque de novo para confirmar' : 'Toque de novo para apagar', 'Substituir e apagar')) return;
+    const toName = to ? (db.library.find(x => x.id === to) || {}).name : '';
+    if (to) libReplace(v, to); else if (libRefs(v).f) return;
+    db.library = db.library.filter(x => x.id !== v); state.libDel = null; state.libOpen = to || null; save(); render(); toast(to ? '"' + l.name + '" apagado. Fichas e histórico agora usam "' + toName + '".' : '"' + l.name + '" apagado.'); }
+  else if (act === 'm-delopen'){ state.mDel = v; render(); }
+  else if (act === 'm-delx'){ state.mDel = null; render(); }
+  else if (act === 'm-delgo'){ const to = (document.getElementById('mdel-to') || {}).value || 'normal', m = db.methods.find(x => x.id === v); if (!m) return;
+    if (!arm(b, 'Toque de novo para confirmar', 'Trocar e apagar')) return;
+    const tn = (db.methods.find(x => x.id === to) || {}).name || 'Normal';
+    db.students.forEach(s => { Object.values(s.days || {}).forEach(d => (d.ex || []).forEach(e => { if (e.method === v) e.method = to; })); (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if (e.method === v) e.method = to; })); });
+    if (typeof dataVer !== 'undefined') dataVer++;
+    db.methods = db.methods.filter(x => x.id !== v); state.mDel = null; save(); render(); toast('Método "' + m.name + '" apagado. Os exercícios agora usam "' + tn + '".'); }
   else if (act === 'm-del'){ if (!arm(b, 'Confirmar', 'Apagar')) return; db.methods = db.methods.filter(m => m.id !== v); save(); render(); }
   else if (act === 'logout'){ if (hasPending() && !arm(b, 'Há dados ainda não enviados. Toque de novo para sair mesmo assim', 'Sair')) return; logout(); }
   else if (act === 'auth-view'){ AUTH.view = v; AUTH.err = AUTH.msg = ''; render(); top(); }

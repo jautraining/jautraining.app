@@ -1112,3 +1112,14 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .autofin{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface));border-radius:16px;padding:12px 14px;margin:0 0 14px}
 .autofin p{margin:0;font-size:.86rem;line-height:1.45}.autofin b{display:block;margin-bottom:2px}
 .autoline{color:var(--muted)}
+
+.dupes{border:1px solid var(--line);border-radius:16px;padding:10px 14px;background:var(--surface)}
+.dupes summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;list-style:none}
+.dupes summary::-webkit-details-marker{display:none}
+.dupes summary b{color:var(--accent)}
+.dupl{display:grid;gap:6px;margin:10px 0 6px}
+.duprow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:6px;font-size:.88rem}
+.duprow .row{display:flex;gap:6px;flex-wrap:wrap}
+.libdel{display:grid;gap:8px;width:100%;border:1px solid var(--accent);border-radius:14px;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.libdel p{margin:0;font-size:.86rem}.libdel .row{display:flex;gap:8px;flex-wrap:wrap}
+.btn.danger{background:var(--accent);color:#fff}
