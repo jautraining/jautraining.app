@@ -29,7 +29,7 @@ const N_OMB = 'Manter o abdômen sempre ativo, tronco estável e elevar os braç
 const N_TRI = 'Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir.';
 const N_COST = 'Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco.';
 
-function L(id, name, primary, secondary, instructions){ return {id, name, primary, secondary, instructions, video: '', custom: false, cat: 'musc'}; }
+function L(id, name, primary, secondary, instructions){ return {id, name, primary, secondary, instructions, video: '', custom: false}; }
 function seedLibrary(){ return withDefaults([
   L('agach-livre','Agachamento livre',['quadriceps','gluteos'],['adutores','lombar','abdomen'],N_AGACH),
   L('agach-hack','Agachamento hack',['quadriceps','gluteos'],['adutores'],N_AGACH),
@@ -64,238 +64,16 @@ function seedLibrary(){ return withDefaults([
   L('prancha','Prancha',['abdomen'],['obliquos','delt_ant'],'Cotovelos abaixo dos ombros, quadril alinhado e glúteo contraído. Respire sem perder a posição.'),
   L('puxada-frente','Puxada frontal',['costas'],['biceps'],N_COST),
   L('afundo','Afundo com halteres',['quadriceps','gluteos'],['adutores'],'Passo largo, tronco estável e desça até o joelho de trás quase tocar o chão.'),
-  L('stiff','Stiff com barra',['posteriores','gluteos'],['lombar'],'Joelhos levemente flexionados, barra rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo.'),
-  L("supino-reto-barra","Supino reto com barra",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-incl-barra","Supino inclinado com barra",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-incl-halter","Supino inclinado com halteres",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-decl-barra","Supino declinado com barra",["peitoral"],["triceps", "delt_ant"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-decl-halter","Supino declinado com halteres",["peitoral"],["triceps", "delt_ant"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-maq","Supino reto na máquina",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender os braços, voltando devagar."),
-  L("supino-incl-maq","Supino inclinado na máquina",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender os braços, voltando devagar."),
-  L("supino-smith","Supino reto no Smith",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("supino-incl-smith","Supino inclinado no Smith",["peitoral"],["delt_ant", "triceps"],"Manter o abdômen sempre ativo, escápulas encaixadas no banco e explorar a amplitude ao descer, sem perder o controle dos cotovelos."),
-  L("crucifixo-reto","Crucifixo reto com halteres",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
-  L("crucifixo-incl","Crucifixo inclinado com halteres",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
-  L("peck-deck","Voador (peck deck)",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
-  L("crossover-alto","Crossover na polia alta",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
-  L("crossover-medio","Crossover na polia média",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
-  L("crossover-baixo","Crossover na polia baixa",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
-  L("crossover-unilateral","Crossover unilateral na polia",["peitoral"],["delt_ant", "obliquos"],"Manter o abdômen sempre ativo, tronco estável e cotovelos levemente flexionados. Junte as mãos à frente contraindo bem o peitoral."),
-  L("pullover-halter","Pullover com halter",["peitoral", "costas"],["triceps"],"Manter o abdômen sempre ativo, quadril estável e levar o halter para trás da cabeça até alongar bem, voltando com os cotovelos levemente flexionados."),
-  L("paralelas-peito","Mergulho nas paralelas (ênfase peitoral)",["peitoral", "triceps"],["delt_ant"],"Tronco levemente inclinado à frente e cotovelos um pouco abertos. Desça até sentir o peitoral alongar, sem forçar o ombro, e suba empurrando."),
-  L("flexao","Flexão de braço",["peitoral"],["triceps", "delt_ant", "abdomen"],"Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("flexao-joelhos","Flexão de braço com joelhos apoiados",["peitoral"],["triceps", "delt_ant"],"Joelhos apoiados e corpo alinhado dos joelhos à cabeça, com o abdômen contraído. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("flexao-inclinada","Flexão inclinada (mãos elevadas)",["peitoral"],["triceps", "delt_ant"],"Mãos apoiadas num banco ou banco de step. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("flexao-declinada","Flexão declinada (pés elevados)",["peitoral", "delt_ant"],["triceps", "abdomen"],"Pés apoiados num banco. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("flexao-elastico","Flexão de braço com elástico",["peitoral"],["triceps", "delt_ant", "abdomen"],"Elástico passado pelas costas e preso nas mãos. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("supino-elastico","Supino em pé com elástico",["peitoral"],["delt_ant", "triceps"],"Elástico preso atrás na altura do peito. Abdômen ativo, um pé à frente e empurrar para a frente até quase estender os braços. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("crucifixo-elastico","Crucifixo em pé com elástico",["peitoral"],["delt_ant"],"Elástico preso atrás na altura do peito. Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
-  L("barra-fixa-pronada","Barra fixa pronada",["costas"],["biceps", "delt_post", "antebraco"],"Pegada um pouco mais aberta que os ombros. Puxe levando o peito em direção à barra, com as escápulas descendo, e desça até estender bem os braços."),
-  L("barra-fixa-supinada","Barra fixa supinada",["costas", "biceps"],["antebraco"],"Pegada na largura dos ombros com as palmas para você. Puxe até o queixo passar a barra e desça controlando até estender os braços."),
-  L("barra-fixa-assistida","Barra fixa assistida (graviton)",["costas"],["biceps", "delt_post"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("barra-fixa-elastico","Barra fixa com elástico de assistência",["costas"],["biceps", "delt_post"],"Elástico preso na barra e apoiado nos pés ou joelhos. Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("barra-fixa-negativa","Barra fixa negativa",["costas"],["biceps", "antebraco"],"Comece com o queixo acima da barra (subindo num banco) e desça o mais devagar que conseguir, de 3 a 5 segundos, até estender os braços."),
-  L("puxada-supinada","Puxada frontal supinada",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("puxada-triangulo","Puxada com triângulo",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("puxada-unilateral","Puxada unilateral na polia",["costas"],["biceps"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("puxada-elastico","Puxada alta com elástico",["costas"],["biceps"],"Elástico preso no alto. Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("pulldown-corda","Pulldown com corda",["costas"],["triceps"],"Iniciar o movimento sempre pela extensão dos ombros, contraindo as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-baixa-triangulo","Remada baixa com triângulo",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-baixa-aberta","Remada baixa pegada aberta",["costas", "delt_post"],["biceps", "trapezio"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-baixa-unilateral","Remada baixa unilateral na polia",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-maq-pronada","Remada máquina pegada pronada",["costas", "delt_post"],["biceps", "trapezio"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-articulada","Remada articulada unilateral",["costas"],["biceps", "delt_post"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("serrote","Remada unilateral com halter (serrote)",["costas"],["biceps", "delt_post"],"Mão e joelho apoiados no banco, coluna neutra. Puxe o halter levando o cotovelo em direção ao quadril, contraindo bem as costas."),
-  L("remada-curvada-supinada","Remada curvada supinada com barra",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
-  L("remada-curvada-halteres","Remada curvada com halteres",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
-  L("remada-curvada-smith","Remada curvada no Smith",["costas"],["biceps", "lombar", "delt_post"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
-  L("remada-cavalinho","Remada cavalinho (T-bar)",["costas"],["biceps", "delt_post", "lombar"],"Tronco inclinado à frente com a coluna neutra e abdômen ativo. Puxe levando os cotovelos para trás, contraindo bem as costas."),
-  L("remada-seal","Remada no banco inclinado com halteres",["costas"],["biceps", "delt_post"],"Peito apoiado no banco inclinado. Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-invertida","Remada invertida (australiana)",["costas"],["biceps", "delt_post", "abdomen"],"Corpo alinhado embaixo da barra, glúteo e abdômen contraídos. Puxe o peito em direção à barra juntando as escápulas."),
-  L("remada-elastico","Remada com elástico",["costas"],["biceps", "delt_post"],"Elástico preso à frente na altura do peito. Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("terra-convencional","Levantamento terra convencional",["posteriores", "gluteos", "lombar"],["quadriceps", "trapezio", "costas", "antebraco"],"Barra rente às canelas, coluna neutra e abdômen bem ativo. Empurre o chão com os pés e estenda quadril e joelhos juntos, mantendo a barra colada ao corpo."),
-  L("extensao-lombar","Extensão lombar no banco romano",["lombar"],["gluteos", "posteriores"],"Quadril apoiado no banco e tronco descendo com a coluna neutra. Suba até alinhar o corpo, sem hiperestender a lombar."),
-  L("superman","Superman (extensão lombar no solo)",["lombar"],["gluteos", "delt_post"],"Deitado de barriga para baixo, eleve braços e pernas juntos contraindo lombar e glúteo, segure 1 segundo e desça devagar."),
-  L("good-morning","Good morning com barra",["posteriores", "lombar"],["gluteos"],"Barra apoiada nos ombros, joelhos levemente flexionados. Leve o quadril para trás inclinando o tronco com a coluna neutra e volte contraindo o glúteo."),
-  L("encolhimento-barra","Encolhimento com barra",["trapezio"],["antebraco"],"Braços estendidos e tronco estável. Eleve os ombros em direção às orelhas, segure 1 segundo e desça devagar, sem girar os ombros."),
-  L("encolhimento-halteres","Encolhimento com halteres",["trapezio"],["antebraco"],"Braços estendidos ao lado do corpo e tronco estável. Eleve os ombros em direção às orelhas, segure 1 segundo e desça devagar."),
-  L("desenv-barra","Desenvolvimento militar com barra em pé",["delt_ant"],["delt_med", "triceps", "trapezio", "abdomen"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Glúteo contraído para proteger a lombar."),
-  L("desenv-sentado","Desenvolvimento sentado com halteres",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
-  L("desenv-maq","Desenvolvimento na máquina",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
-  L("desenv-smith","Desenvolvimento no Smith",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
-  L("desenv-arnold","Desenvolvimento Arnold",["delt_ant", "delt_med"],["triceps"],"Manter o abdômen sempre ativo. Comece com as palmas para você e gire os punhos enquanto sobe, terminando com as palmas para a frente."),
-  L("desenv-unilateral","Desenvolvimento unilateral em pé com halter",["delt_ant"],["delt_med", "triceps", "obliquos"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Não deixe o tronco inclinar para o lado."),
-  L("landmine-press","Landmine press (desenvolvimento na barra apoiada)",["delt_ant"],["peitoral", "triceps", "abdomen"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
-  L("desenv-elastico","Desenvolvimento com elástico",["delt_ant"],["delt_med", "triceps"],"Elástico preso embaixo dos pés. Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("pike-pushup","Flexão pike (ênfase ombro)",["delt_ant"],["triceps", "delt_med"],"Quadril elevado formando um V invertido. Desça a cabeça em direção ao chão entre as mãos e empurre de volta."),
-  L("elev-lateral-sentado","Elevação lateral sentado com halteres",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("elev-lateral-polia","Elevação lateral unilateral na polia",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("elev-lateral-maq","Elevação lateral na máquina",["delt_med"],["trapezio"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("elev-lateral-elastico","Elevação lateral com elástico",["delt_med"],["trapezio"],"Elástico preso embaixo dos pés. Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("elev-frontal-halteres","Elevação frontal com halteres",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
-  L("elev-frontal-anilha","Elevação frontal com anilha",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
-  L("elev-frontal-polia","Elevação frontal na polia",["delt_ant"],["peitoral"],"Manter o abdômen sempre ativo, tronco estável e elevar até a linha dos ombros, descendo devagar e sem balançar o corpo."),
-  L("remada-alta-barra","Remada alta com barra",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("remada-alta-halteres","Remada alta com halteres",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("crucifixo-inverso-halteres","Crucifixo inverso com halteres",["delt_post"],["trapezio", "costas"],"Tronco inclinado à frente com a coluna neutra. Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
-  L("crucifixo-inverso-banco","Crucifixo inverso no banco inclinado",["delt_post"],["trapezio", "costas"],"Peito apoiado no banco inclinado. Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
-  L("crucifixo-inverso-maq","Crucifixo inverso na máquina (voador inverso)",["delt_post"],["trapezio", "costas"],"Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
-  L("crucifixo-inverso-polia","Crucifixo inverso na polia",["delt_post"],["trapezio", "costas"],"Manter o abdômen sempre ativo, tronco estável e abrir os braços conduzindo pelos cotovelos, contraindo a parte de trás do ombro."),
-  L("facepull-elastico","Face pull com elástico",["delt_post", "trapezio"],["costas"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("rotacao-externa","Rotação externa de ombro na polia",["delt_post"],[],"Cotovelo colado ao corpo e dobrado a 90 graus. Gire o antebraço para fora sem afastar o cotovelo, devagar e com carga leve."),
-  L("elev-y","Elevação em Y no banco inclinado",["delt_post", "trapezio"],["delt_med"],"Peito apoiado no banco inclinado, polegares para cima. Eleve os braços formando um Y, contraindo as escápulas, e desça devagar."),
-  L("rosca-direta-barra","Rosca direta com barra",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
-  L("rosca-w","Rosca direta com barra W",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
-  L("rosca-alternada","Rosca alternada com halteres",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco. Gire o punho para fora ao subir."),
-  L("rosca-martelo-halteres","Rosca martelo com halteres",["biceps", "antebraco"],[],"Pegada neutra, cotovelos fixos ao lado do corpo e descida controlada."),
-  L("rosca-martelo-cruzada","Rosca martelo cruzada",["biceps", "antebraco"],[],"Pegada neutra, levando o halter em direção ao ombro oposto. Cotovelos fixos e descida controlada."),
-  L("rosca-scott-barra","Rosca Scott com barra W",["biceps"],["antebraco"],"Braços bem apoiados no banco Scott. Desça até quase estender os cotovelos, sem soltar o peso, e suba contraindo o bíceps."),
-  L("rosca-scott-maq","Rosca Scott na máquina",["biceps"],["antebraco"],"Braços bem apoiados no banco. Desça até quase estender os cotovelos e suba contraindo o bíceps."),
-  L("rosca-scott-unilateral","Rosca Scott unilateral com halter",["biceps"],["antebraco"],"Braço bem apoiado no banco Scott. Desça até quase estender o cotovelo e suba contraindo o bíceps."),
-  L("rosca-concentrada","Rosca concentrada",["biceps"],[],"Sentado, cotovelo apoiado na parte interna da coxa. Suba contraindo bem o bíceps e desça devagar até estender o braço."),
-  L("rosca-polia","Rosca direta na polia",["biceps"],["antebraco"],"Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
-  L("rosca-polia-corda","Rosca na polia com corda",["biceps", "antebraco"],[],"Pegada neutra na corda e cotovelos fixos ao lado do corpo. Suba afastando levemente as mãos e desça controlando."),
-  L("rosca-bayesian","Rosca na polia de costas (unilateral)",["biceps"],[],"De costas para a polia, braço levemente atrás do corpo. Suba contraindo o bíceps sem levar o cotovelo à frente."),
-  L("rosca-inclinada","Rosca no banco inclinado com halteres",["biceps"],["antebraco"],"Costas apoiadas no banco inclinado e braços soltos para trás. Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco."),
-  L("rosca-inversa","Rosca inversa com barra",["antebraco", "biceps"],[],"Pegada pronada (palmas para baixo), cotovelos fixos ao lado do corpo. Suba sem dobrar os punhos e desça devagar."),
-  L("rosca-elastico","Rosca direta com elástico",["biceps"],["antebraco"],"Elástico preso embaixo dos pés. Cotovelos fixos ao lado do corpo. Suba contraindo o bíceps e desça controlando, sem balançar o tronco. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("flexao-punho","Flexão de punho com barra",["antebraco"],[],"Antebraços apoiados nas coxas com as palmas para cima. Flexione os punhos levando a barra para cima e desça até alongar."),
-  L("extensao-punho","Extensão de punho com barra",["antebraco"],[],"Antebraços apoiados nas coxas com as palmas para baixo. Estenda os punhos levando a barra para cima e desça devagar."),
-  L("farmer-walk","Caminhada do fazendeiro (farmer walk)",["antebraco", "trapezio"],["abdomen", "obliquos"],"Um halter pesado em cada mão, ombros para trás e abdômen ativo. Caminhe com passos curtos sem deixar o tronco balançar."),
-  L("triceps-corda","Tríceps na polia com corda",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final. Abra levemente a corda no final."),
-  L("triceps-barra","Tríceps na polia com barra reta",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
-  L("triceps-v","Tríceps na polia com barra V",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
-  L("triceps-unilateral","Tríceps unilateral na polia",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
-  L("triceps-testa-w","Tríceps testa com barra W",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir. Cotovelos apontando para cima, sem abrir."),
-  L("triceps-testa-polia","Tríceps testa na polia",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir. Cotovelos apontando para cima, sem abrir."),
-  L("triceps-frances-halter","Tríceps francês com halter",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
-  L("triceps-frances-w","Tríceps francês com barra W",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
-  L("triceps-coice","Tríceps coice com halter",["triceps"],[],"Tronco inclinado e cotovelo fixo ao lado do corpo. Estenda o braço para trás contraindo o tríceps e volte devagar."),
-  L("triceps-coice-polia","Tríceps coice na polia",["triceps"],[],"Tronco inclinado e cotovelo fixo ao lado do corpo. Estenda o braço para trás contraindo o tríceps e volte devagar."),
-  L("triceps-maq","Tríceps na máquina",["triceps"],[],"Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final."),
-  L("mergulho-banco","Mergulho no banco",["triceps"],["delt_ant", "peitoral"],"Mãos apoiadas no banco atrás do corpo e quadril perto do banco. Desça dobrando os cotovelos para trás e suba estendendo os braços."),
-  L("paralelas-triceps","Mergulho nas paralelas (ênfase tríceps)",["triceps"],["peitoral", "delt_ant"],"Tronco mais reto e cotovelos apontando para trás. Desça até os cotovelos chegarem a 90 graus e suba estendendo os braços."),
-  L("supino-fechado","Supino fechado com barra",["triceps", "peitoral"],["delt_ant"],"Mãos na largura dos ombros e cotovelos próximos ao corpo. Desça a barra até o peito e empurre estendendo os braços."),
-  L("flexao-diamante","Flexão diamante",["triceps", "peitoral"],["delt_ant", "abdomen"],"Mãos juntas embaixo do peito formando um losango. Corpo alinhado da cabeça aos pés, abdômen e glúteo contraídos. Desça até o peito quase tocar o chão e empurre de volta."),
-  L("triceps-elastico","Tríceps com elástico",["triceps"],[],"Elástico preso no alto. Manter o abdômen sempre ativo, cotovelos fixos ao lado do corpo e estender bem os braços, contraindo o tríceps ao final. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("agach-smith","Agachamento no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-frontal","Agachamento frontal com barra",["quadriceps"],["gluteos", "abdomen", "adutores"],"Barra apoiada na frente dos ombros, cotovelos altos e tronco ereto. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-goblet","Agachamento goblet",["quadriceps", "gluteos"],["adutores", "abdomen"],"Halter ou kettlebell junto ao peito, tronco ereto. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-sumo-halter","Agachamento sumô com halter",["adutores", "gluteos"],["quadriceps"],"Pés afastados e apontando para fora, halter entre as pernas. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-box","Agachamento com barra no caixote (box squat)",["quadriceps", "gluteos"],["posteriores", "adutores", "lombar"],"Desça até sentar de leve no caixote, sem relaxar o tronco, e suba empurrando o chão. Manter o abdômen sempre ativo."),
-  L("agach-pendulo","Agachamento pêndulo",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("belt-squat","Agachamento no belt squat",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-peso-corporal","Agachamento com peso corporal",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-elastico","Agachamento com elástico",["quadriceps", "gluteos"],["adutores", "abdutores"],"Elástico embaixo dos pés e nas mãos à altura dos ombros. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("agach-salto","Agachamento com salto",["quadriceps", "gluteos"],["panturrilha"],"Desça no agachamento e suba explodindo num salto. Aterrisse suave, com os joelhos alinhados aos pés."),
-  L("wall-sit","Agachamento isométrico na parede",["quadriceps"],["gluteos"],"Costas apoiadas na parede e joelhos a 90 graus, alinhados com os pés. Segure a posição respirando normalmente."),
-  L("sissy","Agachamento sissy",["quadriceps"],[],"Calcanhares elevados e quadril alinhado ao tronco. Leve os joelhos à frente descendo devagar e volte contraindo o quadríceps."),
-  L("leg-press-45","Leg press 45°",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto na execução. Não tire o quadril do encosto."),
-  L("leg-press-unilateral","Leg press unilateral",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto. Joelho alinhado ao pé durante todo o movimento."),
-  L("extensora-unilateral","Cadeira extensora unilateral",["quadriceps"],[],"Manter o abdômen sempre ativo, explorar a amplitude e controlar a cadência."),
-  L("hack-smith","Hack no Smith",["quadriceps", "gluteos"],["adutores"],"Pés um pouco à frente do corpo. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("bulgaro-smith","Búlgaro no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
-  L("bulgaro-peso","Búlgaro com peso corporal",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
-  L("afundo-barra","Afundo com barra",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
-  L("afundo-smith","Afundo no Smith",["quadriceps", "gluteos"],["adutores"],"Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
-  L("afundo-reverso","Recuo com halteres",["gluteos", "quadriceps"],["adutores"],"Dê o passo para trás. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
-  L("recuo-smith","Recuo no Smith",["gluteos", "quadriceps"],["adutores"],"Dê o passo para trás. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
-  L("afundo-cruzado","Afundo cruzado (curtsy)",["gluteos", "abdutores"],["quadriceps", "adutores"],"Leve a perna para trás e cruzada, como numa reverência. Tronco estável e suba empurrando com a perna da frente."),
-  L("passada","Passada (avanço caminhando) com halteres",["quadriceps", "gluteos"],["adutores"],"Passos largos e alternados, tronco estável. Manter o abdômen sempre ativo, tronco estável e descer até o joelho de trás quase tocar o chão, empurrando o chão com a perna da frente."),
-  L("step-up","Subida no banco (step-up) com halteres",["quadriceps", "gluteos"],["adutores"],"Pé inteiro apoiado no banco. Suba empurrando com a perna de cima, sem dar impulso com a de baixo, e desça controlando."),
-  L("cadeira-adutora","Cadeira adutora",["adutores"],[],"Manter o abdômen sempre ativo, explorar a amplitude e controlar a cadência."),
-  L("adutor-polia","Adução de quadril na polia",["adutores"],[],"Tronco estável e perna de apoio firme. Puxe a perna em direção à linha do corpo, cruzando levemente, e volte devagar."),
-  L("elev-pelvica-barra","Elevação pélvica com barra",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("elev-pelvica-smith","Elevação pélvica no Smith",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("elev-pelvica-unilateral","Elevação pélvica unilateral",["gluteos"],["posteriores", "abdutores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("elev-pelvica-elastico","Elevação pélvica com elástico",["gluteos"],["posteriores", "abdutores"],"Elástico acima dos joelhos, empurrando para fora. Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("ponte-gluteo","Ponte de glúteo no solo",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("ponte-unilateral","Ponte de glúteo unilateral",["gluteos"],["posteriores", "abdutores"],"Manter o abdômen sempre ativo, explore a amplitude na descida e contraia bem o glúteo ao subir. Queixo levemente para o peito e sem hiperestender a lombar."),
-  L("frog-pump","Frog pump",["gluteos"],["abdutores"],"Deitado, solas dos pés juntas e joelhos abertos. Eleve o quadril contraindo bem o glúteo e desça devagar."),
-  L("gluteo-4-apoios","Glúteo 4 apoios com caneleira",["gluteos"],["posteriores"],"Em quatro apoios, abdômen ativo e coluna neutra. Eleve a perna empurrando o calcanhar para cima, sem arquear a lombar."),
-  L("gluteo-polia-4-apoios","Glúteo na polia em 4 apoios",["gluteos"],["posteriores"],"Em quatro apoios, abdômen ativo e coluna neutra. Leve a perna para trás e para cima contraindo o glúteo, sem arquear a lombar."),
-  L("gluteo-maq","Glúteo na máquina (coice)",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, tronco estável e contrair o glúteo ao final do movimento."),
-  L("ext-quadril-elastico","Extensão de quadril com elástico (coice)",["gluteos"],["posteriores"],"Manter o abdômen sempre ativo, tronco estável e contrair o glúteo ao final do movimento. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("abdutora-inclinada","Cadeira abdutora com tronco inclinado",["abdutores", "gluteos"],[],"Tronco inclinado à frente, sem tirar o quadril do banco. Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta."),
-  L("abducao-deitado","Abdução de quadril deitado de lado",["abdutores"],["gluteos"],"Deitado de lado com o corpo alinhado. Eleve a perna de cima sem girar o quadril e desça devagar."),
-  L("abducao-elastico","Abdução de quadril com elástico",["abdutores"],["gluteos"],"Elástico acima dos joelhos. Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta. Ajuste a tensão do elástico para chegar perto da falha na faixa de repetições."),
-  L("caminhada-lateral","Caminhada lateral com elástico",["abdutores"],["gluteos"],"Elástico acima dos joelhos ou nos tornozelos, semiagachado. Dê passos laterais curtos sem deixar os joelhos entrarem."),
-  L("clamshell","Concha (clamshell) com elástico",["abdutores"],["gluteos"],"Deitado de lado, joelhos flexionados e pés juntos. Abra o joelho de cima sem girar o quadril e feche devagar."),
-  L("stiff-halteres","Stiff com halteres",["posteriores", "gluteos"],["lombar"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
-  L("stiff-unilateral","Stiff unilateral com halter",["posteriores", "gluteos"],["lombar", "abdutores"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo. Quadril alinhado, sem girar."),
-  L("stiff-smith","Stiff no Smith",["posteriores", "gluteos"],["lombar"],"Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
-  L("stiff-elastico","Stiff com elástico",["posteriores", "gluteos"],["lombar"],"Elástico embaixo dos pés. Joelhos levemente flexionados, peso rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo."),
-  L("rdl-barra","Levantamento terra romeno (RDL) com barra",["posteriores", "gluteos"],["lombar", "antebraco"],"Manter o abdômen sempre ativo e focar no movimento de jogar o quadril para trás, alongando os posteriores. Barra rente às pernas."),
-  L("terra-trap","Levantamento terra com trap bar",["quadriceps", "gluteos", "posteriores"],["lombar", "trapezio", "antebraco"],"Coluna neutra e abdômen bem ativo. Empurre o chão com os pés e suba estendendo quadril e joelhos juntos."),
-  L("hiperextensao-gluteo","Hiperextensão 45° (ênfase glúteo)",["gluteos"],["posteriores", "lombar"],"Quadril na borda do apoio e costas levemente arredondadas. Suba contraindo o glúteo, sem hiperestender a lombar."),
-  L("pull-through","Pull-through na polia",["gluteos"],["posteriores"],"De costas para a polia, corda entre as pernas. Leve o quadril para trás e volte estendendo o quadril, contraindo bem o glúteo."),
-  L("kettlebell-swing","Kettlebell swing",["gluteos", "posteriores"],["lombar", "abdomen"],"O movimento vem do quadril, não dos braços. Jogue o quadril para trás e estenda com força, deixando o kettlebell subir até a altura do peito."),
-  L("mesa-flexora","Mesa flexora",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força. Quadril colado no banco."),
-  L("flexora-elastico","Flexão de joelho com elástico",["posteriores"],["panturrilha"],"Deitado de barriga para baixo, elástico no tornozelo. Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
-  L("flexora-caneleira","Flexora em pé com caneleira",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
-  L("flexao-nordica","Flexão nórdica",["posteriores"],[],"Ajoelhado com os tornozelos presos. Desça o tronco à frente o mais devagar que conseguir, mantendo o quadril estendido, e use as mãos para voltar."),
-  L("flexora-bola","Flexão de joelho na bola suíça",["posteriores"],["gluteos"],"Deitado com os calcanhares na bola e quadril elevado. Puxe a bola em direção ao glúteo sem deixar o quadril cair."),
-  L("panturrilha-sentado","Panturrilha sentado",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
-  L("panturrilha-leg","Panturrilha no leg press",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
-  L("panturrilha-smith","Panturrilha no Smith",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
-  L("panturrilha-unilateral","Panturrilha unilateral com halter",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
-  L("panturrilha-degrau","Panturrilha no degrau (peso corporal)",["panturrilha"],[],"Desça até alongar bem a panturrilha, segure 1 segundo e suba o máximo que conseguir."),
-  L("abd-supra","Abdominal supra no solo",["abdomen"],[],"Lombar apoiada no chão. Suba as escápulas contraindo o abdômen, sem puxar o pescoço com as mãos."),
-  L("abd-supra-anilha","Abdominal supra com anilha",["abdomen"],[],"Anilha junto ao peito e lombar apoiada no chão. Suba as escápulas contraindo o abdômen e desça devagar."),
-  L("abd-maq","Abdominal na máquina",["abdomen"],["obliquos"],"Flexione o tronco contraindo o abdômen. Os braços só seguram, a força vem do abdômen."),
-  L("abd-elastico","Abdominal ajoelhado com elástico",["abdomen"],["obliquos"],"Ajoelhado de frente para o elástico preso no alto, flexione o tronco contraindo o abdômen. Os braços só seguram, não puxam."),
-  L("abd-bicicleta","Abdominal bicicleta",["abdomen", "obliquos"],[],"Lombar apoiada no chão. Leve o cotovelo em direção ao joelho oposto, alternando, sem puxar o pescoço."),
-  L("abd-cruzado","Abdominal cruzado (oblíquo) no solo",["obliquos"],["abdomen"],"Lombar apoiada no chão. Suba girando o tronco em direção ao joelho oposto e desça devagar."),
-  L("abd-remador","Abdominal remador",["abdomen"],[],"Sentado, tronco levemente para trás. Traga os joelhos ao peito e estenda de novo, sem apoiar os pés no chão."),
-  L("abd-canivete","Abdominal canivete (V-up)",["abdomen"],["obliquos"],"Deitado, suba tronco e pernas ao mesmo tempo tentando tocar os pés com as mãos, e desça controlando."),
-  L("toque-calcanhar","Toque no calcanhar",["obliquos"],["abdomen"],"Deitado com os joelhos dobrados e escápulas fora do chão. Incline o tronco para os lados tocando os calcanhares."),
-  L("elev-pernas-paralela","Elevação de pernas na paralela",["abdomen"],["obliquos"],"Costas apoiadas e braços firmes no apoio. Eleve os joelhos ou as pernas enrolando o quadril, sem dar impulso."),
-  L("elev-pernas-barra","Elevação de pernas na barra fixa",["abdomen"],["obliquos", "antebraco"],"Pendurado na barra, sem balançar. Eleve os joelhos ou as pernas enrolando o quadril e desça devagar."),
-  L("abd-roda","Abdominal com roda (ab wheel)",["abdomen"],["obliquos", "costas"],"Ajoelhado, abdômen bem ativo e glúteo contraído. Role a roda à frente até onde conseguir sem arquear a lombar e volte."),
-  L("dead-bug","Dead bug",["abdomen"],["obliquos"],"Deitado, braços e joelhos para cima e lombar colada no chão. Estenda braço e perna opostos devagar, sem tirar a lombar do chão."),
-  L("hollow","Canoinha (hollow hold)",["abdomen"],[],"Deitado, lombar colada no chão, braços e pernas estendidos e elevados. Segure a posição respirando normalmente."),
-  L("prancha-lateral","Prancha lateral",["obliquos"],["abdomen", "abdutores"],"Cotovelo abaixo do ombro e corpo alinhado, quadril elevado. Segure a posição sem deixar o quadril cair."),
-  L("prancha-toque-ombro","Prancha alta com toque no ombro",["abdomen"],["obliquos", "delt_ant"],"Em prancha com braços estendidos e pés afastados. Toque o ombro oposto alternando, sem deixar o quadril girar."),
-  L("mountain-climber","Escalador (mountain climber)",["abdomen"],["delt_ant", "quadriceps"],"Em prancha com braços estendidos. Traga os joelhos ao peito alternando, em ritmo constante e sem elevar o quadril."),
-  L("pallof","Pallof press na polia",["obliquos", "abdomen"],[],"De lado para a polia, mãos no peito. Estenda os braços à frente resistindo à rotação do tronco e volte devagar."),
-  L("pallof-elastico","Pallof press com elástico",["obliquos", "abdomen"],[],"De lado para o elástico, mãos no peito. Estenda os braços à frente resistindo à rotação do tronco e volte devagar."),
-  L("russian-twist","Rotação russa (russian twist) com anilha",["obliquos"],["abdomen"],"Sentado com o tronco inclinado para trás e coluna neutra. Gire o tronco levando a anilha de um lado para o outro."),
-  L("woodchop","Lenhador na polia (woodchopper)",["obliquos"],["abdomen", "delt_ant"],"Braços estendidos segurando a polia. Gire o tronco puxando na diagonal, com o abdômen ativo e os pés firmes."),
-  L("flexao-lateral","Flexão lateral de tronco com halter",["obliquos"],["abdomen"],"Halter numa das mãos, tronco ereto. Incline para o lado do halter e volte contraindo o oblíquo do outro lado."),
-  L("burpee","Burpee",["quadriceps", "peitoral"],["gluteos", "triceps", "abdomen", "delt_ant"],"Agache, apoie as mãos, leve os pés para trás, faça uma flexão, volte os pés e suba com um salto. Ritmo constante e controlado."),
-  L("crucifixo-polia-deitado","Crucifixo deitado na polia",["peitoral"],["delt_ant"],"Manter o abdômen sempre ativo, cotovelos levemente flexionados e fixos. Abra até sentir o peitoral alongar e feche contraindo bem."),
-  L("supino-incl-elastico","Supino inclinado com elástico",["peitoral"],["delt_ant", "triceps"],"Elástico preso embaixo, atrás do corpo. Abdômen ativo e empurrar para a frente e para cima até quase estender os braços."),
-  L("chest-press-unilateral","Supino unilateral na máquina",["peitoral"],["delt_ant", "triceps", "obliquos"],"Manter o abdômen sempre ativo, escápulas encaixadas no encosto e empurrar até quase estender o braço, sem girar o tronco."),
-  L("puxada-neutra-aberta","Puxada pegada neutra aberta",["costas"],["biceps", "delt_post"],"Iniciar o movimento puxando as escápulas para baixo e levar os cotovelos em direção ao corpo, contraindo bem as costas. Evite jogar o tronco para trás."),
-  L("remada-baixa-supinada","Remada baixa pegada supinada",["costas"],["biceps"],"Iniciar o movimento com a retração das escápulas e contrair bem as costas ao final. Mantenha o abdômen ativo e evite balançar o tronco."),
-  L("remada-alta-polia-corda","Remada alta na polia com corda",["delt_med", "trapezio"],["biceps"],"Manter o abdômen sempre ativo, tronco estável e elevar os braços na linha do ombro, conduzindo pelos cotovelos."),
-  L("desenv-barra-sentado","Desenvolvimento com barra sentado",["delt_ant"],["delt_med", "triceps"],"Manter o abdômen sempre ativo, tronco estável e empurrar o peso para cima sem arquear a lombar."),
-  L("rosca-zottman","Rosca Zottman",["biceps", "antebraco"],[],"Suba com as palmas para cima, gire no topo e desça com as palmas para baixo, devagar. Cotovelos fixos ao lado do corpo."),
-  L("rosca-spider","Rosca spider no banco inclinado",["biceps"],[],"Peito apoiado no banco inclinado e braços soltos para baixo. Suba contraindo bem o bíceps e desça até estender os cotovelos."),
-  L("triceps-frances-polia-unilateral","Tríceps francês unilateral na polia",["triceps"],[],"Manter o abdômen sempre ativo e o tronco estável, alongando bem o tríceps ao descer e contraindo bem ao subir."),
-  L("agach-sumo-barra","Agachamento sumô com barra",["adutores", "gluteos"],["quadriceps", "lombar"],"Pés afastados e apontando para fora, joelhos seguindo a linha dos pés. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("bulgaro-barra","Búlgaro com barra",["quadriceps", "gluteos"],["adutores", "abdomen"],"Manter o abdômen sempre ativo, explorar a amplitude ao máximo e direcionar o movimento numa diagonal ao subir e descer."),
-  L("leg-press-horiz-unilateral","Leg press horizontal unilateral",["quadriceps", "gluteos"],["adutores"],"Ajustar o banco para que tenha uma boa amplitude, sem que gere dor ou desconforto. Joelho alinhado ao pé durante todo o movimento."),
-  L("hack-invertido","Hack invertido (de frente para a máquina)",["gluteos", "quadriceps"],["posteriores", "adutores"],"Peito apoiado na máquina e quadril indo para trás na descida. Manter o abdômen sempre ativo e explorar o máximo de amplitude que conseguir, sem gerar desconforto. Fique atento à cadência do movimento."),
-  L("step-up-lateral","Subida lateral no banco",["gluteos", "abdutores"],["quadriceps"],"De lado para o banco, pé de cima inteiro apoiado. Suba empurrando com essa perna, sem impulso da de baixo, e desça devagar."),
-  L("abducao-maq-pe","Abdução de quadril em pé na máquina",["abdutores"],["gluteos"],"Manter o abdômen sempre ativo, tronco estável e abrir as pernas usando o glúteo, controlando a volta."),
-  L("abducao-caneleira","Abdução de quadril em pé com caneleira",["abdutores"],["gluteos"],"Apoiado com as mãos, tronco estável. Abra a perna para o lado usando o glúteo, sem inclinar o corpo, e volte devagar."),
-  L("coice-caneleira","Coice em pé com caneleira",["gluteos"],["posteriores"],"Apoiado com as mãos e tronco levemente à frente. Leve a perna para trás contraindo o glúteo, sem arquear a lombar."),
-  L("flexora-sentada-unilateral","Cadeira flexora unilateral",["posteriores"],["panturrilha"],"Manter o abdômen sempre ativo, tronco estável e focar em flexionar o joelho, contraindo os posteriores ao fazer a força."),
-  L("prancha-elev-perna","Prancha com elevação de perna",["abdomen"],["gluteos", "obliquos"],"Em prancha com os cotovelos apoiados, eleve uma perna de cada vez sem girar o quadril. Abdômen e glúteo contraídos."),
-  L("abd-infra-declinado","Abdominal infra no banco declinado",["abdomen"],[],"Segure firme no banco e eleve o quadril usando o abdômen, sem dar impulso com as pernas. Desça devagar."),
-  L("afundo-salto","Afundo com salto",["quadriceps", "gluteos"],["panturrilha", "adutores"],"Desça no afundo e troque as pernas no ar com um salto. Aterrisse suave e com o tronco estável.")
+  L('stiff','Stiff com barra',['posteriores','gluteos'],['lombar'],'Joelhos levemente flexionados, barra rente às pernas e quadril indo para trás até alongar os posteriores. Coluna neutra o tempo todo.')
 ]);}
-const TEMPO_IDS = ["prancha", "farmer-walk", "wall-sit", "hollow", "prancha-lateral", "mountain-climber", "prancha-elev-perna"];
-function withDefaults(list){ list.forEach(l => { if (TEMPO_IDS.includes(l.id)) l.defMeas = 'tempo'; }); return list; }
+function withDefaults(list){ const p = list.find(l => l.id === 'prancha'); if (p) p.defMeas = 'tempo'; return list; }
 function seedMethods(){ return [
   {id:'normal', name:'Normal', desc:'Séries tradicionais: faça as repetições, descanse o intervalo indicado e repita.'},
   {id:'conjugado', name:'Conjugado (bi-set)', desc:'Dois exercícios em sequência, sem descanso entre eles. Faça a série do A, vá direto para o B e só então descanse o intervalo indicado.'},
-  {id:'dropset', tec:'drop', name:'Drop-set', desc:'Na última série, ao chegar perto da falha, reduza a carga de 20 a 30% e continue sem descanso até a falha de novo.'},
-  {id:'restpause', tec:'blocos', name:'Rest-pause', desc:'Vá até perto da falha, descanse de 10 a 15 segundos e faça mais algumas repetições com a mesma carga. Repita 2 ou 3 vezes.'},
+  {id:'dropset', name:'Drop-set', desc:'Na última série, ao chegar perto da falha, reduza a carga de 20 a 30% e continue sem descanso até a falha de novo.'},
+  {id:'restpause', name:'Rest-pause', desc:'Vá até perto da falha, descanse de 10 a 15 segundos e faça mais algumas repetições com a mesma carga. Repita 2 ou 3 vezes.'},
   {id:'piramide', name:'Pirâmide crescente', desc:'Aumente a carga a cada série e diminua as repetições, seguindo a faixa indicada para cada série.'},
-  {id:'isometria', name:'Isometria no pico', desc:'Segure 2 a 3 segundos na posição de maior contração em todas as repetições.'},
-  {id:'cluster', tec:'blocos', name:'Cluster', desc:'Divida a série em blocos curtos com a mesma carga, descansando de 10 a 20 segundos entre um bloco e outro.'}
+  {id:'isometria', name:'Isometria no pico', desc:'Segure 2 a 3 segundos na posição de maior contração em todas as repetições.'}
 ];}
 const STYPES = {aq:{l:'Aquecimento'}, prep:{l:'Preparatória'}, trab:{l:'Trabalho'}};
 function buildSeries(sets, reps, o){
@@ -422,7 +200,7 @@ function save(){ clearTimeout(saveT); saveT = setTimeout(() => { cacheWrite(); s
 let db = emptyDb();
 
 const state = {mode:'aluno', sid: undefined, day: todayKey, dayPicked:false, feedF:'todos', feedN:20, copy:null, imp:null, sumOpen:false, obStep:0, newOpen:false, sdataOpen:false, volOpen:false, openEx:{}, editLog:null, logDraft:null, histN:5, stab:'treino', evoLib:null, evoMode:'serie', fperiod:'semana',
-  psec:'painel', pview:'list', ptab:'hist', editDay:'seg', picker:null, libOpen:null, libQ:'', libM:''};
+  psec:'alunos', pview:'list', ptab:'hist', editDay:'seg', picker:null, libOpen:null, libQ:'', libM:''};
 const app = document.getElementById('app');
 
 /* ---------- nuvem: login, banco de dados e sincronização ---------- */
@@ -431,7 +209,7 @@ const CONSENT_VERSION = 'teste-2026-10';
 const RECOVERY_LINK = /type=recovery/.test(location.hash);
 const APP_URL = location.origin + location.pathname.replace(/index\.html$/, '');
 const AUTH = {screen: 'loading', view: RECOVERY_LINK ? 'recovery' : 'login', user: null, profile: null, msg: '', err: '', busy: false};
-const SYNC = {synced: {}, ver: {}, since: {}, fullAt: 0, conflict: false, status: 'ok', timer: null, running: false, again: false, retry: 0, retryT: null, lastPull: 0, pulling: false, pendingRender: false};
+const SYNC = {synced: {}, status: 'ok', timer: null, running: false, again: false, retry: 0, retryT: null, lastPull: 0, pulling: false, pendingRender: false};
 let sb = null;
 try {
   if (window.supabase && CFG.supabaseUrl && !/COLE_AQUI/.test(CFG.supabaseUrl + CFG.supabaseKey))
@@ -443,7 +221,7 @@ if (sb) sb.auth.onAuthStateChange((ev, session) => {
 const isP = () => !!(AUTH.profile && AUTH.profile.role === 'personal');
 const cacheKey = () => 'jau-cache-v1:' + (AUTH.user ? AUTH.user.id : 'anon');
 function emptyDb(){ return {library: [], methods: [], students: [], drafts: {}, draftMeta: {}, settings: {wa: ''}, seen: {}, onboarded: {}}; }
-function cacheWrite(){ if (!AUTH.user) return; try { localStorage.setItem(cacheKey(), JSON.stringify({db, synced: SYNC.synced, ver: SYNC.ver, since: SYNC.since, fullAt: SYNC.fullAt, profile: AUTH.profile})); } catch(e){} }
+function cacheWrite(){ if (!AUTH.user) return; try { localStorage.setItem(cacheKey(), JSON.stringify({db, synced: SYNC.synced, profile: AUTH.profile})); } catch(e){} }
 function cacheRead(){ try { const c = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return c && c.db ? c : null; } catch(e){ return null; } }
 
 /* Cada linha do banco vira uma "foto" em texto. Salvar = enviar só as fotos que mudaram. */
@@ -461,25 +239,20 @@ function snap(){
     db.library.forEach((l, i) => { const {id, ...rest} = l; m['lib:' + id] = JSON.stringify({ord: i, data: rest}); });
     db.methods.forEach((x, i) => { const {id, ...rest} = x; m['met:' + id] = JSON.stringify({ord: i, data: rest}); });
     m['set:wa'] = JSON.stringify((db.settings && db.settings.wa) || '');
-    if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
 }
 const TBL = {
-  lib: {t: 'library', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, ord: v.ord, data: v.data})},
-  met: {t: 'methods', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, ord: v.ord, data: v.data})},
+  lib: {t: 'library', pk: 'id', row: (id, v) => ({id, ord: v.ord, data: v.data})},
+  met: {t: 'methods', pk: 'id', row: (id, v) => ({id, ord: v.ord, data: v.data})},
   set: {t: 'settings', pk: 'key', row: (id, v) => ({key: id, value: v})},
-  stu: {t: 'students', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, email: v.email, data: v.data})},
-  prv: {t: 'student_private', pk: 'student_id', ts: 'updated_at', row: (id, v) => ({student_id: id, notes: v})},
-  log: {t: 'logs', pk: 'id', ts: 'updated_at', row: (id, v) => ({id, student_id: v.student_id, date: v.date, data: v.data})},
-  seen: {t: 'feed_seen', pk: 'log_id', ts: 'seen_at', row: id => ({log_id: id})}
+  stu: {t: 'students', pk: 'id', row: (id, v) => ({id, email: v.email, data: v.data})},
+  prv: {t: 'student_private', pk: 'student_id', row: (id, v) => ({student_id: id, notes: v})},
+  log: {t: 'logs', pk: 'id', row: (id, v) => ({id, student_id: v.student_id, date: v.date, data: v.data})},
+  seen: {t: 'feed_seen', pk: 'log_id', row: id => ({log_id: id})}
 };
 const UP_ORDER = ['lib', 'met', 'set', 'stu', 'prv', 'log', 'seen'], DEL_ORDER = ['seen', 'log', 'prv', 'stu', 'met', 'lib', 'set'];
-/* Versão de cada linha que este aparelho conhece (data da última alteração no banco). */
-const kindsFor = P => P ? ['lib', 'met', 'stu', 'prv', 'log', 'seen'] : ['lib', 'met', 'stu', 'log'];
-const verOf = (p, id) => { const v = SYNC.ver[p] && SYNC.ver[p][id]; return v ? v[0] : null; };
-function setVer(p, id, ts, ord){ (SYNC.ver[p] = SYNC.ver[p] || {})[id] = ord == null ? [ts] : [ts, ord]; if (ts && (!SYNC.since[p] || ts > SYNC.since[p])) SYNC.since[p] = ts; }
 function diff(){
   const cur = snap(), prev = SYNC.synced, up = {}, del = {};
   const pre = k => k.slice(0, k.indexOf(':'));
@@ -488,67 +261,29 @@ function diff(){
   return {cur, up, del, n: Object.keys(up).length + Object.keys(del).length};
 }
 const hasPending = () => diff().n > 0;
-async function selectIn(T, cols, ids){
-  const out = [];
-  for (let i = 0; i < ids.length; i += 100){
-    const {data, error} = await sb.from(T.t).select(cols).in(T.pk, ids.slice(i, i + 100));
-    if (error) throw error;
-    out.push(...(data || []));
-  }
-  return out;
-}
-/* Antes de gravar por cima de uma linha que já existe, confere se outro aparelho mexeu nela. */
-async function guard(p, ks, cur, prev){
-  const T = TBL[p]; if (!T.ts || !SYNC.ver[p]) return ks;
-  const ids = ks.map(k => k.slice(p.length + 1)).filter(id => verOf(p, id));
-  if (!ids.length) return ks;
-  const srv = await selectIn(T, T.pk + ',' + T.ts, ids), now = {};
-  srv.forEach(r => now[r[T.pk]] = r[T.ts]);
-  const changed = ids.filter(id => now[id] && now[id] !== verOf(p, id)), gone = ids.filter(id => !now[id]);
-  if (!changed.length && !gone.length) return ks;
-  const rows = changed.length ? await selectIn(T, '*', changed) : [];
-  rows.forEach(r => applyRow(p, r));
-  gone.forEach(id => dropRow(p, id));
-  finishApply(p === 'lib' || p === 'met' ? [] : [p]);
-  const fresh = snap(), hit = new Set([...changed, ...gone].map(id => p + ':' + id));
-  hit.forEach(k => { if (k in fresh){ prev[k] = fresh[k]; cur[k] = fresh[k]; } else { delete prev[k]; delete cur[k]; } });
-  SYNC.conflict = true;
-  return ks.filter(k => !hit.has(k));
-}
 async function push(){
   if (!sb || !AUTH.user) return;
   const {cur, up, del} = diff(), prev = SYNC.synced;
   for (const p of UP_ORDER){
-    let ks = up[p]; if (!ks) continue;
-    ks = await guard(p, ks, cur, prev);
-    const T = TBL[p];
+    const ks = up[p]; if (!ks) continue;
     for (let i = 0; i < ks.length; i += 200){
       const part = ks.slice(i, i + 200);
-      const rows = part.map(k => T.row(k.slice(p.length + 1), JSON.parse(cur[k])));
-      let q = sb.from(T.t).upsert(rows, {onConflict: T.pk});
-      if (T.ts && p !== 'seen') q = q.select(T.pk + ',' + T.ts + (p === 'lib' || p === 'met' ? ',ord' : ''));
-      const {data, error} = await q;
+      const rows = part.map(k => TBL[p].row(k.slice(p.length + 1), JSON.parse(cur[k])));
+      const {error} = await sb.from(TBL[p].t).upsert(rows, {onConflict: TBL[p].pk});
       if (error) throw error;
-      (data || []).forEach(r => setVer(p, r[T.pk], r[T.ts], r.ord));
       part.forEach(k => prev[k] = cur[k]);
     }
   }
   for (const p of DEL_ORDER){
     const ks = del[p]; if (!ks) continue;
     for (let i = 0; i < ks.length; i += 200){
-      const part = ks.slice(i, i + 200), ids = part.map(k => k.slice(p.length + 1));
-      const {error} = await sb.from(TBL[p].t).delete().in(TBL[p].pk, ids);
+      const part = ks.slice(i, i + 200);
+      const {error} = await sb.from(TBL[p].t).delete().in(TBL[p].pk, part.map(k => k.slice(p.length + 1)));
       if (error) throw error;
       part.forEach(k => delete prev[k]);
-      if (SYNC.ver[p]) ids.forEach(id => delete SYNC.ver[p][id]);
     }
   }
   cacheWrite();
-  if (SYNC.conflict){
-    SYNC.conflict = false; dataVer++;
-    toast('Isto foi alterado em outro aparelho ao mesmo tempo. Fiquei com a versão mais nova.');
-    if (typing() || state.done || state.editLog) SYNC.pendingRender = true; else render();
-  }
   if (up.stu && isP()) setTimeout(() => refresh(true), 1500);
 }
 const isNetErr = e => !e || (!e.code && /fetch|network|load failed|timeout/i.test(String(e.message || e)));
@@ -574,143 +309,45 @@ async function runSync(){
     if (SYNC.again){ SYNC.again = false; scheduleSync(150); }
   }
 }
-async function fetchAll(t, pk, cols, since){
+async function fetchAll(t, pk){
   const out = [];
   for (let from = 0; ; from += 1000){
-    let q = sb.from(t).select(cols || '*');
-    if (since) q = q.gt(since[0], since[1]);
-    const {data, error} = await q.order(pk).range(from, from + 999);
+    const {data, error} = await sb.from(t).select('*').order(pk).range(from, from + 999);
     if (error) throw error;
     out.push(...data);
     if (data.length < 1000) return out;
   }
 }
 const byOrd = (a, b) => (a.ord - b.ord) || (a.id < b.id ? -1 : 1);
-function fixStudent(s){
-  s.days = s.days || {}; DAYS.forEach(x => { s.days[x.k] = s.days[x.k] || {title: '', ex: []}; if (!s.days[x.k].ex) s.days[x.k].ex = []; });
-  s.last = (s.logs || []).reduce((m, x) => !m || x.date > m ? x.date : m, null);
-  return s;
-}
-/* Aplica uma linha que veio do banco nos dados do aparelho. */
-function applyRow(p, r){
-  const T = TBL[p], id = r[T.pk];
-  if (p === 'lib' || p === 'met'){
-    const arr = p === 'lib' ? db.library : db.methods, o = Object.assign({id}, r.data), i = arr.findIndex(x => x.id === id);
-    if (i >= 0) arr[i] = o; else arr.push(o);
-    setVer(p, id, r[T.ts], r.ord);
-  } else if (p === 'stu'){
-    let s = db.students.find(x => x.id === id);
-    if (!s){ s = {id, logs: [], privNotes: ''}; db.students.push(s); }
-    Object.keys(s).forEach(k => { if (!['id', 'logs', 'privNotes'].includes(k)) delete s[k]; });
-    Object.assign(s, r.data, {email: r.email || '', userId: r.user_id || null});
-    fixStudent(s); setVer(p, id, r[T.ts]);
-  } else if (p === 'prv'){
-    const s = db.students.find(x => x.id === id); if (s) s.privNotes = r.notes || '';
-    setVer(p, id, r[T.ts]);
-  } else if (p === 'log'){
-    db.students.forEach(s => { if (s.logs && s.logs.some(l => l.id === id)) s.logs = s.logs.filter(l => l.id !== id); });
-    const s = db.students.find(x => x.id === r.student_id);
-    if (s){ s.logs = s.logs || []; s.logs.push(Object.assign({id, date: r.date}, r.data)); }
-    setVer(p, id, r[T.ts]);
-  } else if (p === 'seen'){ db.seen[id] = true; setVer(p, id, r[T.ts]); }
-}
-function dropRow(p, id){
-  if (p === 'lib') db.library = db.library.filter(x => x.id !== id);
-  else if (p === 'met') db.methods = db.methods.filter(x => x.id !== id);
-  else if (p === 'stu'){
-    const s = db.students.find(x => x.id === id);
-    if (s && SYNC.ver.log) (s.logs || []).forEach(l => delete SYNC.ver.log[l.id]);
-    db.students = db.students.filter(x => x.id !== id);
-  }
-  else if (p === 'prv'){ const s = db.students.find(x => x.id === id); if (s) s.privNotes = ''; }
-  else if (p === 'log') db.students.forEach(s => { if (s.logs) s.logs = s.logs.filter(l => l.id !== id); });
-  else if (p === 'seen') delete db.seen[id];
-  if (SYNC.ver[p]) delete SYNC.ver[p][id];
-}
-function finishApply(kinds){
-  const ord = (p, x) => { const v = SYNC.ver[p] && SYNC.ver[p][x.id]; return v && v[1] != null ? v[1] : 1e9; };
-  if (kinds.includes('lib')) db.library.sort((a, b) => ord('lib', a) - ord('lib', b));
-  if (kinds.includes('met')) db.methods.sort((a, b) => ord('met', a) - ord('met', b));
-  if (kinds.includes('log') || kinds.includes('stu')) db.students.forEach(s => {
-    s.logs = (s.logs || []).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0); fixStudent(s);
-  });
-}
-/* Primeira vez (ou uma vez por dia): baixa tudo. */
-async function pullFull(P){
-  const [lib, met, set, stus, logs, prv, seen] = await Promise.all([
-    fetchAll('library', 'id'), fetchAll('methods', 'id'), fetchAll('settings', 'key'), fetchAll('students', 'id'), fetchAll('logs', 'id'),
-    P ? fetchAll('student_private', 'student_id') : Promise.resolve([]), P ? fetchAll('feed_seen', 'log_id') : Promise.resolve([])]);
-  if (hasPending()) return false;
-  const logsBy = {}, prvBy = {};
-  SYNC.ver = {}; SYNC.since = {};
-  logs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.created_at < b.created_at ? -1 : 1))
-    .forEach(r => { (logsBy[r.student_id] = logsBy[r.student_id] || []).push(Object.assign({id: r.id, date: r.date}, r.data)); setVer('log', r.id, r.updated_at); });
-  prv.forEach(r => { prvBy[r.student_id] = r.notes || ''; setVer('prv', r.student_id, r.updated_at); });
-  db.library = lib.sort(byOrd).map(r => { setVer('lib', r.id, r.updated_at, r.ord); return Object.assign({id: r.id}, r.data); });
-  db.methods = met.sort(byOrd).map(r => { setVer('met', r.id, r.updated_at, r.ord); return Object.assign({id: r.id}, r.data); });
-  applySettings(set);
-  db.seen = Object.fromEntries(seen.map(r => { setVer('seen', r.log_id, r.seen_at); return [r.log_id, true]; }));
-  db.students = stus.sort((a, b) => a.created_at < b.created_at ? -1 : 1).map(r => {
-    setVer('stu', r.id, r.updated_at);
-    return fixStudent(Object.assign({id: r.id, email: r.email || '', userId: r.user_id || null}, r.data, {privNotes: P ? (prvBy[r.id] || '') : '', logs: logsBy[r.id] || []}));
-  });
-  kindsFor(P).forEach(p => SYNC.ver[p] = SYNC.ver[p] || {});
-  SYNC.fullAt = Date.now();
-  return true;
-}
-function applySettings(set){
-  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver');
-  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0});
-}
-/* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
-async function pullDelta(P){
-  const kinds = kindsFor(P);
-  const back = p => SYNC.since[p] || '1970-01-01T00:00:00Z';
-  const [set, ...res] = await Promise.all([fetchAll('settings', 'key'), ...kinds.map(async p => {
-    const T = TBL[p];
-    const [rows, cnt] = await Promise.all([fetchAll(T.t, T.pk, '*', [T.ts, back(p)]), sb.from(T.t).select(T.pk, {count: 'exact', head: true})]);
-    if (cnt.error) throw cnt.error;
-    return {p, rows: rows.filter(r => r[T.ts] !== verOf(p, r[T.pk])), count: cnt.count};
-  })]);
-  // Quantidade diferente: alguma linha foi apagada (ou chegou sem aparecer acima). Confere a lista de ids.
-  for (const x of res){
-    const T = TBL[x.p], known = Object.assign({}, SYNC.ver[x.p] || {});
-    x.rows.forEach(r => known[r[T.pk]] = [r[T.ts]]);
-    if (typeof x.count === 'number' && x.count !== Object.keys(known).length){
-      const ids = await fetchAll(T.t, T.pk, T.pk + ',' + T.ts), live = new Set(ids.map(r => r[T.pk]));
-      x.gone = Object.keys(known).filter(id => !live.has(id));
-      const miss = ids.filter(r => !known[r[T.pk]] || (r[T.ts] !== known[r[T.pk]][0] && !x.rows.some(y => y[T.pk] === r[T.pk]))).map(r => r[T.pk]);
-      if (miss.length) x.rows.push(...await selectIn(T, '*', miss));
-    }
-  }
-  if (hasPending()) return false;
-  const before = JSON.stringify(db.settings);
-  applySettings(set);
-  let touched = before !== JSON.stringify(db.settings);
-  const order = ['lib', 'met', 'stu', 'prv', 'log', 'seen'];
-  res.sort((a, b) => order.indexOf(a.p) - order.indexOf(b.p)).forEach(x => {
-    x.rows.forEach(r => applyRow(x.p, r));
-    (x.gone || []).forEach(id => dropRow(x.p, id));
-    if (x.rows.length || (x.gone || []).length) touched = true;
-  });
-  if (touched) finishApply(kinds);
-  return touched;
-}
-/* Baixa do banco. Devolve true se algo mudou. */
+/* Baixa tudo do banco. Devolve true se algo mudou. */
 async function pull(){
   if (!sb || SYNC.pulling) return false;
   SYNC.pulling = true;
   try {
     const P = isP();
-    const full = !SYNC.fullAt || Date.now() - SYNC.fullAt > 864e5 || kindsFor(P).some(p => !SYNC.ver[p]);
-    const before = full ? JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]) : null;
-    const res = full ? await pullFull(P) : await pullDelta(P);
-    SYNC.lastPull = Date.now();
-    if (full && res === false) return false;
-    if (!full && !res) return false;
-    SYNC.synced = snap(); dataVer++; cacheWrite();
+    const [lib, met, set, stus, logs, prv, seen] = await Promise.all([
+      fetchAll('library', 'id'), fetchAll('methods', 'id'), fetchAll('settings', 'key'), fetchAll('students', 'id'), fetchAll('logs', 'id'),
+      P ? fetchAll('student_private', 'student_id') : Promise.resolve([]), P ? fetchAll('feed_seen', 'log_id') : Promise.resolve([])]);
+    if (hasPending()) return false;
+    const before = JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]);
+    const logsBy = {}, prvBy = {};
+    logs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.created_at < b.created_at ? -1 : 1))
+      .forEach(r => (logsBy[r.student_id] = logsBy[r.student_id] || []).push(Object.assign({id: r.id, date: r.date}, r.data)));
+    prv.forEach(r => prvBy[r.student_id] = r.notes || '');
+    db.library = lib.sort(byOrd).map(r => Object.assign({id: r.id}, r.data));
+    db.methods = met.sort(byOrd).map(r => Object.assign({id: r.id}, r.data));
+    const wa = set.find(r => r.key === 'wa');
+    db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : ''});
+    db.seen = Object.fromEntries(seen.map(r => [r.log_id, true]));
+    db.students = stus.sort((a, b) => a.created_at < b.created_at ? -1 : 1).map(r => {
+      const s = Object.assign({id: r.id, email: r.email || '', userId: r.user_id || null}, r.data, {privNotes: P ? (prvBy[r.id] || '') : '', logs: logsBy[r.id] || []});
+      s.days = s.days || {}; DAYS.forEach(x => { s.days[x.k] = s.days[x.k] || {title: '', ex: []}; if (!s.days[x.k].ex) s.days[x.k].ex = []; });
+      s.last = s.logs.reduce((m, x) => !m || x.date > m ? x.date : m, null);
+      return s;
+    });
+    SYNC.synced = snap(); SYNC.lastPull = Date.now(); dataVer++; cacheWrite();
     if (!db.students.find(s => s.id === state.sid)) state.sid = db.students[0] && db.students[0].id;
-    return full ? before !== JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]) : true;
+    return before !== JSON.stringify([db.library, db.methods, db.students, db.settings, db.seen]);
   } finally { SYNC.pulling = false; }
 }
 const typing = () => { const a = document.activeElement; return !!(a && a.matches && a.matches('input,textarea,select')); };
@@ -741,8 +378,8 @@ async function enter(user){
   AUTH.user = user; AUTH.err = AUTH.msg = '';
   if (AUTH.view === 'recovery'){ AUTH.screen = 'auth'; render(); return; }
   const c = cacheRead();
-  if (c){ db = Object.assign(emptyDb(), c.db); SYNC.synced = c.synced || {}; SYNC.ver = c.ver || {}; SYNC.since = c.since || {}; SYNC.fullAt = c.fullAt || 0; AUTH.profile = c.profile || null; }
-  else { db = emptyDb(); SYNC.synced = {}; SYNC.ver = {}; SYNC.since = {}; SYNC.fullAt = 0; AUTH.profile = null; }
+  if (c){ db = Object.assign(emptyDb(), c.db); SYNC.synced = c.synced || {}; AUTH.profile = c.profile || null; }
+  else { db = emptyDb(); SYNC.synced = {}; AUTH.profile = null; }
   try {
     const {data, error} = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
     if (error) throw error;
@@ -754,35 +391,13 @@ async function enter(user){
   if (!isP() && (!AUTH.profile.consent_terms_at || !AUTH.profile.consent_health_at)){ AUTH.screen = 'consent'; render(); return; }
   await openApp(!!c);
 }
-/* Biblioteca nova: renomeia o afundo reverso e acrescenta só os exercícios que faltam (por id e por nome). */
-const LIB_V = 5;
-function metUpgrade(){
-  const T = {dropset: 'drop', restpause: 'blocos'};
-  db.methods.forEach(m => { if (T[m.id] && m.tec === undefined) m.tec = T[m.id]; });
-  if (!db.methods.some(m => m.id === 'cluster' || norm(m.name) === 'cluster')) db.methods.push(seedMethods().find(m => m.id === 'cluster'));
-}
-function libUpgrade(){
-  const v0 = db.settings.libVer || 0;
-  if (v0 >= LIB_V) return false;
-  catUpgrade();
-  if (v0 >= 4){ db.settings.libVer = LIB_V; return true; }
-  if (v0 >= 3){ metUpgrade(); db.settings.libVer = LIB_V; return true; }
-  metUpgrade();
-  const RENAME = {'afundo-reverso': ['Afundo reverso com halteres', 'Recuo com halteres']};
-  db.library.forEach(l => { const r = RENAME[l.id]; if (r && l.name === r[0]) l.name = r[1]; });
-  const ids = new Set(db.library.map(l => l.id)), names = new Set(db.library.map(l => norm(l.name)));
-  seedLibrary().forEach(l => { if (!ids.has(l.id) && !names.has(norm(l.name))) db.library.push(l); });
-  db.settings.libVer = LIB_V;
-  return true;
-}
 async function openApp(hasCache){
   state.mode = isP() ? 'personal' : 'aluno';
   if (!isP()) state.stab = state.stab || 'treino';
   if (hasCache && (db.students.length || db.library.length)){ AUTH.screen = 'app'; if (!db.students.find(s => s.id === state.sid)) state.sid = db.students[0] && db.students[0].id; render(); }
   else { AUTH.screen = 'loading'; render(); }
   try { if (hasPending()) await push(); } catch(e){}
-  let pulled = false;
-  try { await pull(); pulled = true; setSync(hasPending() ? 'offline' : 'ok'); }
+  try { await pull(); setSync(hasPending() ? 'offline' : 'ok'); }
   catch(e){
     console.error('pull', e);
     if (AUTH.screen !== 'app'){ AUTH.screen = 'error'; AUTH.err = isNetErr(e) ? 'Sem internet. Conecte-se e tente de novo.' : 'Não consegui carregar os dados (' + (e.message || e) + ').'; render(); return; }
@@ -790,8 +405,7 @@ async function openApp(hasCache){
   }
   if (isP()){
     let seeded = false;
-    if (!db.library.length){ db.library = seedLibrary(); db.settings.libVer = LIB_V; seeded = true; }
-    else if (pulled && libUpgrade()) seeded = true;
+    if (!db.library.length){ db.library = seedLibrary(); seeded = true; }
     if (!db.methods.length){ db.methods = seedMethods(); seeded = true; }
     if (!db.settings.wa){ db.settings.wa = '5521984183052'; seeded = true; }
     if (seeded){ cacheWrite(); runSync(); }
@@ -804,8 +418,8 @@ async function logout(){
   try { await sb.auth.signOut({scope: 'local'}); } catch(e){}
   try { localStorage.removeItem(cacheKey()); } catch(e){}
   clearTimeout(SYNC.timer); clearTimeout(SYNC.retryT);
-  db = emptyDb(); SYNC.synced = {}; SYNC.ver = {}; SYNC.since = {}; SYNC.fullAt = 0; AUTH.user = null; AUTH.profile = null; AUTH.screen = 'auth'; AUTH.view = 'login'; AUTH.err = AUTH.msg = '';
-  state.done = null; state.sid = undefined; state.psec = 'painel'; state.pview = 'list'; state.stab = 'treino';
+  db = emptyDb(); SYNC.synced = {}; AUTH.user = null; AUTH.profile = null; AUTH.screen = 'auth'; AUTH.view = 'login'; AUTH.err = AUTH.msg = '';
+  state.done = null; state.sid = undefined; state.psec = 'alunos'; state.pview = 'list'; state.stab = 'treino';
   setSync('ok'); render(); top();
 }
 function authErr(e){
@@ -932,7 +546,7 @@ function accessHTML(s){
 }
 function inviteMsg(s){
   const first = s.name.trim().split(' ')[0];
-  return `Oi, ${first}! Seu treino agora está no app da Jau Training. 🐆\n\n1. Abra: ${APP_URL}\n2. Toque em "Criar conta" e use este e-mail: ${s.email}\n3. Confirme no link que chega no seu e-mail (olhe o spam também)\n4. Para abrir como app:\n• no iPhone, Abra o link no Safari > Vá em Compartilhar > Adicionar à Tela de Início.\n• no Android, Abra o link no Chrome > Toque no menu ⋮ > Instalar app.\n\nQualquer dúvida, me chama! 🫶🏾`;
+  return `Oi, ${first}! Seu treino agora está no app da Jau Training.\n\n1. Abra: ${APP_URL}\n2. Toque em "Criar conta" e use este e-mail: ${s.email}\n3. Confirme no link que chega no seu e-mail (olhe o spam também)\n4. Para abrir como app: no iPhone, Safari > Compartilhar > Adicionar à Tela de Início. No Android, Chrome > menu ⋮ > Instalar app.\n\nQualquer dúvida, me chama!`;
 }
 async function shareText(text, okMsg){
   try { if (navigator.share && matchMedia('(pointer:coarse)').matches){ await navigator.share({text}); return; } } catch(e){ if (e && e.name === 'AbortError') return; }
@@ -951,457 +565,7 @@ const draftKey = () => state.sid + '|' + state.day;
 const draft = () => (db.drafts[draftKey()] = db.drafts[draftKey()] || {});
 function drEx(exId){ const d = draft(); d[exId] = d[exId] || {sets:{}, comment:''}; if (!d[exId].sets) d[exId].sets = {}; return d[exId]; }
 function targets(ex){ return (ex.series && ex.series.length ? ex.series : [{type:'trab', reps:''}]).map(s => s.reps); }
-
-const THEME_KEY = 'jau-tema';
-function themeGet(){ try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch(e){ return 'auto'; } }
-function themeApply(v){ const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; }
-themeApply(themeGet());
-function themeHTML(){ const v = themeGet();
-  return `<section class="card themecard"><p class="eyebrow">Aparência</p><div class="seg" role="group" aria-label="Tema do app">${[['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([k, l]) => `<button type="button" data-act="theme" data-v="${k}" aria-pressed="${v === k}">${l}</button>`).join('')}</div><p class="muted small">Automático segue o modo claro ou escuro do seu celular. A escolha fica salva neste aparelho.</p></section>`; }
-
-function mobEditor(d){
-  const pk = state.picker, list = d.mob || [];
-  return `<section class="card mobed form"><div class="mobhd"><div><p class="eyebrow">Mobilidade</p><b>Antes dos exercícios</b></div><span class="hint">O aluno vê em cards que passam para o lado e só marca como feito.</span></div>
-    ${list.map((m, i) => { const l = lib(m.lib); return `<div class="mobrow"><span class="num">${i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Pôr vídeo</button>`}</small></span>
-      <span class="macts"><button type="button" class="icon" data-act="mob-up" data-v="${m.id}" ${i === 0 ? 'disabled' : ''} aria-label="Subir ${esc(l.name)}">↑</button><button type="button" class="icon" data-act="mob-del" data-v="${m.id}" aria-label="Remover ${esc(l.name)}">✕</button></span>
-      <div class="mobf"><label>Séries<input id="mb-s-${m.id}" inputmode="numeric" data-mob="${m.id}" data-mbf="sets" value="${esc(m.sets || '')}"></label>
-      <label>${m.meas === 'tempo' ? 'Segundos' : 'Reps'}<input id="mb-r-${m.id}" data-mob="${m.id}" data-mbf="reps" value="${esc(m.reps || '')}" placeholder="${m.meas === 'tempo' ? '30' : '10'}"></label>
-      <label>Medida<select id="mb-m-${m.id}" data-mob="${m.id}" data-mbf="meas"><option value="reps" ${m.meas !== 'tempo' ? 'selected' : ''}>Séries × reps</option><option value="tempo" ${m.meas === 'tempo' ? 'selected' : ''}>Séries × tempo</option></select></label></div></div>`; }).join('')}
-    ${pk && pk.target === 'mob' ? pickerHTML('Adicionar mobilidade') : `<button class="icon" type="button" data-act="pick-open" data-v="mob">+ Adicionar mobilidade</button>`}
-  </section>`;
-}
-function mobHTML(d){
-  const list = (d.mob || []).filter(m => m && m.lib); if (!list.length) return '';
-  const dr = db.drafts[draftKey()] || {}, done = list.filter(m => dr['mob:' + m.id]).length;
-  return `<section class="mobsec" aria-label="Mobilidade"><div class="mobtop"><div><p class="eyebrow">Mobilidade</p><b>${done} de ${list.length} ${list.length === 1 ? 'feito' : 'feitos'}</b></div>${list.length > 1 ? '<span class="muted small">Arraste para o lado →</span>' : ''}</div>
-    <div class="mobcar" id="mobcar">${list.map((m, i) => { const l = lib(m.lib), ok = !!dr['mob:' + m.id], u = videoUrl(l);
-      const vid = u ? (ytId(l.video) ? `<button type="button" class="vcard" data-act="vid-open" data-v="${esc(l.id)}"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Ver execução</b><span>abre aqui no app</span></span></button>`
-          : `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Ver execução</b><span>abre em outra página</span></span></a>`)
-        : `<span class="vcard none"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>Vídeo em breve</b><span>o personal ainda vai adicionar</span></span></span>`;
-      const meta = (m.sets ? `${esc(m.sets)} ${String(m.sets).trim() === '1' ? 'série' : 'séries'}` : '') + (m.reps ? `${m.sets ? ' × ' : ''}${esc(m.reps)}${m.meas === 'tempo' ? ' s' : ' reps'}` : '');
-      return `<article class="mobcard ${ok ? 'done' : ''}" id="mob-${m.id}"><div class="mobh"><span class="num ${ok ? 'ok' : ''}">${ok ? ICON_CHECK : i + 1}</span><h3>${esc(l.name)}</h3></div>${vid}${meta ? `<p class="mobmeta">${meta}</p>` : ''}
-        <button type="button" class="mobchk" data-act="mob-done" data-v="${m.id}" aria-pressed="${ok}">${ICON_CHECK}<span>${ok ? 'Feito' : 'Marcar como feito'}</span></button></article>`; }).join('')}</div></section>`;
-}
-
-const CATS = [['musc', 'Musculação'], ['mob', 'Mobilidade']];
-const catOf = l => l && l.cat === 'mob' ? 'mob' : 'musc';
-function pickCat(list, q){ const pc = state.picker && state.picker.target === 'mob' ? 'mob' : 'musc', c = list.filter(l => catOf(l) === pc); return q && !c.length ? list : c; }
-function libCats(){ const n = k => db.library.filter(l => !k || catOf(l) === k).length;
-  return `<div class="seg libcats" role="group" aria-label="Categoria">${[['', 'Todos'], ...CATS].map(([k, l]) => `<button type="button" data-act="libc" data-v="${k}" aria-pressed="${(state.libC || '') === k}">${l}<small>${n(k)}</small></button>`).join('')}</div>`; }
-function catUpgrade(){ let ch = false; db.library.forEach(l => { if (l.cat !== 'mob' && l.cat !== 'musc'){ l.cat = /^mob-/.test(l.id) ? 'mob' : 'musc'; ch = true; } }); return ch; }
-
-function exLibEditor(ex){
-  if (!state.exLib || state.exLib.split(':')[0] !== ex.id) return '';
-  const k = +state.exLib.split(':')[1], id = ex.items[k]; if (!id) return '';
-  const l = lib(id), prev = state.libOpen; state.libOpen = l.id; const h = libItem(l); state.libOpen = prev;
-  const a = h.indexOf('<div class="libed">'), body = a > -1 ? h.slice(a, h.lastIndexOf('</article>')) : '';
-  const u = usage(l.id);
-  return `<div class="exlibed"><div class="exlibhd"><div><p class="eyebrow">Editando na biblioteca</p><b>${esc(l.name)}</b></div><button type="button" class="btn sm" data-act="exlib-close">Concluir</button></div>
-    <p class="hint">${u > 1 ? `Este exercício está em ${u} fichas: a mudança vale para todas. Para mudar só nesta ficha, use Copiar.` : 'A mudança fica salva na biblioteca.'}</p>${body}</div>`;
-}
-
-const ICON_CLOCK = '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-const clk = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(ss).padStart(2, '0'); };
-const durTxt = s => { const m = Math.max(1, Math.round(s / 60)); return m >= 60 ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') : m + ' min'; };
-const wElapsed = () => { const m = (db.draftMeta || {})[draftKey()]; return m ? Math.max(0, Math.floor((Date.now() - m) / 1000)) : 0; };
-function wclockHTML(){ const s = wElapsed(); return `<span class="wclock ${s >= 3600 ? 'long' : ''}" id="wclock" title="Tempo de treino">${ICON_CLOCK}<span>${clk(s)}</span></span>`; }
-setInterval(() => { const e = document.getElementById('wclock'); if (!e) return; const s = wElapsed(); e.lastChild.textContent = clk(s); e.classList.toggle('long', s >= 3600); }, 1000);
-const day0 = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-const daysTo = iso => Math.round((new Date(iso + 'T12:00') - new Date(isoToday() + 'T12:00')) / 864e5);
-function panInfo(){
-  const t0 = day0(new Date()), tk = dayKeyOf(new Date());
-  return db.students.map(s => {
-    const fs = freqStats(s), a = alertFor(s), last = s.logs.length ? s.logs.reduce((m, l) => l.date > m.date ? l : m) : null;
-    const idle = last ? Math.round((t0 - day0(last.date)) / 864e5) : null, today = !!last && dayKeyOf(new Date(last.date)) === tk;
-    const p = planState(s), due = s.planDue ? daysTo(s.planDue) : null;
-    const todayKey = DAYS[(new Date().getDay() + 6) % 7].k;
-    const planned = isSeq(s) ? fs.plan > 0 && fs.week < fs.plan : !!(s.days[todayKey] && s.days[todayKey].ex.length);
-    return {s, fs, a, last, idle, today, p, due, planned};
-  });
-}
-const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Vencendo'], ['semtreinar', 'Sem treinar']];
-const panMatch = (x, f) => f === 'atencao' ? !!x.a : f === 'vencendo' ? (x.p === 'hoje' || x.p === 'vencido' || x.p === 'breve') : f === 'semtreinar' ? (x.idle === null || x.idle >= 7) : true;
-function panList(){
-  const q = norm((state.panQ || '').trim()), f = state.panF || 'todos';
-  const list = panInfo().filter(x => panMatch(x, f) && (!q || norm(x.s.name).includes(q)))
-    .sort((a, b) => (b.a ? 1 : 0) - (a.a ? 1 : 0) || (a.idle === null ? 1e9 : a.idle) - (b.idle === null ? 1e9 : b.idle) || a.s.name.localeCompare(b.s.name, 'pt'));
-  if (!list.length) return '<p class="muted small" style="padding:8px 4px">Nenhum aluno aqui.</p>';
-  return list.map(x => { const n = Math.max(x.fs.plan, x.fs.week, 1);
-    const tag = x.p === 'vencido' ? '<span class="ptag red">Venceu</span>' : x.p === 'hoje' ? '<span class="ptag red">Vence hoje</span>' : x.idle !== null && x.idle >= 4 ? `<span class="ptag amber">${x.idle}d sem treinar</span>` : !x.last ? '<span class="ptag">Sem treinos</span>' : x.today ? '<span class="ptag green">Treinou hoje</span>' : (fbState(x.s) || {}).due ? '<span class="ptag">Feedback</span>' : '';
-    return `<button type="button" class="pstu" data-act="pan-open" data-v="${x.s.id}"><span class="pn"><b>${esc(x.s.name)}</b><small>${esc(x.s.protocol || '')}</small></span>
-      <span class="pm">${x.last ? 'Último treino ' + esc(whenTxt(x.last.date)) : 'Ainda não treinou'}${x.s.planDue ? ' · vence ' + esc(dueBR(x.s.planDue)) : ''}</span>
-      <span class="pbars" title="${x.fs.week} de ${x.fs.plan} treinos nesta semana">${Array.from({length: n}, (_, i) => `<i class="${i < x.fs.week ? 'on' : ''}"></i>`).join('')}</span>${tag}</button>`; }).join('');
-}
-function panChart(){
-  const days = Array.from({length: 14}, (_, i) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - 13 + i); return d; });
-  const by = {}; db.students.forEach(s => { const seen = new Set(); s.logs.forEach(l => { const k = dayKeyOf(new Date(l.date)); if (!seen.has(k)){ seen.add(k); by[k] = (by[k] || 0) + 1; } }); });
-  const vals = days.map(d => by[dayKeyOf(d)] || 0), mx = Math.max(1, ...vals), tk = dayKeyOf(new Date());
-  return `<div class="pchart" role="img" aria-label="Alunos que treinaram por dia nos últimos 14 dias">${days.map((d, i) => { const v = vals[i], isT = dayKeyOf(d) === tk;
-    return `<div class="pcol ${isT ? 'today' : ''}"><span class="pv">${v || ''}</span><span class="pbar"><i style="height:${Math.round(v / mx * 100)}%"></i></span><span class="pl ${i % 2 === 1 && !isT ? 'odd' : ''}">${isT ? 'Hoje' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0')}</span></div>`; }).join('')}</div>`;
-}
-function panDue(){
-  const list = db.students.filter(s => s.planDue).map(s => ({s, d: daysTo(s.planDue)})).sort((a, b) => a.d - b.d);
-  if (!list.length) return '<p class="muted small">Nenhum vencimento cadastrado. Coloque a data em Editar ficha › Dados do aluno.</p>';
-  return `<table class="ptable"><thead><tr><th>Aluno</th><th>Vence</th><th>Situação</th></tr></thead><tbody>${list.map(({s, d}) => `<tr data-act="pan-open" data-v="${s.id}"><td><b>${esc(s.name)}</b></td><td>${esc(dueBR(s.planDue))}</td>
-    <td><span class="pdue ${d < 0 || d === 0 ? 'red' : d <= 5 ? 'amber' : ''}">${d < 0 ? 'Venceu há ' + (-d) + (d === -1 ? ' dia' : ' dias') : d === 0 ? 'Vence hoje' : 'Faltam ' + d + (d === 1 ? ' dia' : ' dias')}</span></td></tr>`).join('')}</tbody></table>`;
-}
-function panFeed(){
-  const items = allLogs().slice(0, 14);
-  if (!items.length) return '<p class="muted small">Os treinos finalizados pelos alunos aparecem aqui.</p>';
-  return items.map(({st, l}) => { const nc = l.entries.filter(e => e.comment).length + (l.cardioCmt ? 1 : 0) + (l.effortMsg ? 1 : 0);
-    return `<button type="button" class="pact ${isSeen(l) ? '' : 'unread'}" data-act="feed-open" data-v="${st.id}" data-log="${l.id}"><span class="pai">${ICON_CHECK}</span>
-      <span class="pat"><b>${esc(st.name)}</b><small>Terminou ${esc(l.title || 'o treino')}${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''}${nc ? ' · ' + nc + (nc === 1 ? ' observação' : ' observações') : ''}</small></span>
-      <span class="paw">${esc(whenTxt(l.date))}</span></button>`; }).join('');
-}
-function panelView(){
-  const info = panInfo(), f = state.panF || 'todos';
-  const done = info.filter(x => x.today), wait = info.filter(x => !x.today && x.planned);
-  const cnt = k => info.filter(x => panMatch(x, k)).length;
-  return `<main class="wrap v-painel">
-    <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Visão geral</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'} · ${new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: '2-digit', month: '2-digit'})}</span></div>
-    <div class="panel">
-      <section class="card pcolL"><input id="pan-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno" value="${esc(state.panQ || '')}">
-        <div class="pfil">${PANF.map(([k, l]) => `<button type="button" data-act="pan-f" data-v="${k}" aria-pressed="${f === k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
-        <div class="plist" id="pan-list">${panList()}</div></section>
-      <div class="pcolM">
-        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
-          ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
-          ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
-      </div>
-      <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
-    </div>
-    ${bkHTML()}
-  </main>`;
-}
-
-const EFF = [[1, 'Muito leve', 'sobrou muito', '😌', '#2FC48D'], [2, 'Leve', 'deu para fazer bem', '🙂', '#8BC34A'], [3, 'Normal', 'esforço na medida', '😐', '#F2C230'], [4, 'Pesado', 'puxado, mas fechou', '😣', '#FF8A3D'], [5, 'Exaustivo', 'no limite', '🥵', '#F0463C']];
-const effOf = n => EFF.find(x => x[0] === n);
-const effTxt = n => { const e = effOf(n); return e ? e[1] : ''; };
-const effChip = n => { const e = effOf(n); return e ? `<span class="effchip" style="--ec:${e[4]}">${e[3]} ${e[1]}</span>` : ''; };
-function effortView(st){
-  const l = st.logs.find(x => x.id === state.done.logId); if (!l){ state.done.step = null; return doneView(st); }
-  const sel = state.done.eff || 0;
-  return `<main class="wrap v-narrow"><section class="effort">
-    <p class="eyebrow">Treino concluído${l.title ? ' · ' + esc(l.title) : ''}</p><h2 class="serif">Como foi o treino?</h2>
-    <p class="muted">Escolha o esforço do treino de hoje. Seu personal usa essa nota para ajustar o próximo.</p>
-    <div class="efflist" role="radiogroup" aria-label="Esforço do treino">${EFF.map(([n, t, s, e, c]) => `<button type="button" class="effopt" role="radio" data-act="eff-pick" data-v="${n}" aria-checked="${sel === n}" style="--ec:${c}"><span class="effemo" aria-hidden="true">${e}</span><span class="efft"><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>
-    <label class="effmsg" for="eff-msg">Quer contar algo ao personal? (opcional)</label>
-    <textarea id="eff-msg" rows="3" data-effmsg="1" placeholder="Ex.: senti o ombro no supino, o leg press estava ocupado...">${esc(state.done.msg || '')}</textarea>
-    <p class="small muted">Ele recebe junto com a nota.</p>
-    <button class="btn block" type="button" data-act="eff-save" ${sel ? '' : 'disabled'}>Salvar e ver o resumo</button>
-    <button class="linkbtn effskip" type="button" data-act="eff-skip">Pular</button>
-  </section></main>`;
-}
-
-const BK_TABLES = [['students', 'id'], ['student_private', 'student_id'], ['logs', 'id'], ['library', 'id'], ['methods', 'id'], ['settings', 'key'], ['profiles', 'id'], ['feed_seen', 'log_id']];
-let jszipP = null;
-function loadZip(){
-  if (jszipP) return jszipP;
-  jszipP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-    el.onload = () => window.JSZip ? res(window.JSZip) : rej(new Error('zip')); el.onerror = () => { jszipP = null; rej(new Error('zip')); }; document.head.appendChild(el); });
-  return jszipP;
-}
-function toCSV(rows){
-  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
-  const cell = v => { if (v === null || v === undefined) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  return [cols.join(','), ...rows.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n');
-}
-const BK_KEY = 'jau-backup-em';
-const bkLast = () => { try { return +localStorage.getItem(BK_KEY) || 0; } catch(e){ return 0; } };
-function bkHTML(){
-  const t = bkLast(), d = t ? Math.floor((Date.now() - t) / 864e5) : null, cloud = typeof sb !== 'undefined' && !!sb;
-  return `<section class="card bkcard ${d === null || d >= 30 ? 'bkdue' : ''}"><div class="bkt"><p class="eyebrow">Backup</p>
-    <b>${d === null ? 'Nenhum backup feito neste aparelho' : d === 0 ? 'Último backup: hoje' : 'Último backup: há ' + d + (d === 1 ? ' dia' : ' dias')}</b>
-    <span class="small muted">${cloud ? 'Baixa as 8 tabelas do banco em CSV, num arquivo só (.zip).' : 'Baixa uma cópia dos dados deste rascunho.'} Faça uma vez por mês e guarde no computador.</span></div>
-    <button type="button" class="btn sm" data-act="bk-go">Baixar backup</button></section>`;
-}
-async function doBackup(b){
-  const name = 'jau-backup-' + isoToday(), t0 = b.textContent;
-  b.disabled = true; b.textContent = 'Preparando…';
-  try {
-    let blob, file;
-    if (typeof sb !== 'undefined' && sb){
-      if (typeof hasPending === 'function' && hasPending()) await runSync();
-      const Z = await loadZip(), zip = new Z(), info = [];
-      for (const [t, pk] of BK_TABLES){ const rows = await fetchAll(t, pk); zip.file(t + '.csv', toCSV(rows)); info.push(t + ': ' + rows.length + (rows.length === 1 ? ' linha' : ' linhas')); }
-      zip.file('LEIA-ME.txt', 'Backup do app Jau Training\r\nGerado em ' + new Date().toLocaleString('pt-BR') + '\r\n\r\n' + info.join('\r\n') + '\r\n\r\nCada arquivo .csv é uma tabela do Supabase, no mesmo formato do "Export table as CSV".\r\n');
-      blob = await zip.generateAsync({type: 'blob'}); file = name + '.zip';
-    } else { blob = new Blob([JSON.stringify(db)], {type: 'application/json'}); file = name + '.json'; }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    try { localStorage.setItem(BK_KEY, String(Date.now())); } catch(e){}
-    toast('Backup baixado: ' + file); render();
-  } catch(e){
-    console.error('backup', e);
-    toast(navigator.onLine === false ? 'Sem internet. O backup precisa de conexão.' : 'Não consegui gerar o backup. Tente de novo.');
-    b.disabled = false; b.textContent = t0;
-  }
-}
-
-const fbEvery = s => { const v = s.fbEvery === undefined || s.fbEvery === '' ? 14 : +s.fbEvery; return v > 0 ? v : 0; };
-function fbState(s){
-  const ev = fbEvery(s); if (!ev) return null;
-  if (!s.fbLast) return {due: true, first: true, d: 0, ev};
-  const next = new Date(s.fbLast + 'T12:00'); next.setDate(next.getDate() + ev);
-  const iso = next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0') + '-' + String(next.getDate()).padStart(2, '0');
-  const d = daysTo(iso); return {due: d <= 0, d, ev, next: iso};
-}
-const fbFreq = ev => ev === 7 ? 'semanal' : ev === 14 ? 'quinzenal' : 'a cada ' + ev + ' dias';
-function fbHTML(){
-  const all = db.students.map(s => ({s, f: fbState(s)})).filter(x => x.f);
-  const due = all.filter(x => x.f.due).sort((a, b) => (a.f.first ? 1 : 0) - (b.f.first ? 1 : 0) || a.f.d - b.f.d);
-  const soon = all.filter(x => !x.f.due && x.f.d <= 3).sort((a, b) => a.f.d - b.f.d);
-  return `<section class="card pfb"><div class="phd"><p class="eyebrow">Feedbacks</p><span class="muted small">${due.length ? due.length + (due.length === 1 ? ' pendente' : ' pendentes') : 'em dia'}</span></div>
-    ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><button type="button" class="pfbname" data-act="fb-hist" data-v="${s.id}" title="Ver histórico de feedbacks">${esc(s.name)}</button><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
-        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar</button>`}</div>
-        ${state.fbOpen === s.id ? `<div class="pfbform"><textarea id="fb-note" rows="2" placeholder="Anotação do feedback (opcional): como o aluno está, o que ajustar..."></textarea>
-          <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}`).join('')}</div>${due.length > 6 && !state.fbAll ? `<button type="button" class="linkbtn" data-act="fb-all">Ver todos os ${due.length}</button>` : ''}`
-      : '<p class="muted small">Nenhum feedback pendente. Tudo em dia!</p>'}
-    ${soon.length ? `<p class="plabel">Próximos dias</p><div class="pchips">${soon.map(({s, f}) => `<span class="pchip">${esc(s.name.split(' ')[0])} · ${f.d === 1 ? 'amanhã' : 'em ' + f.d + ' dias'}</span>`).join('')}</div>` : ''}
-  </section>`;
-}
-function fbEditHTML(s){
-  const ev = s.fbEvery === undefined || s.fbEvery === '' ? '14' : String(s.fbEvery), log = (s.fbLog || []).slice(-5).reverse();
-  return `<label>Feedback do aluno <span class="hint">O painel avisa quando é hora de pedir o feedback.${s.fbLast ? ' Último: ' + esc(dueBR(s.fbLast)) + '.' : ''}</span>
-      <select id="f-fbevery" data-sf="fbEvery">${[['7', 'Semanal'], ['14', 'Quinzenal'], ['0', 'Desligado']].map(([v, l]) => `<option value="${v}" ${ev === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-    ${log.length ? `<div class="fblog"><span class="hint">Últimos feedbacks</span>${log.map(x => `<p><b>${esc(dueBR(x.d))}</b>${x.t ? esc(x.t) : '<span class="muted">sem anotação</span>'}</p>`).join('')}<button type="button" class="linkbtn" data-act="fb-hist" data-v="${s.id}">Ver histórico completo</button></div>` : ''}`;
-}
-function fbTab(s){
-  const f = fbState(s), log = (s.fbLog || []).map((x, i) => ({...x, i})).reverse(), open = state.fbOpen === s.id;
-  const status = !f ? 'Lembrete desligado' : f.first ? 'Primeiro feedback pendente' : f.d < 0 ? 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias') : f.d === 0 ? 'Feedback é hoje' : f.d === 1 ? 'Próximo feedback amanhã' : 'Próximo feedback em ' + f.d + ' dias (' + dueBR(f.next) + ')';
-  return `<section class="card fbtab"><div class="phd"><div><p class="eyebrow">Feedbacks${f ? ' · ' + fbFreq(f.ev) : ''}</p><p class="fbst ${f && f.due ? 'due' : ''}">${status}</p></div>
-      ${open ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar feedback</button>`}</div>
-    ${open ? `<div class="pfbform"><textarea id="fb-note" rows="3" placeholder="O que o aluno contou: como está se sentindo, dores, rotina, o que ajustar..."></textarea>
-      <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}
-    ${log.length ? `<div class="fbhist">${log.map(x => state.fbEdit === x.i ? `<div class="fbitem"><p class="fbd">${esc(dateBR(x.d + 'T12:00', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}))}</p>
-          <textarea id="fb-edit" rows="3">${esc(x.t || '')}</textarea><div class="row"><button type="button" class="btn sm" data-act="fb-esave" data-v="${x.i}">Salvar</button><button type="button" class="btn sm quiet" data-act="fb-ecancel">Cancelar</button>
-          <button type="button" class="linkbtn fbdel" data-act="fb-del" data-v="${x.i}">${state.fbDel === x.i ? 'Toque de novo para apagar' : 'Apagar'}</button></div></div>`
-        : `<div class="fbitem"><div class="fbihd"><p class="fbd">${esc(dateBR(x.d + 'T12:00', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}))}</p><button type="button" class="icon" data-act="fb-edit" data-v="${x.i}">Editar</button></div>
-          <p class="fbt">${x.t ? esc(x.t) : '<span class="muted">Sem anotação.</span>'}</p></div>`).join('')}</div>`
-      : `<div class="empty">Nenhum feedback registrado ainda. Quando você conversar com ${esc(s.name.split(' ')[0])}, toque em "Registrar feedback" e anote o que ele contou. Fica tudo guardado aqui.</div>`}
-  </section>`;
-}
-
-const PLANS = [['mensal', 'Mensal', 1], ['bimestral', 'Bimestral', 2], ['trimestral', 'Trimestral', 3], ['semestral', 'Semestral', 6], ['anual', 'Anual', 12]];
-const planOf = s => PLANS.find(p => p[0] === s.plan);
-const planMonths = s => (planOf(s) || [0, '', 1])[2];
-const planLbl = s => (planOf(s) || [0, ''])[1];
-const renLbl = s => planMonths(s) === 1 ? '+1 mês' : '+' + planMonths(s) + ' meses';
-function renewPlan(s){ for (let i = 0; i < planMonths(s); i++) s.planDue = addMonth(s.planDue); }
-const anamOk = s => s.anam === 'ok';
-const alRenew = s => !!s.planDue && daysTo(s.planDue) <= 7;
-const alPass = s => !state.alF || (state.alF === 'ativos' ? anamOk(s) : state.alF === 'anam' ? !anamOk(s) : alRenew(s));
-const AL_F = {ativos: 'Alunos ativos', anam: 'Anamnese pendente', renov: 'Para renovação'};
-function alBoxes(){
-  const all = db.students, at = all.filter(anamOk).length, pend = all.length - at, ren = all.filter(alRenew).length;
-  const box = (k, n, sub) => `<button type="button" class="albox ${k}" data-act="al-f" data-v="${k}" aria-pressed="${state.alF === k}"><b>${n}</b><span>${AL_F[k]}</span><small>${sub}</small></button>`;
-  return `<div class="alboxes">${box('ativos', at, 'anamnese respondida')}${box('anam', pend, pend ? 'falta responder' : 'todos responderam')}${box('renov', ren, 'vencido ou vence em 7 dias')}</div>`;
-}
-function alDueTxt(s){ const d = daysTo(s.planDue); return d < 0 ? 'Venceu há ' + (-d) + (d === -1 ? ' dia' : ' dias') : d === 0 ? 'Vence hoje' : d === 1 ? 'Vence amanhã' : 'Vence em ' + d + ' dias'; }
-function alDetail(){
-  if (state.alF === 'renov'){
-    const l = db.students.filter(alRenew).sort((a, b) => daysTo(a.planDue) - daysTo(b.planDue));
-    return `<section class="card aldet"><div class="phd"><p class="eyebrow">Para renovação</p><button type="button" class="linkbtn small" data-act="al-f" data-v="renov">Fechar</button></div>
-      ${l.length ? `<div class="pfblist">${l.map(s => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small><span class="alplan ${s.plan ? '' : 'none'}">${s.plan ? planLbl(s) : 'Plano não definido'}</span> · ${alDueTxt(s)} · ${esc(dueBR(s.planDue))}</small></span>
-        <button type="button" class="btn sm" data-act="al-renew" data-v="${s.id}">Renovar ${renLbl(s)}</button></div>`).join('')}</div>` : '<p class="muted small">Nenhum plano vencido ou vencendo nos próximos 7 dias.</p>'}
-      <p class="hint">Renovar soma ao vencimento o período do plano do aluno (mensal +1 mês, trimestral +3 meses...). O tipo de plano fica nos dados do aluno.</p></section>`;
-  }
-  if (state.alF === 'anam'){
-    const l = db.students.filter(s => !anamOk(s)).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-    return `<section class="card aldet"><div class="phd"><p class="eyebrow">Anamnese pendente</p><button type="button" class="linkbtn small" data-act="al-f" data-v="anam">Fechar</button></div>
-      ${l.length ? `<div class="pfblist">${l.map(s => `<div class="pfbrow"><span class="pfbt"><b>${esc(s.name)}</b><small>${s.plan ? planLbl(s) + ' · ' : ''}${s.logs.length ? s.logs.length + (s.logs.length === 1 ? ' treino' : ' treinos') : 'ainda sem treinos'}</small></span>
-        <button type="button" class="btn sm quiet" data-act="al-anam" data-v="${s.id}">Marcar como respondida</button></div>`).join('')}</div>` : '<p class="muted small">Todos os alunos já responderam a anamnese.</p>'}
-      <p class="hint">Quando o aluno responder a anamnese, marque aqui. Ele passa a contar como aluno ativo.</p></section>`;
-  }
-  return '';
-}
-function alFilLine(){
-  if (!state.alF) return '';
-  const n = db.students.filter(alPass).length;
-  return `<p class="alfil">Mostrando: <b>${AL_F[state.alF]}</b> (${n}) <button type="button" class="linkbtn" data-act="al-f" data-v="${state.alF}">Ver todos</button></p>${n ? '' : '<p class="empty">Nenhum aluno neste filtro.</p>'}`;
-}
-
-function leTec(e, ei, x, si){
-  const tec = tecOfMeth(e.method); if (!tec) return '';
-  const pf = findEx(e.exId), pex = pf && pf.ex, dr = tec === 'drop';
-  const has = x.parts.some(p => (p.drops && p.drops.length) || (p.blocks && p.blocks.length));
-  let show = has || !!(pex && pex.series && pex.series[si] && pex.series[si].m);
-  if (!show && !(pex && pex.series && pex.series.some(z => z.m))){ const w = e.sets.map((z, i) => (z.type || 'trab') === 'trab' ? i : -1).filter(i => i >= 0); show = si === w[w.length - 1]; }
-  if (!show) return '';
-  const base = pex ? tecN(pex) : (dr ? 1 : 2), cnt = Math.max(1, dr ? base : base - 1, ...x.parts.map(p => dr ? (p.drops || []).length : (p.blocks || []).length));
-  let out = '';
-  for (let k = 0; k < cnt; k++){
-    out += `<div class="le-row lex"><span class="lexl">↳ ${dr ? 'Drop ' + (k + 1) : (k + 2) + 'º bloco'}</span>${x.parts.map((p, pi) => {
-      const at = `data-e="${ei}" data-s="${si}" data-p="${pi}" data-k="${k}"`, dv = (p.drops && p.drops[k]) || {};
-      if (!dr) return `<span class="fld samekg" aria-hidden="true">mesma carga</span><label class="fld"><input id="le-bk-${ei}-${si}-${pi}-${k}" inputmode="numeric" autocomplete="off" data-le="blk" ${at} value="${esc((p.blocks && p.blocks[k]) || '')}" aria-label="Repetições do ${k + 2}º bloco, série ${si + 1}"><span>reps</span></label>`;
-      return (nkE(e, pi) ? '<span class="fld nokg">sem carga</span>' : `<label class="fld"><input id="le-dk-${ei}-${si}-${pi}-${k}" inputmode="decimal" autocomplete="off" data-le="dkg" ${at} value="${esc(dv.kg || '')}" aria-label="Carga do drop ${k + 1}, série ${si + 1}"><span>kg</span></label>`)
-        + `<label class="fld"><input id="le-dr-${ei}-${si}-${pi}-${k}" inputmode="numeric" autocomplete="off" data-le="dreps" ${at} value="${esc(dv.reps || '')}" aria-label="Repetições do drop ${k + 1}, série ${si + 1}"><span>reps</span></label>`;
-    }).join('')}</div>`;
-  }
-  return `<div class="lexwrap"><span class="tecpill">${esc((db.methods.find(m => m.id === e.method) || {}).name || '')}</span>${out}</div>`;
-}
-
-const AUTO_FIN_H = 3;
-function buildEntries(d, dr, auto){
-  const entries = [];
-    d.ex.forEach(ex => {
-      const rec = dr[ex.id]; if (!rec) return;
-      const used = usedItems(ex, rec);
-      const sets = targets(ex).map((_, si) => { const s = (rec.sets || {})[si] || {};
-        return {done: !!s.done || (!!auto && (s.parts || []).some(p => p && p.reps)), type: stypeOf(ex, si), parts: used.map((_, pi) => { const sp = (s.parts && s.parts[pi]) || {}, o = {kg: sp.kg || '', reps: sp.reps || ''};
-          const sm = tecOfMeth(ex.method) && ex.series && ex.series[si] && ex.series[si].m;
-          if (sm && sp.drops && sp.drops.some(d => d && (d.kg || d.reps))) o.drops = sp.drops.slice(0, tecN(ex)).map(d => ({kg: (d && d.kg) || '', reps: (d && d.reps) || ''}));
-          if (sm && sp.blocks && sp.blocks.some(Boolean)) o.blocks = sp.blocks.slice(0, tecN(ex) - 1).map(x => x || '');
-          return o; })}; });
-      const comment = (rec.comment || '').trim();
-      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), nokg: ex.items.map((_, k) => nkOf(ex, k)), sets, comment});
-    });
-  return entries;
-}
-function autoFinish(){
-  const M = db.draftMeta; if (!M) return 0;
-  const lim = AUTO_FIN_H * 3600e3, now = Date.now(); let n = 0;
-  Object.keys(M).forEach(k => {
-    const t0 = M[k]; if (!t0 || now - t0 < lim) return;
-    const i = k.lastIndexOf('|'), sid = k.slice(0, i), day = k.slice(i + 1), st = db.students.find(s => s.id === sid);
-    if (!st){ if (db.students.length) delete M[k]; return; }
-    const d = st.days && st.days[day], dr = db.drafts[k];
-    if (d && dr){
-      const entries = buildEntries(d, dr, true), cc = ((dr.__cardio || {}).comment || '').trim();
-      if (entries.length || cc){
-        const last = Math.min((db.draftEdit || {})[k] || t0, t0 + lim), date = new Date(last).toISOString(), dur = Math.round((last - t0) / 1000);
-        st.logs = st.logs || [];
-        st.logs.push(Object.assign({id: uid(), date, day, title: d.title, protocol: st.protocol, entries, auto: 1}, cc ? {cardioCmt: cc} : {}, dur >= 60 && dur <= 5 * 3600 ? {dur} : {}));
-        if (!st.last || st.last < date) st.last = date;
-        (state.autoFin = state.autoFin || []).push({sid, day, title: d.title || '', date}); n++;
-      }
-    }
-    delete M[k]; delete db.drafts[k]; if (db.draftEdit) delete db.draftEdit[k];
-    if (state.sid === sid && state.day === day && state.sumOpen) state.sumOpen = false;
-  });
-  if (n){ if (typeof dataVer !== 'undefined') dataVer++; save(); }
-  return n;
-}
-function autoBanner(st){
-  const l = (state.autoFin || []).filter(x => x.sid === st.id); if (!l.length) return '';
-  return `<div class="autofin" role="status"><p><b>${l.length === 1 ? 'Treino finalizado automaticamente' : l.length + ' treinos finalizados automaticamente'}</b>
-    ${l.map(x => esc((x.title || 'Treino') + ' · ' + dateBR(x.date, {weekday: 'long', day: '2-digit', month: '2-digit'}))).join('<br>')}<br>
-    <span class="muted small">Ficou aberto por mais de ${AUTO_FIN_H} horas, então salvamos as cargas que estavam anotadas. Séries com repetições preenchidas contam como feitas.</span></p>
-    <button type="button" class="icon" data-act="auto-ok">Entendi</button></div>`;
-}
-setInterval(() => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} }, 60000);
-document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible' && db && db.draftMeta && Object.values(db.draftMeta).some(t => t && Date.now() - t >= AUTO_FIN_H * 3600e3)) render(); } catch(e){} });
-
-function libRefs(id){
-  let f = 0, h = 0;
-  db.students.forEach(s => { Object.values(s.days || {}).forEach(d => { (d.ex || []).forEach(e => { if ((e.items || []).includes(id) || (e.alt || []).includes(id)) f++; }); (d.mob || []).forEach(m => { if (m && m.lib === id) f++; }); });
-    (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if ((e.items || []).includes(id)) h++; })); });
-  return {f, h};
-}
-function libReplace(from, to){
-  const sw = a => (a || []).map(x => x === from ? to : x);
-  db.students.forEach(s => { Object.values(s.days || {}).forEach(d => { (d.ex || []).forEach(e => { e.items = sw(e.items); if (e.alt) e.alt = sw(e.alt); }); (d.mob || []).forEach(m => { if (m && m.lib === from) m.lib = to; }); });
-    (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if ((e.items || []).includes(from)) e.items = sw(e.items); })); });
-  if (typeof dataVer !== 'undefined') dataVer++;
-}
-const libDupKey = l => norm(l.name).replace(/[^a-z0-9]+/g, ' ').trim();
-function libDupes(){ const g = {}; db.library.forEach(l => { const k = libDupKey(l); (g[k] = g[k] || []).push(l); }); return Object.values(g).filter(x => x.length > 1); }
-function libDupHTML(){
-  const d = libDupes(); if (!d.length) return '';
-  return `<details class="dupes"><summary><b>${d.length === 1 ? '1 exercício aparece repetido' : d.length + ' exercícios aparecem repetidos'}</b><span class="muted small">Toque para ver e juntar</span></summary>
-    <div class="dupl">${d.map(g => `<div class="duprow"><span>${esc(g[0].name)} <small class="muted">× ${g.length}</small></span><span class="row">${g.map((l, i) => { const r = libRefs(l.id); return `<button type="button" class="icon" data-act="lib-dup" data-v="${l.id}">${i + 1}ª · ${r.f ? 'em ' + r.f + (r.f === 1 ? ' ficha' : ' fichas') : 'sem ficha'}</button>`; }).join('')}</span></div>`).join('')}</div>
-    <p class="hint">Abra a cópia que você quer tirar e toque em "Apagar". Escolha a outra como substituta: as fichas e o histórico passam para ela.</p></details>`;
-}
-function libDelHTML(l){
-  const r = libRefs(l.id);
-  if (!r.f && !r.h) return `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`;
-  if (state.libDel !== l.id) return `<button type="button" class="icon danger" data-act="lib-delopen" data-v="${l.id}">Apagar</button>`;
-  const k = libDupKey(l), others = db.library.filter(x => x.id !== l.id).sort((a, b) => (libDupKey(b) === k) - (libDupKey(a) === k) || (catOf(b) === catOf(l)) - (catOf(a) === catOf(l)) || a.name.localeCompare(b.name, 'pt'));
-  return `<div class="libdel"><p><b>${esc(l.name)}</b> está em ${[r.f ? r.f + (r.f === 1 ? ' ficha' : ' fichas') : '', r.h ? r.h + (r.h === 1 ? ' treino' : ' treinos') + ' do histórico' : ''].filter(Boolean).join(' e ')}. Escolha o exercício que fica no lugar:</p>
-    <select id="libdel-to" class="selbox" aria-label="Exercício que fica no lugar">${r.f ? '' : '<option value="">Nenhum (no histórico aparece "Exercício removido")</option>'}${others.map(x => `<option value="${x.id}">${esc(x.name)}${libDupKey(x) === k ? ' (mesmo nome)' : ''}</option>`).join('')}</select>
-    <div class="row"><button type="button" class="btn sm danger" data-act="lib-delgo" data-v="${l.id}">Substituir e apagar</button><button type="button" class="btn sm quiet" data-act="lib-delx">Cancelar</button></div></div>`;
-}
-function methDelHTML(m, u){
-  if (m.id === 'normal' || m.id === 'conjugado') return '';
-  const h = db.students.reduce((a, s) => a + (s.logs || []).reduce((b, l) => b + (l.entries || []).filter(e => e.method === m.id).length, 0), 0);
-  if (!u && !h) return `<button type="button" class="icon danger" data-act="m-del" data-v="${m.id}">Apagar</button>`;
-  if (state.mDel !== m.id) return `<button type="button" class="icon danger" data-act="m-delopen" data-v="${m.id}">Apagar</button>`;
-  return `<div class="libdel"><p>Os exercícios com <b>${esc(m.name)}</b> passam para:</p>
-    <select id="mdel-to" class="selbox" aria-label="Método que fica no lugar">${db.methods.filter(x => x.id !== m.id && x.id !== 'conjugado').map(x => `<option value="${x.id}" ${x.id === 'normal' ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
-    <div class="row"><button type="button" class="btn sm danger" data-act="m-delgo" data-v="${m.id}">Trocar e apagar</button><button type="button" class="btn sm quiet" data-act="m-delx">Cancelar</button></div></div>`;
-}
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
-
-const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
-const nkE = (e, pi) => !!(e && e.nokg && e.nokg[pi]);
-const TEC = {drop: {l: 'Drop', def: 1}, blocos: {l: 'Blocos', def: 3}};
-const tecOfMeth = id => { const m = db.methods.find(x => x.id === id); return (m && TEC[m.tec]) ? m.tec : ''; };
-const tecN = ex => { const tec = tecOfMeth(ex.method), n = parseInt(ex.tecN); return Math.max(tec === 'blocos' ? 2 : 1, Math.min(6, n || (TEC[tec] ? TEC[tec].def : 2))); };
-function partVol(p, kg, r){
-  let v = kg && r ? kg * r : 0;
-  (p.drops || []).forEach(d => { if (!d) return; const k = numKg(d.kg), n = parseInt(d.reps) || 0; if (k && n) v += k * n; });
-  if (kg) (p.blocks || []).forEach(b => { v += kg * (parseInt(b) || 0); });
-  return v;
-}
-function extraTxt(p){
-  const out = [];
-  (p.drops || []).forEach(d => { if (d && (d.kg || d.reps)) out.push('drop ' + (d.kg ? d.kg + ' kg × ' : '') + (d.reps || '–')); });
-  const b = (p.blocks || []).filter(Boolean); if (b.length) out.push('blocos ' + [p.reps || '–', ...b].join(' + '));
-  return out.length ? ' (' + out.join(', ') + ')' : '';
-}
-function partTxt(e, p, pi){ const t = e.meas && e.meas[pi] === 'tempo', nk = nkE(e, pi); return (nk ? '' : (p.kg || '–') + ' kg × ') + (p.reps || '–') + (t ? ' s' : nk ? ' reps' : '') + extraTxt(p); }
-function measOpts(ex, k){ const v = (nkOf(ex, k) ? 's' : '') + measOf(ex, k);
-  return [['reps', 'Carga + reps'], ['sreps', 'Só reps'], ['tempo', 'Carga + tempo'], ['stempo', 'Só tempo']].map(([o, l]) => `<option value="${o}" ${v === o ? 'selected' : ''}>${l}</option>`).join(''); }
-function tecBox(ex){
-  const tec = tecOfMeth(ex.method); if (!tec) return '';
-  const n = tecN(ex), marked = (ex.series || []).filter(s => s.m).length, dr = tec === 'drop';
-  return `<div class="tecbox"><div class="tecrow1"><span class="lbl2">${dr ? 'Drop-set' : 'Blocos'} em quais séries?</span>
-    <div class="tools"><button type="button" class="icon" data-act="tec-apply" data-ex="${ex.id}" data-v="last">Só na última</button><button type="button" class="icon" data-act="tec-apply" data-ex="${ex.id}" data-v="all">Em todas as de trabalho</button></div></div>
-    <label class="tecn">${dr ? 'Drops em cada série' : 'Blocos em cada série, contando o primeiro'}<input id="tecn-${ex.id}" type="number" inputmode="numeric" min="${dr ? 1 : 2}" max="6" data-tecn="${ex.id}" value="${n}"></label>
-    <span class="hint">${marked ? `Marcado em ${marked} ${marked === 1 ? 'série' : 'séries'}. Para ajustar uma a uma, use o botão ${TEC[tec].l} de cada série.` : 'Nenhuma série marcada: o aluno vê só a explicação do método.'} ${dr ? 'O aluno anota a carga e as reps de cada drop.' : 'O aluno anota as reps de cada bloco, com a mesma carga.'}</span></div>`;
-}
-function tecChip(ex, k){ const tec = tecOfMeth(ex.method); if (!tec) return ''; const on = !!(ex.series[k] && ex.series[k].m); if (!on && ex.series[k] && ex.series[k].type !== 'trab') return '';
-  return `<button type="button" class="tecchip" data-act="tec-tog" data-ex="${ex.id}" data-i="${k}" aria-pressed="${on}" aria-label="${TEC[tec].l} na série ${k + 1}">${TEC[tec].l}</button>`; }
-function tecOn(ex, si){ return !!tecOfMeth(ex.method) && !!(ex.series && ex.series[si] && ex.series[si].m); }
-function tecFlag(ex, si){ if (!tecOn(ex, si)) return ''; const m = db.methods.find(x => x.id === ex.method);
-  return `<div class="tecflag"><span>${esc(m ? m.name : TEC[tecOfMeth(ex.method)].l)}</span></div>`; }
-function tecSub(ex, si, s, np, conj){
-  if (!tecOn(ex, si)) return '';
-  const tec = tecOfMeth(ex.method), dr = tec === 'drop', n = tecN(ex), L = k => String.fromCharCode(65 + k), rows = [];
-  const cnt = dr ? n : n - 1;
-  for (let d = 0; d < cnt; d++){
-    const lbl = dr ? 'Drop ' + (d + 1) : (d + 2) + 'º bloco';
-    const cells = Array.from({length: np}, (_, pi) => {
-      const v = (s.parts && s.parts[pi]) || {}, at = `data-k="${d}" data-ex="${ex.id}" data-set="${si}" data-part="${pi}"`;
-      const kgCell = !dr ? '<span class="fld samekg" aria-hidden="true">mesma carga</span>' : nkOf(ex, pi) ? '<span class="fld nokg">sem carga</span>'
-        : `<label class="fld"><input id="dk-${ex.id}-${si}-${pi}-${d}" inputmode="decimal" autocomplete="off" aria-label="Carga do drop ${d + 1}, série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="dkg" ${at} value="${esc(((v.drops && v.drops[d]) || {}).kg || '')}"><span>kg</span></label>`;
-      const rv = dr ? (((v.drops && v.drops[d]) || {}).reps || '') : ((v.blocks && v.blocks[d]) || '');
-      const repCell = `<label class="fld"><input id="${dr ? 'dr' : 'bk'}-${ex.id}-${si}-${pi}-${d}" inputmode="numeric" autocomplete="off" aria-label="Repetições ${dr ? 'do drop ' + (d + 1) : 'do ' + (d + 2) + 'º bloco'}, série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="${dr ? 'dreps' : 'blk'}" ${at} value="${esc(rv)}"><span>reps</span></label>`;
-      return `<div class="part ${conj ? 'withl' : ''}">${conj ? `<span class="plabel">${L(pi)}</span>` : ''}<span class="target tecl">${lbl}</span>${kgCell}${repCell}</div>`;
-    }).join('');
-    rows.push(`<div class="set tecx ${s.done ? 'done' : ''}"><span class="sn tecarrow" aria-hidden="true">↳</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div><span class="tecsp"></span></div>`);
-  }
-  return `<div class="tecsub" id="tsub-${ex.id}-${si}">${rows.join('')}</div>`;
-}
-const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
-function startHTML(d){
-  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
-  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}
-    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') + ' · ' + ns + ' séries' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : ''].filter(Boolean).join(' · ')}</small></span></button>`;
-}
-/* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
-let AC = null;
-function audioUnlock(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){ AC = null; } }
-function restBeep(){
-  try { if (!AC) return; if (AC.state === 'suspended') AC.resume();
-    const t0 = AC.currentTime + 0.02;
-    [0, 0.22, 0.44].forEach((dt, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = i === 2 ? 1175 : 880;
-      g.gain.setValueAtTime(0.0001, t0 + dt); g.gain.exponentialRampToValueAtTime(0.35, t0 + dt + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.18);
-      o.connect(g); g.connect(AC.destination); o.start(t0 + dt); o.stop(t0 + dt + 0.2); });
-  } catch(e){}
-}
 const tgtFmt = (t, m) => m === 'tempo' && t && !/s|seg|min/i.test(t) ? t + ' s' : t;
 const markTxt = b => (b.kg ? fmtKg(b.kg) + ' kg × ' : '') + b.reps + (b.t ? ' s' : '');
 const stypeOf = (ex, i) => (ex.series && ex.series[i] && ex.series[i].type) || 'trab';
@@ -1500,7 +664,7 @@ const beats = (c, b) => !b || c.kg > b.kg || (c.kg === b.kg && c.reps > b.reps);
 function bestSets(e, pi){
   const out = [];
   e.sets.forEach((s, si) => { if ((s.type || 'trab') !== 'trab' || s.done === false) return; const p = s.parts[pi]; if (!p) return;
-    const tmp = !!(e.meas && e.meas[pi] === 'tempo') || nkE(e, pi), kg0 = numKg(p.kg), r = parseInt(p.reps) || 0; if ((kg0 || tmp) && r) out.push({kg: kg0 || 0, reps: r, si}); });
+    const tmp = !!(e.meas && e.meas[pi] === 'tempo'), kg0 = numKg(p.kg), r = parseInt(p.reps) || 0; if ((kg0 || tmp) && r) out.push({kg: kg0 || 0, reps: r, si}); });
   return out;
 }
 let prCache = {k: null, v: null}, dataVer = 0;
@@ -1562,7 +726,7 @@ function achStats(st){
       w = new Date(w); w.setDate(w.getDate() + 7); }
   }
   let vol = 0;
-  st.logs.forEach(l => l.entries.forEach(e => e.sets.forEach(s => { if (s.done === false || (s.type || 'trab') !== 'trab') return; s.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); })));
+  st.logs.forEach(l => l.entries.forEach(e => e.sets.forEach(s => { if (s.done === false || (s.type || 'trab') !== 'trab') return; s.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); })));
   return {total: st.logs.length, fullWeeks, bestStreak, prs: prHistory(st).count, tons: vol / 1000};
 }
 function unlocked(st){ const s = achStats(st); return ACH.filter(a => s[a.k] >= a.v); }
@@ -1608,11 +772,11 @@ function attentionHTML(){
     <p class="hint">Alerta quando o aluno fica 4 dias ou mais sem treinar, ou faz menos da metade do planejado nas últimas 2 semanas.</p></section>`;
 }
 function nextProto(p){ p = String(p || 'Protocolo 0'); const m = p.match(/(\d+)\s*$/); return m ? p.replace(/(\d+)\s*$/, String(+m[1] + 1)) : p + ' 2'; }
-function touchStart(){ db.draftMeta = db.draftMeta || {}; const k = draftKey(); if (!db.draftMeta[k]) db.draftMeta[k] = Date.now(); db.draftEdit = db.draftEdit || {}; db.draftEdit[k] = Date.now(); }
+function touchStart(){ db.draftMeta = db.draftMeta || {}; const k = draftKey(); if (!db.draftMeta[k]) db.draftMeta[k] = Date.now(); }
 function doneData(st){
   const l = st.logs.find(x => x.id === state.done.logId); if (!l) return null;
   let sets = 0, vol = 0;
-  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); }));
+  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); }));
   return {l, sets, vol: Math.round(vol)};
 }
 function doneView(st){
@@ -1625,12 +789,8 @@ function doneView(st){
   return `<main class="wrap">
     <section class="card stkcard">
       <div><p class="eyebrow">Treino concluído</p><h2 class="stk-h">Mandou bem, ${esc(st.name.split(' ')[0])}!</h2>
-        <p class="small muted">${f.week}º treino da semana${f.streak ? ' · ' + f.streak + (f.streak === 1 ? ' semana' : ' semanas') + ' de sequência' : ''}${l.dur ? ' · ' + durTxt(l.dur) + ' de treino' : ''}</p></div>
-      <div class="stk-car" id="stk-car" role="group" aria-label="Modelos da imagem. Arraste para o lado para trocar.">
-        <div class="stk-prev stk-slide"><img id="stk-img-center" alt="Imagem do treino, modelo centralizado" hidden><p class="small stk-wait">Gerando imagem…</p></div>
-        <div class="stk-prev stk-slide"><img id="stk-img-left" alt="Imagem do treino, modelo alinhado à esquerda" hidden><p class="small stk-wait">Gerando imagem…</p></div>
-      </div>
-      <div class="stk-dots"><button type="button" data-act="stk-go" data-v="0" aria-label="Modelo centralizado" aria-pressed="true"></button><button type="button" data-act="stk-go" data-v="1" aria-label="Modelo alinhado à esquerda" aria-pressed="false"></button></div>
+        <p class="small muted">${f.week}º treino da semana${f.streak ? ' · ' + f.streak + (f.streak === 1 ? ' semana' : ' semanas') + ' de sequência' : ''}</p></div>
+      <div class="stk-prev"><img id="sticker-img" alt="Imagem do treino com logo, nome do treino, volume load e séries" hidden><p id="stk-wait" class="small">Gerando imagem…</p></div>
       <p class="small muted">Imagem PNG com fundo transparente: no Instagram, coloque por cima da sua foto no story ou no post.</p>
       <button class="btn block" type="button" data-act="save-sticker" id="save-stk" disabled>Salvar imagem</button>
     </section>
@@ -1640,7 +800,7 @@ function doneView(st){
   </main>`;
 }
 /* imagem PNG transparente para compartilhar */
-let STICKER = null, STKCACHE = null;
+let STICKER = null;
 function wrapLines(ctx, text, max){
   const words = String(text).split(/\s+/), lines = []; let cur = '';
   words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > max && cur){ lines.push(cur); cur = w; } else cur = t; });
@@ -1651,113 +811,52 @@ function spacedText(ctx, text, cx, y, sp){
   let x = cx - tot / 2; const al = ctx.textAlign; ctx.textAlign = 'left';
   chars.forEach((ch, i) => { ctx.fillText(ch, x, y); x += ws[i] + sp; }); ctx.textAlign = al;
 }
-function topPR(st, l){
-  const list = prHistory(st).prs[l.id] || []; if (!list.length) return null;
-  const prev = {};
-  st.logs.filter(x => x.date < l.date).forEach(x => x.entries.forEach(e => e.items.forEach((lid, pi) => bestSets(e, pi).forEach(c => { if (beats(c, prev[lid])) prev[lid] = c; }))));
-  let top = null, topScore = -Infinity;
-  list.forEach(p => {
-    const b = prev[p.libId]; let sc = 0;
-    if (b && p.kg && b.kg) sc = (p.kg - b.kg) / b.kg + (p.kg === b.kg ? 0.001 * (p.reps - b.reps) : 0);
-    else if (b) sc = (p.reps - b.reps) / Math.max(b.reps, 1);
-    if (sc > topScore){ topScore = sc; top = p; }
-  });
-  if (!top) return null;
-  return {name: lib(top.libId).name, val: top.kg ? fmtKg(top.kg) + ' kg' : top.reps + (top.t ? ' s' : ' reps')};
-}
-function drawTrophy(ctx, x, y, s){
-  ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24);
-  ctx.fillStyle = '#F2C14E'; ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-  ctx.fill(new Path2D('M7 3h10v4.5a5 5 0 0 1-10 0z'));
-  ctx.stroke(new Path2D('M7 5H4.5v1.2a3.3 3.3 0 0 0 3.1 3.3M17 5h2.5v1.2a3.3 3.3 0 0 1-3.1 3.3'));
-  ctx.fillRect(11, 12, 2, 4.2); ctx.fill(new Path2D('M8.5 16.5h7a1 1 0 0 1 1 1v2.5h-9v-2.5a1 1 0 0 1 1-1z'));
-  ctx.restore();
-}
-function fitOneLine(ctx, text, max){
-  if (ctx.measureText(text).width <= max) return text;
-  let t = text; while (t.length > 1 && ctx.measureText(t + '…').width > max) t = t.slice(0, -1);
-  return t.trimEnd() + '…';
-}
-async function makeSticker(title, vol, sets, pr, align){
-  const LEFT = align === 'left';
+async function makeSticker(title, vol, sets){
   const serif = '"Cormorant Garamond", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
-  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
+  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 30px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
   const logo = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = LOGO_HI; });
-  const W = 1080, PAD = 64, MAX = W - PAD * 2, c = document.createElement('canvas'), ctx = c.getContext('2d');
-  const logoW = 400, logoH = Math.round(logoW * logo.height / logo.width);
-  let fs = 124; ctx.font = `italic 700 ${fs}px ${serif}`;
-  while (ctx.measureText(title).width > MAX && fs > 56){ fs -= 4; ctx.font = `italic 700 ${fs}px ${serif}`; }
-  const tTxt = fitOneLine(ctx, title, MAX);
-  let pfs = 62, pTxt = '';
-  if (pr){
-    const full = pr.name + ' · ' + pr.val;
-    ctx.font = `700 ${pfs}px ${sans}`;
-    while (ctx.measureText(full).width + pfs * 1.3 > MAX && pfs > 38){ pfs -= 2; ctx.font = `700 ${pfs}px ${sans}`; }
-    pTxt = ctx.measureText(full).width + pfs * 1.3 <= MAX ? full : fitOneLine(ctx, pr.name, MAX - pfs * 1.3 - ctx.measureText(' · ' + pr.val).width) + ' · ' + pr.val;
-  }
-  const yLogo = PAD, ySL = yLogo + logoH + 84, ySN = ySL + 110, yTL = ySN + 104, yT = yTL + Math.round(fs * 0.92) + 10;
-  const yPL = yT + 96, yP = yPL + Math.round(pfs * 1.05) + 14;
-  const H = (pr ? yP : yT) + PAD;
+  const W = 1080, PAD = 70, c = document.createElement('canvas'), ctx = c.getContext('2d');
+  const logoW = 600, logoH = Math.round(logoW * logo.height / logo.width);
+  let fs = 132, lines;
+  const fit = () => { ctx.font = `italic 700 ${fs}px ${serif}`; lines = wrapLines(ctx, title.toUpperCase(), W - PAD * 2); };
+  fit(); while ((lines.length > 2 || lines.some(t => ctx.measureText(t).width > W - PAD * 2)) && fs > 64){ fs -= 6; fit(); }
+  const yLogo = PAD, yKick = yLogo + logoH + 92, yTitle0 = yKick + 34 + Math.round(fs * 0.86);
+  const yTitleEnd = yTitle0 + (lines.length - 1) * Math.round(fs * 0.98);
+  const yNum = yTitleEnd + 190, yLbl = yNum + 62, H = yLbl + PAD;
   c.width = W; c.height = H;
-  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 3;
-  ctx.drawImage(logo, LEFT ? PAD : (W - logoW) / 2, yLogo, logoW, logoH);
-  const volTxt = vol.toLocaleString('pt-BR'), setTxt = String(sets), setLbl = sets === 1 ? 'Série' : 'Séries';
-  ctx.font = `800 112px ${sans}`; const wNum = ctx.measureText(volTxt).width, wSet = ctx.measureText(setTxt).width;
-  ctx.font = `700 48px ${sans}`; const wUnit = ctx.measureText('kg').width;
-  ctx.font = `500 40px ${sans}`; const wLbl = ctx.measureText('Volume load').width, wSetLbl = ctx.measureText(setLbl).width;
-  const wVol = wNum + 12 + wUnit;
-  let xVolLbl, xVol, xSetLbl, xSet;
-  if (LEFT){ const x2 = PAD + Math.max(wVol, wLbl) + 110; xVolLbl = PAD; xVol = PAD; xSetLbl = x2; xSet = x2; }
-  else { const cx1 = W * 0.31, cx2 = W * 0.69; xVolLbl = cx1 - wLbl / 2; xVol = cx1 - wVol / 2; xSetLbl = cx2 - wSetLbl / 2; xSet = cx2 - wSet / 2; }
-  ctx.textAlign = 'left';
-  ctx.font = `500 40px ${sans}`; ctx.fillText('Volume load', xVolLbl, ySL); ctx.fillText(setLbl, xSetLbl, ySL);
-  ctx.font = `800 112px ${sans}`; ctx.fillText(volTxt, xVol, ySN); ctx.fillText(setTxt, xSet, ySN);
-  ctx.font = `700 48px ${sans}`; ctx.fillText('kg', xVol + wNum + 12, ySN);
-  ctx.textAlign = LEFT ? 'left' : 'center'; const tx = LEFT ? PAD : W / 2;
-  ctx.font = `500 40px ${sans}`; ctx.fillText('Treino concluído', tx, yTL);
-  ctx.font = `italic 700 ${fs}px ${serif}`; ctx.fillText(tTxt, tx, yT);
-  if (pr){
-    ctx.font = `500 40px ${sans}`; ctx.fillText('PR · maior progresso', tx, yPL);
-    ctx.font = `700 ${pfs}px ${sans}`;
-    const ic = Math.round(pfs * 1.02), gap = pfs * 0.28, wTxt = ctx.measureText(pTxt).width, x0 = LEFT ? PAD - 4 : (W - (ic + gap + wTxt)) / 2;
-    drawTrophy(ctx, x0, yP - ic * 0.86, ic);
-    ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'left'; ctx.fillText(pTxt, x0 + ic + gap, yP);
-  }
+  ctx.drawImage(logo, (W - logoW) / 2, yLogo, logoW, logoH);
+  ctx.font = `700 34px ${sans}`; spacedText(ctx, 'TREINO CONCLUÍDO', W / 2, yKick, 9);
+  ctx.font = `italic 700 ${fs}px ${serif}`; lines.forEach((t, i) => ctx.fillText(t, W / 2, yTitle0 + i * Math.round(fs * 0.98)));
+  const cols = [{cx: W * 0.29, num: vol.toLocaleString('pt-BR'), unit: 'kg', lbl: 'VOLUME LOAD'}, {cx: W * 0.71, num: String(sets), unit: '', lbl: sets === 1 ? 'SÉRIE' : 'SÉRIES'}];
+  cols.forEach(col => {
+    ctx.font = `800 104px ${sans}`; const w1 = ctx.measureText(col.num).width;
+    ctx.font = `700 46px ${sans}`; const w2 = col.unit ? ctx.measureText(col.unit).width + 12 : 0;
+    let x = col.cx - (w1 + w2) / 2; ctx.textAlign = 'left';
+    ctx.font = `800 104px ${sans}`; ctx.fillText(col.num, x, yNum);
+    if (col.unit){ ctx.font = `700 46px ${sans}`; ctx.fillText(col.unit, x + w1 + 12, yNum); }
+    ctx.textAlign = 'center'; ctx.font = `700 30px ${sans}`; spacedText(ctx, col.lbl, col.cx, yLbl, 6);
+  });
+  ctx.shadowColor = 'transparent'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(W / 2 - 1.5, yNum - 96, 3, yLbl - yNum + 104);
   const blob = await new Promise(res => c.toBlob(res, 'image/png'));
   return blob;
 }
-const STK_STYLES = ['center', 'left'];
 async function renderSticker(){
   const st = stu(); if (!st || !state.done) return; const dd = doneData(st); if (!dd) return;
-  STKCACHE = STKCACHE || {};
-  const d = new Date(dd.l.date), stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  const car = document.getElementById('stk-car');
-  if (car && state.stkStyle === 'left') car.scrollLeft = car.clientWidth;
+  const img = document.getElementById('sticker-img'), wait = document.getElementById('stk-wait'), btn = document.getElementById('save-stk');
   try {
-    for (const sty of STK_STYLES){
-      const ck = dd.l.id + '|' + sty;
-      if (!STKCACHE[ck]){
-        const blob = await makeSticker(dd.l.title || 'Treino', dd.vol, dd.sets, topPR(st, dd.l), sty);
-        STKCACHE[ck] = {logId: dd.l.id, key: ck, blob, url: URL.createObjectURL(blob), name: `treino-jau-training-${stamp}-${sty === 'left' ? 'esquerda' : 'centro'}.png`};
-      }
-      const im = document.getElementById('stk-img-' + sty); if (!im) return;
-      im.src = STKCACHE[ck].url; im.hidden = false;
-      const w = im.nextElementSibling; if (w) w.hidden = true;
+    if (!STICKER || STICKER.logId !== dd.l.id){
+      const blob = await makeSticker(dd.l.title || 'Treino', dd.vol, dd.sets);
+      if (STICKER) URL.revokeObjectURL(STICKER.url);
+      const d = new Date(dd.l.date), stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      STICKER = {logId: dd.l.id, blob, url: URL.createObjectURL(blob), name: `treino-jau-training-${stamp}.png`};
     }
-    stkPick();
-  } catch(e){ document.querySelectorAll('.stk-wait').forEach(w => w.textContent = 'Não consegui gerar a imagem neste aparelho.'); }
+    const i2 = document.getElementById('sticker-img'); if (!i2) return;
+    i2.src = STICKER.url; i2.hidden = false; const w2 = document.getElementById('stk-wait'); if (w2) w2.hidden = true;
+    const b2 = document.getElementById('save-stk'); if (b2) b2.disabled = false;
+  } catch(e){ if (wait) wait.textContent = 'Não consegui gerar a imagem neste aparelho.'; }
 }
-function stkPick(){
-  const car = document.getElementById('stk-car'), st = stu(); if (!car || !st || !state.done) return;
-  const dd = doneData(st); if (!dd) return;
-  const i = Math.max(0, Math.min(STK_STYLES.length - 1, Math.round(car.scrollLeft / Math.max(1, car.clientWidth))));
-  state.stkStyle = STK_STYLES[i];
-  STICKER = (STKCACHE || {})[dd.l.id + '|' + STK_STYLES[i]] || null;
-  document.querySelectorAll('.stk-dots button').forEach((el, k) => el.setAttribute('aria-pressed', String(k === i)));
-  const b = document.getElementById('save-stk'); if (b) b.disabled = !STICKER;
-}
-document.addEventListener('scroll', e => { if (e.target && e.target.id === 'stk-car') stkPick(); }, true);
 async function saveSticker(){
   if (!STICKER) return;
   try {
@@ -1774,12 +873,11 @@ const WHEN = {antes: 'Antes do treino', depois: 'Depois do treino', separado: 'E
 const CD_MODS = ['Esteira', 'Esteira inclinada', 'Caminhada', 'Corrida', 'Bicicleta', 'Bike de spinning', 'Elíptico', 'Escada', 'Remo', 'Natação', 'Pular corda', 'HIIT'];
 const cardioList = d => ((d && d.cardio) || []).filter(c => c.mod || c.dur || c.obs || c.int);
 const cardioTxt = c => [c.mod || 'Cardio', c.dur, c.when && c.when !== 'livre' ? (WHEN[c.when] || '').toLowerCase() : ''].filter(Boolean).join(' · ');
-function cardioCard(d, cm){
+function cardioCard(d){
   const cs = cardioList(d); if (!cs.length) return '';
   return `<section class="cardio" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b></div>
     ${cs.map(c => `<div class="cdi"><p class="cdm"><b>${esc(c.mod || 'Cardio')}</b>${c.dur ? `<span class="cdd">${esc(c.dur)}</span>` : ''}${WHEN[c.when] ? `<span class="cdw">${WHEN[c.when]}</span>` : ''}</p>
-      ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}
-    ${cm ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="1" data-cardiocm="1" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(((db.drafts[draftKey()] || {}).__cardio || {}).comment || '')}</textarea></div>` : ''}</section>`;
+      ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}</section>`;
 }
 function cardioSum(d){
   const cs = cardioList(d); if (!cs.length) return '';
@@ -1812,8 +910,8 @@ function onboardHTML(st){
      m: `<div class="obmock"><div class="set done"><span class="sn">${dot('trab')}1</span><div class="parts"><div class="part"><span class="target">10 a 12</span><span class="fld"><input value="40" readonly tabindex="-1" aria-hidden="true"><span>kg</span></span><span class="fld"><input value="12" readonly tabindex="-1" aria-hidden="true"><span>reps</span></span></div></div><span class="chk">${ICON_CHECK}</span></div></div>`},
     {t: 'O descanso é automático', p: 'Ao marcar a série, o cronômetro de descanso começa sozinho na parte de baixo da tela. Precisa de mais um pouco? Toque em +15s.',
      m: `<div class="obmock obtimer"><div class="obbar"><i></i></div><div class="obt"><span><small>DESCANSO</small><b>1:24</b></span><span class="obbtn">+15s</span></div></div>`},
-    {t: 'Exercício alternativo, dor ou dúvida?', p: 'Quando o personal cadastrar uma alternativa, aparece um botão para trocar o exercício na hora. Sentiu incômodo ou ficou com dúvida? Escreva na observação do exercício: ela chega direto pro personal.',
-     m: `<div class="obmock"><span class="swapbtn">${ICON_SWAP}Trocar por exercício alternativo: Afundo com halteres</span></div>`}
+    {t: 'Aparelho ocupado? Dor ou dúvida?', p: 'Quando o personal cadastrar uma alternativa, aparece um botão para trocar o exercício na hora. Sentiu incômodo ou ficou com dúvida? Escreva na observação do exercício: ela chega direto pro personal.',
+     m: `<div class="obmock"><span class="swapbtn">${ICON_SWAP}Aparelho ocupado? Trocar por Afundo com halteres</span></div>`}
   ];
   const sp = steps[k];
   return `<div class="obov" role="dialog" aria-modal="true" aria-label="Como usar o app"><div class="obcard">
@@ -1834,11 +932,11 @@ function whenTxt(iso){
 }
 function logStats(l){
   let sets = 0, vol = 0;
-  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; vol += partVol(p, kg, r); }); }));
+  l.entries.forEach(e => e.sets.forEach(x => { if (!x.done) return; sets++; if ((x.type || 'trab') !== 'trab') return; x.parts.forEach((p, pi) => { if (e.meas && e.meas[pi] === 'tempo') return; const kg = numKg(p.kg), r = parseInt(p.reps) || 0; if (kg && r) vol += kg * r; }); }));
   return {sets, vol: Math.round(vol)};
 }
 function feedView(){
-  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? (x.l.entries.some(e => e.comment) || !!x.l.cardioCmt || !!x.l.effortMsg) : f === 'naolidos' ? !isSeen(x.l) : true);
+  const f = state.feedF, items = allLogs().filter(x => f === 'obs' ? x.l.entries.some(e => e.comment) : f === 'naolidos' ? !isSeen(x.l) : true);
   const shown = items.slice(0, state.feedN), un = unreadCount();
   return `<main class="wrap">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Atividade dos alunos</h2></div><span class="muted small">${un ? un + (un === 1 ? ' treino não lido' : ' treinos não lidos') : 'Tudo lido'}</span></div>
@@ -1856,15 +954,15 @@ function feedItem(st, l){
     <div class="fhead"><span class="fav" aria-hidden="true">${esc(st.name.trim().charAt(0).toUpperCase())}</span>
       <div class="fwho"><b>${esc(st.name)}</b><span>${esc(whenTxt(l.date))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</span></div>
       ${seen ? '' : '<span class="fdot" title="Não lido"></span>'}</div>
-    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''} · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
+    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b> · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
     ${prs.length ? `<div class="fprs">${prs.map(p => `<span class="mpill gold">${ICON_TROPHY}${esc(lib(p.libId).name)}: ${esc(markTxt(p))}</span>`).join('')}</div>` : ''}
-    ${l.effortMsg ? `<div class="cmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
+    ${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
     <div class="row"><button type="button" class="btn sm quiet" data-act="feed-open" data-v="${st.id}" data-log="${l.id}">Ver treino completo</button><button type="button" class="linkbtn" data-act="feed-seen" data-v="${l.id}">${seen ? 'Marcar como não lido' : 'Marcar como lido'}</button></div>
   </article>`;
 }
 
 /* ---------- copiar treino ---------- */
-function cloneDay(d){ return {title: d.title, cardio: JSON.parse(JSON.stringify(d.cardio || [])), mob: (d.mob || []).map(m => Object.assign({}, m, {id: uid()})), ex: d.ex.map(e => Object.assign(JSON.parse(JSON.stringify(e)), {id: uid()}))}; }
+function cloneDay(d){ return {title: d.title, cardio: JSON.parse(JSON.stringify(d.cardio || [])), ex: d.ex.map(e => Object.assign(JSON.parse(JSON.stringify(e)), {id: uid()}))}; }
 function cloneDays(days){ const o = {}; DAYS.forEach(x => o[x.k] = cloneDay(days[x.k] || {title:'', ex:[]})); return o; }
 function copyPanel(s){
   const c = state.copy; if (!c) return '';
@@ -1933,169 +1031,32 @@ async function pdfText(file){
   }
   return pages.join('\n\n');
 }
-/* Leitura de ficha em PDF sem IA: usa a posição dos textos nas tabelas do modelo da Jau Training.
-   pages = [{items: [{s, x, y, w}]}]  (x, y = canto esquerdo e topo do texto, y crescendo para baixo) */
-const FP_DAYS = {segunda: 'seg', terca: 'ter', quarta: 'qua', quinta: 'qui', sexta: 'sex', sabado: 'sab', domingo: 'dom'};
-const FP_KEEP = new Set(['rdl', 'vtom', 'w', 'y', 't', 'ii', 'iii', 'mmii', 'mmss', 'abs', 'trx', 'hiit']);
-function fpNorm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
-function fpCase(t){
-  const s = String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const out = s.split(' ').map(w => FP_KEEP.has(fpNorm(w)) ? w.toUpperCase() : w).join(' ');
-  return out.charAt(0).toUpperCase() + out.slice(1);
-}
-const fpCx = i => i.x + i.w / 2;
-function fpLineStr(items){ // junta os pedaços da mesma linha: sem espaço quando estão colados (o Canva separa letras às vezes)
-  let out = '', end = null;
-  items.slice().sort((a, b) => a.x - b.x).forEach(i => { const t = i.s; if (end !== null){ const gap = i.x - end; out += gap > 2.5 ? ' ' : ''; } out += t; end = i.x + i.w; });
-  return out.replace(/\s+/g, ' ').trim();
-}
-function fpLines(items){ // agrupa em linhas (mesma altura)
-  const rows = [];
-  items.slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach(i => { const r = rows.find(r => Math.abs(r.y - i.y) < 4); if (r) r.items.push(i); else rows.push({y: i.y, items: [i]}); });
-  return rows.map(r => ({y: r.y, items: r.items.sort((a, b) => a.x - b.x), s: fpLineStr(r.items)}));
-}
-const fpJoin = items => fpLines(items).map(l => l.s).filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-function fpHeaders(items, names){
-  const H = {};
-  items.forEach(i => { const n = fpNorm(i.s); names.forEach(k => { if (n === k) (H[k] = H[k] || []).push(i); }); });
-  return H;
-}
-function fpCleanTime(t){ // "20 seg a 30 seg" -> "20 a 30"
-  return t.replace(/\b(seg|segundos?|s)\b\.?/gi, '').replace(/\s+/g, ' ').replace(/\s+a\s*$/, '').trim();
-}
-const FP_ISTIME = t => /\bseg|segundo|\d\s*s\b|\bmin\b/i.test(t);
-function fpMethod(t, nItems, methods){
-  const n = fpNorm(t).replace(/\s+/g, ' ');
-  if (!n || n === '*' || n === '-') return nItems > 1 ? 'conjugado' : 'normal';
-  if (/conjug|bi-?set|tri-?set/.test(n)) return 'conjugado';
-  if (/pre-?ativ/.test(n)) return nItems > 1 ? 'conjugado' : 'normal';
-  if (/drop/.test(n)) return 'dropset';
-  if (/rest/.test(n)) return 'restpause';
-  if (/cluster/.test(n)) return 'cluster';
-  if (/piram/.test(n)) return 'piramide';
-  if (/isometr/.test(n)) return 'isometria';
-  const m = (methods || []).find(m => fpNorm(m.name) === n || fpNorm(m.id) === n);
-  return m ? m.id : (nItems > 1 ? 'conjugado' : 'normal');
-}
-function fpRows(items, anchors){ // cada bloco de texto de uma coluna vai para a linha da tabela (âncora = coluna SÉRIES) mais perto
-  const rows = anchors.map(a => ({a, items: []}));
-  const byCol = {};
-  items.forEach(i => { if (!anchors.includes(i)) (byCol[i.c] = byCol[i.c] || []).push(i); });
-  Object.values(byCol).forEach(list => {
-    const lines = fpLines(list), blocks = [];
-    lines.forEach(l => { const b = blocks[blocks.length - 1]; if (b && l.y - b.last < 34) { b.lines.push(l); b.last = l.y; } else blocks.push({lines: [l], last: l.y}); });
-    blocks.forEach(b => { const cy = (b.lines[0].y + b.last) / 2; let best = null, bd = 1e9;
-      rows.forEach(r => { const d = Math.abs(r.a.y - cy); if (d < bd){ bd = d; best = r; } });
-      if (best && bd < 200) b.lines.forEach(l => best.items.push(...l.items)); });
-  });
-  return rows;
-}
-function fpWorkout(page, H){
-  const h = k => H[k][0], hx = k => fpCx(h(k));
-  const top = h('exercicio').y + 8, items = page.items.filter(i => i.y > top);
-  const intC = hx('intervalo');
-  const cols = ['metodo', 'series', 'repeticoes', 'intervalo'];
-  const col = i => { if (H.observacoes && i.x >= intC + 40) return 'obs';
-    let b = null, bd = 1e9; ['exercicio', ...cols].forEach(c => { const d = Math.abs(fpCx(i) - hx(c)); if (d < bd){ bd = d; b = c; } }); return b === 'exercicio' ? 'nome' : b; };
-  const tagged = items.map(i => Object.assign({}, i, {c: col(i)}));
-  const anchors = tagged.filter(i => i.c === 'series' && /^\d+\s*x/i.test(i.s.trim()));
-  return fpRows(tagged, anchors).map(r => {
-    const by = c => r.items.filter(i => i.c === c);
-    const nome = fpJoin(by('nome'));
-    const repLines = fpLines(by('repeticoes')).map(l => l.s);
-    return {nome, metodo: fpJoin(by('metodo')), series: r.a.s.trim(), reps: repLines, intervalo: fpJoin(by('intervalo')), obs: fpJoin(by('obs'))};
-  }).filter(r => r.nome);
-}
-function fpMobTables(page, H){
-  const exs = (H.exercicio || []).slice().sort((a, b) => a.x - b.x);
-  return exs.map((eh, ti) => {
-    const left = eh.x - 150, right = ti + 1 < exs.length ? exs[ti + 1].x - 150 : 1e9;
-    const inT = i => i.x >= left && i.x < right;
-    const ser = (H.series || []).find(s => inT(s) && Math.abs(s.y - eh.y) < 6), rep = (H.reps || H.repeticoes || []).find(s => inT(s) && Math.abs(s.y - eh.y) < 6);
-    if (!ser || !rep) return null;
-    const label = page.items.filter(i => inT(i) && i.y < eh.y - 4 && i.y > eh.y - 140 && /[a-z]/i.test(i.s)).sort((a, b) => b.y - a.y)[0];
-    const items = page.items.filter(i => inT(i) && i.y > eh.y + 8).map(i => Object.assign({}, i, {c: i.x < ser.x - 10 ? 'nome' : (Math.abs(fpCx(i) - fpCx(ser)) < Math.abs(fpCx(i) - fpCx(rep)) ? 'series' : 'reps')}));
-    const anchors = items.filter(i => i.c === 'series' && /^\d+\s*x/i.test(i.s.trim()));
-    const list = fpRows(items, anchors).map(r => ({nome: fpJoin(r.items.filter(i => i.c === 'nome')), series: r.a.s.trim(), reps: fpJoin(r.items.filter(i => i.c === 'reps'))})).filter(r => r.nome);
-    return {label: label ? label.s.trim() : '', list};
-  }).filter(t => t && t.list.length);
-}
-function fpSeriesFromRow(r, nItems){
-  const n = Math.max(1, ...(r.series.match(/\d+/g) || ['3']).map(Number));
-  let groups = [];
-  const lines = r.reps.filter(Boolean);
-  if (lines.length && lines.every(l => /^\d+\s*x\s+\S/i.test(l))) groups = lines.map(l => { const m = l.match(/^(\d+)\s*x\s+(.+)$/i); return {n: +m[1], t: m[2]}; });
-  else { const t = lines.join(' ').replace(/\s+/g, ' ').trim(); const m = t.match(/^(\d+)\s*x\s+(.+)$/i); groups = [{n: m ? +m[1] : n, t: m ? m[2] : (t || '10 a 12')}]; }
-  // medida por exercício (tempo quando a meta tem "seg")
-  const meas = Array.from({length: nItems}, (_, k) => groups.some(g => FP_ISTIME((g.t.split(/\s*\+\s*/)[k] || g.t.split(/\s*\+\s*/)[0] || ''))) ? 'tempo' : 'reps');
-  const clean = t => t.split(/\s*\+\s*/).map((p, k) => meas[k] === 'tempo' ? fpCleanTime(p) : p.trim()).join(' + ');
-  const series = [];
-  groups.forEach(g => { for (let i = 0; i < g.n; i++) series.push({tipo: 'trab', reps: clean(g.t)}); });
-  return {series, meas};
-}
-function parseFicha(pages, fileName, methods){
-  const out = {aluno: '', protocolo: '', foco: '', cardio: '', organizacao: 'dias', dias: {}};
-  Object.values(FP_DAYS).forEach(k => out.dias[k] = {titulo: '', exercicios: [], cardios: [], mob: []});
-  const fn = String(fileName || '').replace(/\.pdf$/i, '').replace(/_/g, ' ');
-  const pm = fn.match(/protocolo\s*(\d+)/i); if (pm) out.protocolo = 'Protocolo ' + pm[1];
-  const nm = fn.split(/\s+-\s+/); if (nm.length > 1) out.aluno = nm.slice(1).join(' - ').trim();
-  const schedTitles = {}, mobTables = [];
-  let seqIdx = 0;
-  pages.forEach(page => {
-    const lines = fpLines(page.items);
-    // nome do aluno, foco e cardio
-    lines.forEach((l, i) => {
-      const n = fpNorm(l.s);
-      if (/^bem-?vind[ao]/.test(n) && lines[i + 1] && !out._nameFromPdf){ out.aluno = lines[i + 1].s; out._nameFromPdf = true; }
-      if (/^neste protocolo nosso foco/.test(n) && !out.foco){ const f = []; for (let j = i + 1; j < lines.length && !/^cref|^orienta/.test(fpNorm(lines[j].s)); j++) f.push(lines[j].s.replace(/;$/, '')); out.foco = f.join('; '); }
-      if (/^orientacoes de cardio/.test(n) && !out.cardio){ const f = []; for (let j = i + 1; j < lines.length && !/^neste protocolo|^cref/.test(fpNorm(lines[j].s)); j++) f.push(lines[j].s); out.cardio = f.join(' '); }
-    });
-    const H = fpHeaders(page.items, ['exercicio', 'metodo', 'series', 'repeticoes', 'intervalo', 'observacoes', 'reps']);
-    if (H.exercicio && H.metodo && H.series && H.repeticoes && H.intervalo){
-      // página de treino: dia e título ficam acima do cabeçalho
-      const hy = H.exercicio[0].y, above = lines.filter(l => l.y < hy - 4 && !/^cref/.test(fpNorm(l.s)));
-      let key = null, title = '';
-      above.forEach((l, i) => { const n = fpNorm(l.s).replace(/-?\s*feira/, '').trim();
-        if (FP_DAYS[n]){ key = FP_DAYS[n]; title = above.slice(i + 1).map(x => x.s).join(' '); }
-        const t = n.match(/^treino\s+([a-g])\b/); if (!key && t){ key = Object.values(FP_DAYS)['abcdefg'.indexOf(t[1])]; out.organizacao = 'sequencia'; title = above.slice(i + 1).map(x => x.s).join(' ') || l.s; } });
-      if (!key){ key = Object.values(FP_DAYS)[seqIdx] || 'seg'; title = above.map(x => x.s).join(' '); }
-      seqIdx++;
-      const day = out.dias[key]; if (title) day.titulo = title;
-      fpWorkout(page, H).forEach(r => {
-        const names = r.nome.replace(/\s*\+\s*/g, ' + ').split(' + ').map(s => s.trim()).filter(Boolean);
-        const {series, meas} = fpSeriesFromRow(r, names.length);
-        let obs = r.obs;
-        const wm = obs.match(/fazer\s+(?:uma|1)\s+s[ée]rie\s+de\s+aquecimento\s+com\s+(\d+)\s*(?:reps?|repeti[çc][õo]es)?\.?/i);
-        if (wm){ series.unshift({tipo: 'aq', reps: wm[1]}); obs = obs.replace(wm[0], '').trim(); }
-        day.exercicios.push({itens: names.map((n, k) => ({nome: fpCase(n), medida: meas[k]})), metodo: /drop\s+na\s+[úu]ltima/i.test(r.obs) && names.length === 1 ? 'dropset' : fpMethod(r.metodo, names.length, methods), metodoTxt: r.metodo,
-          series, intervalo: r.intervalo.replace(/\s+/g, ' '), obs: obs.replace(/\s+/g, ' ').trim(), dropUltima: /drop\s+na\s+[úu]ltima/i.test(r.obs)});
-      });
-    } else if (H.exercicio && H.series && (H.reps || H.repeticoes) && !H.metodo){
-      fpMobTables(page, H).forEach(t => mobTables.push(t));
-    } else {
-      // quadro da semana: dia em cima, treino embaixo
-      const heads = page.items.filter(i => { const n = fpNorm(i.s).replace(/-$/, ''); return FP_DAYS[n]; });
-      heads.forEach(hd => { const k = FP_DAYS[fpNorm(hd.s).replace(/-$/, '')];
-        const below = page.items.filter(i => i !== hd && i.y > hd.y + 40 && i.y < hd.y + 320 && Math.abs(fpCx(i) - fpCx(hd)) < 90 && !/^feira$/i.test(i.s.trim()) && !FP_DAYS[fpNorm(i.s).replace(/-$/, '')]);
-        const t = fpJoin(below); if (t && !/^(neste|orienta)/i.test(fpNorm(t))) schedTitles[k] = t; });
-    }
-  });
-  Object.keys(schedTitles).forEach(k => { if (!out.dias[k].titulo) out.dias[k].titulo = schedTitles[k]; });
-  // mobilidade: tabela "INFERIORES" vai para os dias de inferiores, "SUPERIORES" para os de superiores
-  const INF = /inferior|glute|gluteo|posterior|perna|quadr|mmii/, SUP = /superior|costa|ombro|peit|bicep|tricep|braco|dorsal|mmss/;
-  mobTables.forEach(t => {
-    const lab = fpNorm(t.label), dk = FP_DAYS[lab.replace(/-?\s*feira/, '').trim()];
-    const targets = Object.keys(out.dias).filter(k => { const d = out.dias[k]; if (!d.exercicios.length) return false;
-      if (dk) return k === dk; const tt = fpNorm(d.titulo);
-      if (INF.test(lab)) return INF.test(tt) && !(SUP.test(tt) && !INF.test(tt)); if (SUP.test(lab)) return SUP.test(tt); return true; });
-    targets.forEach(k => t.list.forEach(m => {
-      const reps = m.reps.replace(/\s+/g, ' ').trim(), tempo = FP_ISTIME(reps) && /^\d+(\s*a\s*\d+)?\s*(seg|s)\.?$/i.test(reps);
-      out.dias[k].mob.push({nome: fpCase(m.nome), series: (m.series.match(/\d+/) || ['1'])[0], reps: tempo ? fpCleanTime(reps) : reps, medida: tempo ? 'tempo' : 'reps'}); }));
-  });
-  delete out._nameFromPdf;
-  return out;
-}
+function buildImportPrompt(text){
+  return `Você converte fichas de treino de musculação (texto extraído de um PDF, as colunas de tabelas aparecem separadas por "|") em JSON para um app de personal trainer.
+Responda SOMENTE com um objeto JSON neste formato:
+{"aluno":"nome do aluno ou vazio","protocolo":"ex.: Protocolo 11 (ou vazio)","foco":"objetivo/foco do treino ou vazio","cardio":"orientações de cardio ou vazio",
+ "organizacao":"dias|sequencia","dias":{"seg":{"titulo":"nome do treino do dia","exercicios":[EX],"cardios":[CARDIO]},"ter":{...},"qua":{...},"qui":{...},"sex":{...},"sab":{...},"dom":{...}}}
+EX = {"itens":[{"nome":"nome do exercício como está no PDF","lib":"id da biblioteca ou null","medida":"reps|tempo","musculos":{"principais":[],"auxiliares":[]}}],"metodo":"id do método","series":[{"tipo":"aq|prep|trab","reps":"10 a 12"}],"intervalo":"2:00 a 2:30","obs":"instrução de execução do exercício"}
+CARDIO = {"modalidade":"ex.: Esteira inclinada","duracao":"ex.: 20 min","intensidade":"ex.: moderada","quando":"antes|depois|separado|livre","obs":""}
+Regras:
+- Cardio prescrito para um dia vai em "cardios" daquele dia (pode haver mais de um). O "cardio" do topo é só a orientação geral de cardio, em texto.
+- Use exatamente as chaves seg, ter, qua, qui, sex, sab, dom. Dia de descanso ou só cardio: "exercicios":[] com o título que aparece (ex.: "Descanso"). Dia sem nada na ficha: título vazio.
+- Se a ficha usar treinos A/B/C (sem dias da semana), use "organizacao":"sequencia" e coloque A em seg, B em ter e assim por diante. Com dias da semana, "organizacao":"dias".
+- Séries: uma entrada por série, na ordem de execução. "3 séries de 10 a 12" vira 3 entradas tipo "trab" com reps "10 a 12". "1x 10 a 12 / 2x 8 a 10" vira 1 entrada "10 a 12" e 2 entradas "8 a 10". Uma série de aquecimento (ex.: "realizar 1 série de aquecimento com 12 reps") vira uma entrada tipo "aq" no início, com as reps indicadas. Série preparatória ou de reconhecimento de carga vira "prep".
+- Exercício medido por tempo (prancha, isometria, "30 seg", "40s"): "medida":"tempo" e, nas séries, "reps" só com os segundos (ex.: "30 a 45"). Nos demais, "medida":"reps".
+- Conjugados (bi-set, ou dois exercícios unidos por "+"): um único exercício com 2 itens, metodo "conjugado" e reps de cada série no formato "12 a 15 + 12 a 15".
+- metodo: use um destes ids: ${db.methods.map(m => m.id + ' (' + m.name + ')').join(', ')}. Na dúvida, "normal".
+- lib: o id da biblioteca abaixo que seja o MESMO exercício (mesmo movimento e equipamento). Se nenhum for o mesmo, use null e preencha "musculos" usando só estas chaves: ${MUSCLES.map(m => m[0]).join(', ')}.
+- intervalo: o descanso indicado, no formato do PDF. obs: só a instrução de execução daquele exercício, sem repetir séries e repetições.
+- Ignore textos gerais: boas-vindas, regras da consultoria, orientações gerais, assinatura e registro profissional.
+Biblioteca (id: nome):
+${db.library.map(l => l.id + ': ' + l.name).join('\n')}
 
+Texto do PDF (entre <<< e >>>):
+<<<
+${text}
+>>>`;
+}
 const STOP = new Set(['com', 'de', 'da', 'do', 'das', 'dos', 'na', 'no', 'em', 'e', 'a', 'o', 'para', 'p']);
 const toks = n => new Set(norm(n).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(t => t && !STOP.has(t)));
 function fuzzyLib(name){
@@ -2112,49 +1073,51 @@ function normalizeImport(raw){
       ex = ex || {};
       const itens = (Array.isArray(ex.itens) ? ex.itens : []).filter(i => i && str(i.nome)).map(i => {
         const lid = db.library.some(l => l.id === i.lib) ? i.lib : null, mus = i.musculos || {};
-        return {nome: str(i.nome), meas: i.medida === 'tempo' ? 'tempo' : 'reps', choice: lid || libMatch(i.nome, 'musc') || '__new',
+        return {nome: str(i.nome), meas: i.medida === 'tempo' ? 'tempo' : 'reps', choice: lid || fuzzyLib(i.nome) || '__new',
           prim: (Array.isArray(mus.principais) ? mus.principais : []).filter(k => MNAME[k]), sec: (Array.isArray(mus.auxiliares) ? mus.auxiliares : []).filter(k => MNAME[k])}; });
       if (!itens.length) return null;
       let series = (Array.isArray(ex.series) ? ex.series : []).map(sr => ({type: ['aq', 'prep', 'trab'].includes(sr && sr.tipo) ? sr.tipo : 'trab', reps: str(sr && sr.reps) || '10 a 12'}));
       if (!series.length) series = [1, 2, 3].map(() => ({type: 'trab', reps: '10 a 12'}));
       let metodo = db.methods.some(m => m.id === ex.metodo) ? ex.metodo : 'normal';
       if (itens.length > 1 && metodo === 'normal') metodo = 'conjugado';
-      return {itens, metodo, series, intervalo: str(ex.intervalo) || '1:30 a 2:00', obs: str(ex.obs), drop: !!ex.dropUltima};
-    }).filter(Boolean), cardios: (Array.isArray(d.cardios) ? d.cardios : []).map(c => ({mod: str(c && c.modalidade), dur: str(c && c.duracao), int: str(c && c.intensidade), when: ['antes', 'depois', 'separado', 'livre'].includes(c && c.quando) ? c.quando : 'livre', obs: str(c && c.obs)})).filter(c => c.mod || c.dur || c.obs), mob: (Array.isArray(d.mob) ? d.mob : []).filter(m => m && str(m.nome)).map(m => ({nome: str(m.nome), sets: str(m.series) || '1', reps: str(m.reps), meas: m.medida === 'tempo' ? 'tempo' : 'reps', choice: libMatch(m.nome, 'mob') || '__new'}))}; });
+      return {itens, metodo, series, intervalo: str(ex.intervalo) || '1:30 a 2:00', obs: str(ex.obs)};
+    }).filter(Boolean), cardios: (Array.isArray(d.cardios) ? d.cardios : []).map(c => ({mod: str(c && c.modalidade), dur: str(c && c.duracao), int: str(c && c.intensidade), when: ['antes', 'depois', 'separado', 'livre'].includes(c && c.quando) ? c.quando : 'livre', obs: str(c && c.obs)})).filter(c => c.mod || c.dur || c.obs)}; });
   return out;
 }
-async function pdfPages(file){
-  const lib = await loadPdfJs();
-  const doc = await lib.getDocument({data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, disableFontFace: true}).promise;
-  const pages = [];
-  for (let p = 1; p <= doc.numPages; p++){
-    const pg = await doc.getPage(p), vp = pg.getViewport({scale: 1}), tc = await pg.getTextContent();
-    pages.push({items: tc.items.filter(i => i.str && i.str.trim()).map(i => ({s: i.str, x: i.transform[4], y: vp.height - i.transform[5], w: i.width || 0}))});
-  }
-  return pages;
-}
-function libMatch(name, cat){
-  const n = norm(name), pool = db.library.filter(l => !cat || catOf(l) === cat);
-  const ex = pool.find(l => norm(l.name) === n) || db.library.find(l => norm(l.name) === n); if (ex) return ex.id;
-  const a = toks(name); let best = null, bs = 0;
-  pool.forEach(l => { const b = toks(l.name); let inter = 0; a.forEach(t => { if (b.has(t)) inter++; }); const sc = inter / (a.size + b.size - inter || 1); if (sc > bs){ bs = sc; best = l.id; } });
-  return bs >= 0.75 ? best : (cat === 'mob' ? null : fuzzyLib(name));
+function importErr(e){
+  const c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled') return 'O uso do Claude não foi permitido neste app, então não dá pra ler o PDF com IA. Você pode permitir no aviso que aparece ao tentar de novo.';
+  if (c === 'rate_limited') return 'Muitas leituras seguidas ou limite de uso atingido. Espere um pouco e tente de novo.';
+  if (c === 'invalid_json' || c === 'empty_completion') return 'O Claude respondeu, mas não consegui montar a ficha com a resposta. Tente de novo.';
+  if (c === 'prompt_too_large') return 'Esse PDF tem texto demais para ler de uma vez. Tente enviar só as páginas da ficha.';
+  if (c === 'session_expired') return 'Sua sessão no Claude expirou. Entre de novo e tente outra vez.';
+  return 'Algo deu errado na leitura. Tente de novo em instantes.';
 }
 async function runImport(){
   const im = state.imp; if (!im || !impFile) return;
   im.fileName = impFile.name; im.stage = 'reading'; render(); top();
-  let pages = null;
-  try { pages = await pdfPages(impFile); }
-  catch(e){ im.stage = 'error'; im.err = navigator.onLine === false ? 'Sem internet. O leitor de PDF precisa de conexão na primeira vez.' : 'Não consegui abrir esse arquivo. Confira se é o PDF da ficha e tente de novo.'; render(); return; }
+  let text = '';
+  try { text = await pdfText(impFile); }
+  catch(e){ im.stage = 'error'; im.err = 'Não consegui abrir esse arquivo. Confira se é o PDF da ficha e tente de novo.'; render(); return; }
+  if (text.replace(/---.*?---|[\s|]/g, '').length < 60){ im.stage = 'error'; im.err = 'Esse PDF parece ser uma imagem (foto ou escaneado), sem texto para ler. Exporte a ficha do Canva como PDF normal e tente de novo.'; render(); return; }
+  let sample = null;
+  try { sample = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch(e){ sample = null; }
+  if (!sample){ im.stage = 'error'; im.err = 'A leitura com IA só funciona com o app aberto dentro do Claude.'; render(); return; }
   if (state.imp !== im) return;
-  const chars = pages.reduce((a, p) => a + p.items.reduce((b, i) => b + i.s.trim().length, 0), 0);
-  if (chars < 60){ im.stage = 'error'; im.err = 'Esse PDF parece ser uma imagem (foto ou escaneado), sem texto para ler. Exporte a ficha do Canva como PDF normal e tente de novo.'; render(); return; }
-  let raw = null;
-  try { raw = parseFicha(pages, impFile.name, db.methods); } catch(e){ console.error('import', e); raw = null; }
-  im.data = normalizeImport(raw);
-  const n = DAYS.reduce((a, x) => a + im.data.dias[x.k].exercicios.length, 0);
-  if (!n){ im.stage = 'error'; im.err = 'Não reconheci as tabelas de treino nesse PDF. A leitura funciona com o modelo de ficha da Jau Training (colunas Exercício, Método, Séries, Repetições, Intervalo e Observações).'; render(); return; }
-  im.useObs = true; im.stage = 'review'; render(); top();
+  im.stage = 'thinking'; render();
+  impCtl = new AbortController();
+  try {
+    const raw = await sample.json(buildImportPrompt(text.slice(0, 150000)), {signal: impCtl.signal});
+    if (state.imp !== im) return;
+    im.data = normalizeImport(raw);
+    const n = DAYS.reduce((a, x) => a + im.data.dias[x.k].exercicios.length + im.data.dias[x.k].cardios.length, 0);
+    if (!n){ im.stage = 'error'; im.err = 'Não encontrei exercícios nesse PDF. Confira se é o arquivo da ficha.'; render(); return; }
+    im.stage = 'review'; render(); top();
+  } catch(e){
+    if (state.imp !== im) return;
+    if (e && e.code === 'cancelled'){ im.stage = 'pick'; render(); return; }
+    im.stage = 'error'; im.err = importErr(e); render();
+  }
 }
 function seriesSummary(ex){
   const g = []; ex.series.forEach(x => { const last = g[g.length - 1]; if (last && last.type === x.type && last.r === x.reps) last.n++; else g.push({type: x.type, n: 1, r: x.reps}); });
@@ -2165,7 +1128,7 @@ function importView(){
   const back = '<button class="back" type="button" data-act="imp-cancel">← Voltar</button>';
   const head = '<div class="sectionhead"><div><p class="eyebrow">Importar ficha</p><h2>Do PDF para o app</h2></div></div>';
   if (im.stage === 'pick') return `<main class="wrap v-narrow">${back}${head}
-    <p class="note">Envie a ficha em PDF do Canva, no seu modelo de sempre. O app lê o arquivo aqui mesmo, sem IA e sem custo: monta os dias, exercícios, séries, métodos, aquecimento e mobilidade e liga cada exercício à sua biblioteca. Você confere tudo antes de salvar.</p>
+    <p class="note">Envie a ficha em PDF, como as que você faz no Canva. O Claude lê o arquivo, monta os dias, exercícios, séries e métodos e liga cada exercício à sua biblioteca. Você confere tudo antes de salvar.</p>
     <section class="card form">
       <label>Arquivo PDF<input id="imp-file" type="file" accept="application/pdf,.pdf"></label>
       ${impFile ? `<span class="small muted">Selecionado: ${esc(impFile.name)}</span>` : ''}
@@ -2173,8 +1136,8 @@ function importView(){
       <button class="btn" type="button" data-act="imp-go" ${impFile ? '' : 'disabled'}>Ler PDF e montar ficha</button>
     </section></main>`;
   if (im.stage === 'reading' || im.stage === 'thinking') return `<main class="wrap v-narrow">${head}
-    <section class="card impwait"><span class="spin" aria-hidden="true"></span><b>Lendo o PDF…</b>
-      <p class="small muted">${esc(im.fileName || '')}</p>
+    <section class="card impwait"><span class="spin" aria-hidden="true"></span><b>${im.stage === 'reading' ? 'Lendo o PDF…' : 'O Claude está montando a ficha…'}</b>
+      <p class="small muted">${im.stage === 'thinking' ? 'Costuma levar de 30 segundos a 2 minutos. Se aparecer um pedido de permissão para usar o Claude, é só permitir.' : esc(im.fileName || '')}</p>
       ${im.stage === 'thinking' ? '<button class="btn sm quiet" type="button" data-act="imp-stop">Parar</button>' : ''}</section></main>`;
   if (im.stage === 'error') return `<main class="wrap v-narrow">${back}${head}<section class="card"><b>Não deu certo</b><p class="small" style="margin-top:6px">${esc(im.err)}</p>
     <div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="imp-retry">Tentar de novo</button><button class="btn sm quiet" type="button" data-act="imp-cancel">Voltar</button></div></section></main>`;
@@ -2184,8 +1147,7 @@ function importView(){
   const libOpts = it => `<option value="__new" ${it.choice === '__new' ? 'selected' : ''}>+ Criar novo: ${esc(it.nome)}</option>` + db.library.slice().sort((a, b) => a.name.localeCompare(b.name, 'pt')).map(l => `<option value="${l.id}" ${it.choice === l.id ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
   return `<main class="wrap v-narrow">${back}
     <div class="sectionhead"><div><p class="eyebrow">Confira antes de salvar</p><h2>Ficha importada</h2></div><span class="muted small">${esc(im.fileName || '')}</span></div>
-    <p class="note">Confira principalmente o campo abaixo de cada nome: é o exercício da sua biblioteca ligado ao que está no PDF. Os marcados como "Criar novo" entram na biblioteca; depois é só completar músculos e vídeo por lá. Tudo pode ser editado na ficha depois.</p>
-    <label class="impobs"><input type="checkbox" id="imp-useobs" data-impobs="1" ${im.useObs !== false ? 'checked' : ''}> Usar as observações do PDF como observação do personal em cada exercício</label>
+    <p class="note">Confira principalmente o campo abaixo de cada nome: é o exercício da sua biblioteca ligado ao que está no PDF. Exercícios marcados como "Criar novo" entram na biblioteca com os músculos sugeridos. Depois de importar, tudo pode ser editado na ficha.</p>
     <section class="card form">
       ${tgt ? `<p class="small"><b>Destino:</b> ${esc(tgt.name)}. A ficha atual será substituída; o histórico de cargas continua salvo.</p>` : `<label>Nome do aluno<input id="imp-aluno" data-imp="aluno" value="${esc(d.aluno)}" placeholder="Nome do aluno"></label>`}
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><label>Protocolo<input id="imp-proto" data-imp="protocolo" value="${esc(d.protocolo)}"></label><label>Foco<input id="imp-foco" data-imp="foco" value="${esc(d.foco)}"></label></div>
@@ -2194,13 +1156,11 @@ function importView(){
     <p class="impsum"><b>${nDays}</b> dias com treino · <b>${nEx}</b> exercícios · <b>${nNew}</b> ${nNew === 1 ? 'novo' : 'novos'} na biblioteca</p>
     ${DAYS.map(x => { const day = d.dias[x.k]; return `<section class="card impday">
       <div class="impdh"><span class="chip"><b>${x.l}</b></span><input id="imp-dt-${x.k}" data-impday="${x.k}" value="${esc(day.titulo)}" placeholder="Título do dia (ou vazio)" aria-label="Título de ${x.f}"></div>
-      ${(day.mob || []).length ? `<div class="impmob"><p class="eyebrow">Mobilidade · ${day.mob.length}</p>${day.mob.map((m, mi) => `<div class="impit"><span class="pdfn">${esc(m.nome)} <small class="muted">${esc(m.sets)}× ${esc(m.reps)}${m.meas === 'tempo' ? ' s' : ''}</small></span>
-          <select id="imp-m-${x.k}-${mi}" data-impmob="${x.k}|${mi}" class="${m.choice === '__new' ? 'isnew' : ''}" aria-label="Mobilidade da biblioteca para ${esc(m.nome)}">${libOpts(m)}</select></div>`).join('')}</div>` : ''}
       ${(day.cardios || []).length ? `<p class="impcd">${ICON_HEART}<span>Cardio: ${esc(day.cardios.map(cardioTxt).join(' · '))}</span></p>` : ''}
       ${day.exercicios.length ? day.exercicios.map((ex, ei) => `<div class="impex"><span class="num">${ei + 1}</span><div class="impb ${ex.itens.length > 1 ? 'conjgrp' : ''}">
           ${ex.itens.map((it, ii) => `<div class="impit"><span class="pdfn">${ex.itens.length > 1 ? `<span class="ab">${L(ii)}</span>` : ''}${esc(it.nome)}</span>
             <select id="imp-l-${x.k}-${ei}-${ii}" data-implib="${x.k}|${ei}|${ii}" class="${it.choice === '__new' ? 'isnew' : ''}" aria-label="Exercício da biblioteca para ${esc(it.nome)}">${libOpts(it)}</select></div>`).join('')}
-          <div class="impmeta">${methPill(ex.metodo)}${ex.drop ? '<span class="sx">drop na última série</span>' : ''}<span class="rgs">${seriesSummary(ex)}</span><span class="sx">desc. ${esc(ex.intervalo)}</span></div></div>
+          <div class="impmeta">${methPill(ex.metodo)}<span class="rgs">${seriesSummary(ex)}</span><span class="sx">desc. ${esc(ex.intervalo)}</span></div></div>
         <button class="icon" type="button" data-act="imp-del" data-v="${x.k}|${ei}" aria-label="Remover exercício">✕</button></div>`).join('') : '<p class="small muted">Sem exercícios (descanso ou cardio).</p>'}
     </section>`; }).join('')}
     <div class="row"><button class="btn" type="button" data-act="imp-save">Importar ficha</button><button class="btn quiet" type="button" data-act="imp-cancel">Cancelar</button></div>
@@ -2214,14 +1174,9 @@ function saveImport(){
       const items = ex.itens.map(it => {
         if (it.choice !== '__new' && db.library.some(l => l.id === it.choice)) return it.choice;
         const key = norm(it.nome); if (created[key]) return created[key];
-        const l = newLibItem(it.nome); l.primary = it.prim.slice(); l.secondary = it.sec.filter(k => !it.prim.includes(k)); nNew++;
+        const l = newLibItem(it.nome); l.primary = it.prim.slice(); l.secondary = it.sec.filter(k => !it.prim.includes(k)); l.instructions = ex.obs; nNew++;
         created[key] = l.id; return l.id; });
-      const series = ex.series.map(x2 => ({type: x2.type, reps: x2.reps}));
-      if (ex.metodo === 'dropset'){ const w = series.map((x2, i) => x2.type === 'trab' ? i : -1).filter(i => i >= 0); if (w.length) series[w[w.length - 1]].m = true; }
-      return {id: uid(), items, method: ex.metodo, meas: ex.itens.map(it => it.meas || 'reps'), series, rest: ex.intervalo, notes: im.useObs !== false ? ex.obs : '', alt: [], tecN: ex.metodo === 'dropset' ? 1 : undefined}; }),
-      mob: (dd.mob || []).map(m => { let lid = m.choice !== '__new' && db.library.some(l => l.id === m.choice) ? m.choice : null;
-        if (!lid){ const key = norm(m.nome); lid = created[key]; if (!lid){ const l = newLibItem(m.nome); l.cat = 'mob'; created[key] = l.id; lid = l.id; nNew++; } }
-        return {id: uid(), lib: lid, sets: m.sets, reps: m.reps, meas: m.meas}; })}; });
+      return {id: uid(), items, method: ex.metodo, meas: ex.itens.map(it => it.meas || 'reps'), series: ex.series.map(x2 => ({type: x2.type, reps: x2.reps})), rest: ex.intervalo, notes: '', alt: []}; })}; });
   let st = db.students.find(x => x.id === im.target);
   if (st){ st.days = days; st.schedule = d.org; if (d.protocolo) st.protocol = d.protocolo; if (d.foco) st.focus = d.foco; if (d.cardio) st.cardio = d.cardio; }
   else { st = {id: uid(), name: d.aluno || 'Aluno importado', protocol: d.protocolo || 'Protocolo 1', focus: d.foco, cardio: d.cardio, privNotes: '', schedule: d.org, days, logs: [], last: null}; db.students.push(st); }
@@ -2248,7 +1203,7 @@ function refLine(st, refs, conj){
   const ok = refs.filter(Boolean); if (!ok.length) return '';
   const txt = refs.map((r, k) => { if (!r) return ''; const w = workKg(r);
     const tm = r.entry.meas && r.entry.meas[r.pi] === 'tempo', rr = r.entry.sets.filter(x => (x.type || 'trab') === 'trab').map(x => x.parts[r.pi] && x.parts[r.pi].reps).filter(Boolean);
-    if ((tm || nkE(r.entry, r.pi)) && !w.length) return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (rr.length ? rr.join(' · ') + (tm ? ' s' : ' reps') : '—');
+    if (tm && !w.length) return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (rr.length ? rr.join(' · ') + ' s' : '—');
     return (conj ? String.fromCharCode(65 + k) + ': ' : '') + (w.length ? w.map(fmtKg).join(' · ') + ' kg' : '—'); }).filter(Boolean).join(' | ');
   const r0 = ok[0], other = r0.log.protocol && st.protocol && r0.log.protocol !== st.protocol;
   return `<span class="last ${other ? 'ref' : ''}">${other ? 'Referência' : 'Último treino'}: ${esc(txt)} <small>(${ddmm(r0.log.date)}${other ? ' · ' + esc(r0.log.protocol) : ''})</small></span>`;
@@ -2301,7 +1256,7 @@ function loadDetail(s, id, cur){
       <button type="button" class="icon" data-act="load-chart" data-v="${id}" style="align-self:flex-start">Ver gráfico de evolução</button>
     </section>
     <section class="card"><div class="tablewrap"><table class="ltable"><thead><tr><th>Data</th><th>Protocolo</th><th>Séries (kg × reps)</th></tr></thead><tbody>
-      ${sess.map(({l, e, pi}) => `<tr><td>${dateBR(l.date, {day:'2-digit', month:'2-digit', year:'2-digit'})}</td><td>${esc(l.protocol || '—')}</td><td><div class="lsets">${e.sets.map(x => { const p = x.parts[pi] || {}; return `<span>${dot(x.type || 'trab')}${nkE(e, pi) ? '' : (p.kg ? esc(fmtKg(numKg(p.kg))) : '–') + ' × '}${esc(p.reps || '–')}${e.meas && e.meas[pi] === 'tempo' ? ' s' : nkE(e, pi) ? ' reps' : ''}${esc(extraTxt(p))}</span>`; }).join('')}</div>${e.comment ? `<div class="cmt" style="margin-top:6px"><b>Observação</b>${esc(e.comment)}</div>` : ''}</td></tr>`).join('')}
+      ${sess.map(({l, e, pi}) => `<tr><td>${dateBR(l.date, {day:'2-digit', month:'2-digit', year:'2-digit'})}</td><td>${esc(l.protocol || '—')}</td><td><div class="lsets">${e.sets.map(x => { const p = x.parts[pi] || {}; return `<span>${dot(x.type || 'trab')}${p.kg ? esc(fmtKg(numKg(p.kg))) : '–'} × ${esc(p.reps || '–')}${e.meas && e.meas[pi] === 'tempo' ? ' s' : ''}</span>`; }).join('')}</div>${e.comment ? `<div class="cmt" style="margin-top:6px"><b>Observação</b>${esc(e.comment)}</div>` : ''}</td></tr>`).join('')}
     </tbody></table></div></section>`;
 }
 
@@ -2387,12 +1342,11 @@ function profile(st){
       <div class="stat"><span>Total</span><b>${f.all}</b></div>
     </div>
     <p class="small muted" style="margin-top:-12px">Sequência: semanas seguidas com ${f.target} ou mais treinos.</p>
-    <section class="card"><p class="eyebrow" style="margin-bottom:10px">Últimas 12 semanas</p><div class="heat">${heat}</div>
-      <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
     ${achSection(st)}${recordsSection(st)}${histSection(st)}
     ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Falar com o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
-    ${themeHTML()}
     <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Ver o tutorial do app de novo</button></div>
+    <section class="card"><p class="eyebrow" style="margin-bottom:10px">Últimas 12 semanas</p><div class="heat">${heat}</div>
+      <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
     <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
       ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
     ${st.logs.some(l => l.sample) ? '<p class="sample">A frequência inclui o histórico de exemplo das últimas 10 semanas.</p>' : ''}`;
@@ -2404,8 +1358,8 @@ function repsFor(ex){
   return ex.items.map((_, k) => {
     const groups = [];
     (ex.series || []).forEach(s => { const ps = String(s.reps).split(/\s*\+\s*/); const r = ps[k] || ps[0];
-      const g = groups[groups.length - 1], mm = !!(s.m && tecOfMeth(ex.method)); if (g && g.type === s.type && g.r === r && g.m === mm) g.n++; else groups.push({type: s.type, n: 1, r, m: mm}); });
-    return groups.map(g => `<span class="rg">${dot(g.type)}${g.n}× ${esc(tgtFmt(g.r, measOf(ex, k)))}${g.m ? (tecOfMeth(ex.method) === 'drop' ? ' + ' + tecN(ex) + (tecN(ex) > 1 ? ' drops' : ' drop') : ' em ' + tecN(ex) + ' blocos') : ''}</span>`).join('');
+      const g = groups[groups.length - 1]; if (g && g.type === s.type && g.r === r) g.n++; else groups.push({type: s.type, n: 1, r}); });
+    return groups.map(g => `<span class="rg">${dot(g.type)}${g.n}× ${esc(tgtFmt(g.r, measOf(ex, k)))}</span>`).join('');
   });
 }
 const altTxt = (ex, k) => ex.alt && ex.alt[k] ? `<small class="altsum">ou ${esc(lib(ex.alt[k]).name)}</small>` : '';
@@ -2435,15 +1389,15 @@ function seriesFor(st, libId){
   const out = [];
   st.logs.slice().sort((a, b) => a.date < b.date ? -1 : 1).forEach(l => l.entries.forEach(e => {
     const pi = e.items.indexOf(libId); if (pi < 0) return;
-    const work = e.sets.filter(s => (s.type || 'trab') === 'trab'), tm = !!(e.meas && e.meas[pi] === 'tempo') ? 1 : nkE(e, pi) ? 2 : 0;
+    const work = e.sets.filter(s => (s.type || 'trab') === 'trab'), tm = !!(e.meas && e.meas[pi] === 'tempo');
     const sets = (work.length ? work : e.sets).map(s => { const p = s.parts[pi]; if (!p) return null;
-      if (tm){ const sec = parseInt(p.reps) || 0, kg = numKg(p.kg); return sec ? {kg: sec, reps: tm === 1 && kg ? fmtKg(kg) + ' kg' : '', t: 1} : null; }
+      if (tm){ const sec = parseInt(p.reps) || 0, kg = numKg(p.kg); return sec ? {kg: sec, reps: kg ? fmtKg(kg) + ' kg' : '', t: 1} : null; }
       const kg = numKg(p.kg); return kg === null ? null : {kg, reps: p.reps}; });
     const valid = sets.filter(Boolean); if (!valid.length) return;
     out.push({d: l.date, sets, t: tm, best: valid.reduce((a, b) => b.kg > a.kg ? b : a)});
   }));
   const lastT = out.length ? out[out.length - 1].t : false;
-  const res = out.filter(r => r.t === lastT); res.unit = lastT === 1 ? 's' : lastT === 2 ? 'reps' : 'kg';
+  const res = out.filter(r => r.t === lastT); res.unit = lastT ? 's' : 'kg';
   return res;
 }
 function planExFor(st, libId){ for (const d of DAYS){ const ex = st.days[d.k].ex.find(e => e.items.includes(libId)); if (ex) return ex; } return null; }
@@ -2456,7 +1410,7 @@ function spark(ser){
   return `<svg class="spk" viewBox="0 0 84 26" aria-hidden="true"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--accent)"/></svg>`;
 }
 function chartLines(mode, data, unit){
-  if (mode === 'max') return [{name: unit === 's' ? 'Maior tempo' : unit === 'reps' ? 'Mais repetições' : 'Maior carga', short:'', color:'var(--accent)', vals: data.map(s => s.best)}];
+  if (mode === 'max') return [{name: unit === 's' ? 'Maior tempo' : 'Maior carga', short:'', color:'var(--accent)', vals: data.map(s => s.best)}];
   const n = Math.min(6, Math.max(...data.map(s => s.sets.length)));
   return Array.from({length: n}, (_, k) => ({name:'Série ' + (k + 1), short:'S' + (k + 1), color: SC[k], vals: data.map(s => s.sets[k] || null)}));
 }
@@ -2555,15 +1509,10 @@ function evolution(st){
 }
 
 /* ---------- header ---------- */
-const TABI = {
-  treino: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-  evolucao: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19h16M6 15l4-4 3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  perfil: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
-};
 function header(){
   const tabs = state.mode === 'aluno'
-    ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
-    : [['painel','Painel'], ['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
+    ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${l}</button>`).join('')
+    : [['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
   return `<header class="band"><div class="wrap">
     <div class="band-top"><img class="logo" src="${LOGO}" alt="Jau Training, Online Strength Coaching" width="560" height="406">
     ${isP() ? `<div class="modes" role="group" aria-label="Visão">
@@ -2573,73 +1522,16 @@ function header(){
     <nav class="tabs">${tabs}</nav></div></header>`;
 }
 
-/* ---------- vencimento do plano ---------- */
-const isoToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-function planState(s){
-  if (!s || !s.planDue) return null;
-  const t = isoToday();
-  if (s.planDue === t) return 'hoje';
-  if (s.planDue < t) return 'vencido';
-  const days = Math.round((new Date(s.planDue + 'T12:00') - new Date(t + 'T12:00')) / 864e5);
-  return days <= 5 ? 'breve' : 'ok';
-}
-function dueBR(iso){ const [y, m, d] = iso.split('-'); return d + '/' + m + (+y !== new Date().getFullYear() ? '/' + y.slice(2) : ''); }
-function addMonth(iso){
-  const [y, m, d] = (iso || isoToday()).split('-').map(Number);
-  const last = new Date(y, m + 1, 0).getDate(), dt = new Date(y, m, Math.min(d, last));
-  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
-}
-function dueChip(s){
-  const p = planState(s); if (!p) return '';
-  const txt = p === 'hoje' ? 'Vence hoje' : p === 'vencido' ? 'Venceu ' + dueBR(s.planDue) : 'Vence ' + dueBR(s.planDue);
-  return `<span class="due ${p}" title="Vencimento do plano">${esc(txt)}</span>`;
-}
-function planMsg(s){
-  const p = planState(s); if (p !== 'hoje' && p !== 'vencido') return '';
-  return `<div class="planmsg ${p}" role="status"><b>${p === 'hoje' ? 'Seu plano vence hoje' : 'Seu plano venceu'}</b>${waNum() ? `<a href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Falar com o personal</a>` : ''}</div>`;
-}
-
-/* ---------- vídeo dentro do app ---------- */
-const isShort = url => /youtube\.com\/shorts\//.test(String(url || ''));
-function openVideo(libId){
-  const l = lib(libId), id = ytId(l.video);
-  if (!id) return;
-  closeVideo(true);
-  const src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&mute=1&playsinline=1&loop=1&playlist=' + id + '&rel=0&modestbranding=1';
-  const ov = document.createElement('div');
-  ov.className = 'vidov'; ov.id = 'vidov';
-  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Vídeo de execução: ' + l.name);
-  ov.innerHTML = `<div class="vidbox ${isShort(l.video) ? 'short' : ''}">
-    <div class="vidtop"><div class="vidttl"><p class="eyebrow">Execução</p><b>${esc(l.name)}</b></div><button type="button" class="icon" data-act="vid-close">Fechar</button></div>
-    <div class="vidframe">
-      <p class="vidwait">${navigator.onLine === false ? 'Sem internet. O vídeo precisa de conexão para carregar.' : 'Carregando o vídeo…'}</p>
-      ${navigator.onLine === false ? '' : `<iframe src="${src}" title="${esc(l.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`}
-    </div>
-    ${l.instructions ? `<p class="vidhow">${esc(l.instructions)}</p>` : ''}
-    <a class="vidext" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">Não carregou? Abrir no YouTube</a>
-  </div>`;
-  ov.addEventListener('click', e => { if (e.target === ov) closeVideo(); });
-  document.body.appendChild(ov);
-  document.body.classList.add('noscroll');
-  const c = ov.querySelector('[data-act="vid-close"]'); if (c) c.focus();
-}
-function closeVideo(silent){
-  const ov = document.getElementById('vidov');
-  if (ov) ov.remove();
-  document.body.classList.remove('noscroll');
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('vidov')) closeVideo(); });
-
 /* ---------- aluno ---------- */
 function studentView(){
   const st = stu();
   if (!st) return `<main class="wrap"><div class="empty">Nenhum aluno cadastrado ainda. Vá em Personal para adicionar.</div></main>`;
   const preview = isP() ? `<p class="previewbar">Você está vendo o app como ${esc(st.name.split(' ')[0])}. Treinos registrados aqui entram no histórico do aluno.</p>` : '';
-  if (state.done) return state.done.step === 'eff' ? effortView(st) : doneView(st);
+  if (state.done) return doneView(st);
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   if (state.stab === 'evolucao') return `<main class="wrap">${hello}${evolution(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${hello}${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
@@ -2647,12 +1539,12 @@ function studentView(){
   const d = st.days[state.day] || {title:'', ex:[]};
   const df = {k: state.day, f: slotFull(st, state.day)};
   let body;
-  if (!d.ex.length && !(d.mob || []).length){
+  if (!d.ex.length){
     const isCardio = /barquinho|remo|cardio|corrida|bike/i.test(d.title);
     body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
       <div id="finish-area"><button class="btn block" type="button" data-act="finish">Finalizar treino</button></div>`;
   }
@@ -2666,7 +1558,7 @@ function studentView(){
     }).join('')}</nav>`}
     <header class="dayhead">
       <div><p class="eyebrow">${df.f}${seq ? (state.day === nxt ? ' · próximo da sequência' : '') : (state.day === todayKey ? ' · hoje' : '')}</p><h2 class="serif">${esc(d.title || '—')}</h2></div>
-      <div class="dhr">${trainOpen() ? wclockHTML() : ''}${d.ex.length ? `<span class="prog" id="prog">${progText(d)}</span>` : ''}</div>
+      ${d.ex.length ? `<span class="prog" id="prog">${progText(d)}</span>` : ''}
     </header>
     ${body}${guide()}
     <p class="foot">Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, CREF RJ-056749</p>
@@ -2688,7 +1580,7 @@ function exCard(st, ex, i){
     <button type="button" class="icon" data-act="ex-open" data-v="${ex.id}">Ver séries</button></div></article>`;
   const isSw = k => !!(dr.swap && dr.swap[k] && ex.alt && ex.alt[k]);
   const swapBtns = ex.items.map((id, k) => { const a = ex.alt && ex.alt[k]; if (!a) return '';
-    return `<button type="button" class="swapbtn" data-act="swap" data-ex="${ex.id}" data-i="${k}">${isSw(k) ? ICON_SWAP + 'Voltar para ' + esc(lib(id).name) : ICON_SWAP + 'Trocar por exercício alternativo: ' + esc(lib(a).name)}</button>`; }).join('');
+    return `<button type="button" class="swapbtn" data-act="swap" data-ex="${ex.id}" data-i="${k}">${isSw(k) ? ICON_SWAP + 'Voltar para ' + esc(lib(id).name) : ICON_SWAP + 'Aparelho ocupado? Trocar por ' + esc(lib(a).name)}</button>`; }).join('');
   const lastTxt = refLine(st, refs, conj);
   const tag = k => isSw(k) ? '<span class="alttag">Alternativa</span>' : '';
   const title = conj ? ps.map((p, k) => `<span class="sub"><span class="ab">${L(k)}</span>${esc(p.name)}${tag(k)}</span>`).join('') : esc(ps[0].name) + tag(0);
@@ -2701,18 +1593,17 @@ function exCard(st, ex, i){
       const v = (s.parts && s.parts[pi]) || {}, lp = refPart(refs[pi], curType, ord);
       return `<div class="part ${conj ? 'withl' : ''}">${conj ? `<span class="plabel">${L(pi)}</span>` : ''}
         <span class="target">${esc(tgtFmt(tp[pi] || tp[0] || '', measOf(ex, pi)))}</span>
-        ${nkOf(ex, pi) ? '<span class="fld nokg">sem carga</span>' : `<label class="fld"><input id="kg-${ex.id}-${si}-${pi}" inputmode="decimal" autocomplete="off" aria-label="Carga série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="kg" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.kg || '')}" placeholder="${esc((lp && lp.kg) || '')}"><span>kg</span></label>`}
+        <label class="fld"><input id="kg-${ex.id}-${si}-${pi}" inputmode="decimal" autocomplete="off" aria-label="Carga série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="kg" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.kg || '')}" placeholder="${esc((lp && lp.kg) || '')}"><span>kg</span></label>
         <label class="fld"><input id="rp-${ex.id}-${si}-${pi}" inputmode="numeric" autocomplete="off" aria-label="${measOf(ex, pi) === 'tempo' ? 'Segundos' : 'Repetições'} série ${si + 1}${conj ? ' ' + L(pi) : ''}" data-in="reps" data-ex="${ex.id}" data-set="${si}" data-part="${pi}" value="${esc(v.reps || '')}" placeholder="${esc((lp && lp.reps) || '')}"><span>${measOf(ex, pi) === 'tempo' ? 'seg' : 'reps'}</span></label>
       </div>`;
     }).join('');
-    return tecFlag(ex, si) + `<div class="set ${s.done ? 'done' : ''} ${ps.some((_, pi) => prs.has(si + '-' + pi)) ? 'pr' : ''}" id="set-${ex.id}-${si}"><span class="sn">${dot(stypeOf(ex, si))}${si + 1}</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div>
-      <button class="chk" type="button" data-act="set" data-ex="${ex.id}" data-set="${si}" aria-pressed="${!!s.done}" aria-label="Concluir série ${si + 1}">${ICON_CHECK}${ICON_TROPHY}</button></div>` + tecSub(ex, si, s, ps.length, conj);
+    return `<div class="set ${s.done ? 'done' : ''} ${ps.some((_, pi) => prs.has(si + '-' + pi)) ? 'pr' : ''}" id="set-${ex.id}-${si}"><span class="sn">${dot(stypeOf(ex, si))}${si + 1}</span><div class="parts ${conj ? 'conj' : ''}">${cells}</div>
+      <button class="chk" type="button" data-act="set" data-ex="${ex.id}" data-set="${si}" aria-pressed="${!!s.done}" aria-label="Concluir série ${si + 1}">${ICON_CHECK}${ICON_TROPHY}</button></div>`;
   }).join('');
   const how = ps.filter(p => p.instructions).map((p, k) => `<p>${conj ? `<span class="ab">${L(used.indexOf(p.id))}</span>` : ''}${esc(p.instructions)}</p>`).join('');
   const vids = ps.map((p, k) => {
     const u = videoUrl(p);
-    return u ? (ytId(p.video) ? `<button type="button" class="vcard" data-act="vid-open" data-v="${esc(p.id)}"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre aqui no app</span></span></button>`
-        : `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre em outra página</span></span></a>`)
+    return u ? `<a class="vcard" href="${esc(u)}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Ver execução</b><span>${esc(p.name)} · abre no YouTube</span></span></a>`
       : `<a class="vcard none" href="https://www.youtube.com/results?search_query=${encodeURIComponent(p.name + ' execução')}" target="_blank" rel="noopener"><span class="thumb">${ICON_PLAY}</span><span class="vtxt"><b>${conj ? L(k) + ' · ' : ''}Vídeo em breve</b><span>Enquanto isso, buscar exemplo no YouTube</span></span></a>`;
   }).join('');
   const hasM = m.id !== 'normal';
@@ -2721,11 +1612,11 @@ function exCard(st, ex, i){
     <div class="ex-top"><span class="num">${i + 1}</span><div style="min-width:0">
       <h3 class="${conj ? 'conjgrp' : ''}">${title}</h3>
       <div class="meta"><span class="chip">${countType(ex, 'trab')} ${countType(ex, 'trab') === 1 ? 'série' : 'séries'} de trabalho</span><span class="chip">Intervalo ${esc(ex.rest)}</span></div>
-      ${how ? `<div class="howto ehow">${how}</div>` : ''}
+      ${muscles ? `<p class="musc">${esc(muscles)}</p>` : ''}
     </div></div>
     ${ex.notes ? `<p class="pnote">${esc(ex.notes)}</p>` : ''}
     ${swapBtns}
-    <details class="exinfo"><summary>${ps.length > 1 ? 'Vídeos de execução' : 'Vídeo de execução'}</summary><div class="vids">${vids}</div></details>
+    <details class="exinfo"><summary>Como fazer e vídeo</summary>${how ? `<div class="howto">${how}</div>` : ''}<div class="vids">${vids}</div></details>
     <div class="exlinks">${lastTxt}
       ${best ? `<span class="last rbest">${ICON_TROPHY}Recorde: ${esc(markTxt(best))}</span>` : ''}
       ${refs.some(Boolean) ? `<button type="button" class="linkbtn" data-act="goevo" data-v="${used[0]}">Ver evolução</button>` : ''}
@@ -2752,7 +1643,6 @@ function guide(){
 
 /* ---------- personal: alunos ---------- */
 function trainerView(){
-  if (state.psec === 'painel' && state.pview === 'list') return panelView();
   if (state.psec === 'lib') return libraryView();
   if (state.psec === 'feed') return feedView();
   if (state.psec === 'metodos') return methodsView();
@@ -2761,18 +1651,17 @@ function trainerView(){
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    <div class="alay"><div class="amain">${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
-    <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
+    ${attentionHTML()}
+    <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button></div>
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
-      <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
-    ${alFilLine()}<div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
+    <div class="stugrid">${db.students.slice().sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
-      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
+      const nc = lastLog ? lastLog.entries.filter(e => e.comment).length : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div>${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}</p><h3>${esc(s.name)}</h3><div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -2782,9 +1671,7 @@ function trainerView(){
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
         <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
     </article>`;}).join('')}</div>
-    <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
-    ${bkHTML()}
-    ${themeHTML()}
+    <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p>
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
     ${accountHTML()}
   </main>`;
@@ -2800,9 +1687,6 @@ function editView(){
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
     <div class="form">
       <label>Nome<input id="f-name" data-sf="name" value="${esc(s.name)}"></label>
-      <div class="duerow"><label>Vencimento do plano <span class="hint">${s.planDue ? (planState(s) === 'vencido' ? 'Vencido. O aluno vê o aviso "Seu plano venceu".' : planState(s) === 'hoje' ? 'Vence hoje. O aluno vê o aviso.' : 'Em dia.') : 'Opcional.'}</span><input id="f-due" type="date" data-sf="planDue" data-rerender="1" value="${esc(s.planDue || '')}"></label><button type="button" class="icon" data-act="due-plus">${renLbl(s)}</button></div>
-      <div class="grid2al"><label>Plano<select id="f-plan" data-sf="plan"><option value="">Não definido</option>${PLANS.map(([k, l]) => `<option value="${k}" ${s.plan === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label><label>Anamnese<select id="f-anam" data-sf="anam"><option value="" ${anamOk(s) ? '' : 'selected'}>Pendente</option><option value="ok" ${anamOk(s) ? 'selected' : ''}>Respondida</option></select></label></div>
-      ${fbEditHTML(s)}
       <label>E-mail de acesso <span class="hint">O aluno cria a conta no app com este e-mail e a ficha aparece pra ele. ${s.userId ? 'Situação: app ativo.' : s.email ? 'Situação: ainda não criou a conta.' : ''}</span><input id="f-email" type="email" inputmode="email" data-sf="email" value="${esc(s.email || '')}" placeholder="aluno@email.com"></label>
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
         <label>Organização dos treinos<select id="f-sched" data-sched="1"><option value="fixo" ${isSeq(s) ? '' : 'selected'}>Dias fixos da semana</option><option value="seq" ${isSeq(s) ? 'selected' : ''}>Sequência A, B, C (sem dia fixo)</option></select></label>
@@ -2823,11 +1707,10 @@ function editView(){
     </aside><div class="edmain">
     <nav class="week" aria-label="Dia para editar">${DAYS.map(x => `<button type="button" data-act="p-day" data-v="${x.k}" aria-pressed="${x.k === state.editDay}"><span class="d">${slotShort(s, x.k)}</span><span class="t">${esc(shortTitle(s.days[x.k].title))}</span></button>`).join('')}</nav>
     <div class="form"><label>${isSeq(s) ? 'Nome do ' + slotFull(s, state.editDay) : 'Nome do treino de ' + slotFull(s, state.editDay).toLowerCase()}<input id="f-dtitle" data-dt="1" value="${esc(d.title)}" placeholder="Ex.: Inferiores Completo, Descanso"></label></div>
-    <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button><button class="icon" type="button" data-act="imp-start" data-v="${s.id}">${ICON_UP}Importar PDF</button></div>
+    <div class="tools"><button class="icon" type="button" data-act="copy-open" data-v="day">${ICON_COPY}Copiar este dia</button><button class="icon" type="button" data-act="copy-open" data-v="all">${ICON_COPY}Copiar ficha inteira</button></div>
     ${copyPanel(s)}
     ${cardioEditor(d)}
-    ${mobEditor(d)}
-    <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Escolha o exercício alternativo') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
+    <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Alternativa para quando o aparelho estiver ocupado') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
     ${pk && pk.target === 'new' ? pickerHTML('Adicionar exercício da biblioteca') : `<button class="btn block ghost" type="button" data-act="pick-open" data-v="new">+ Adicionar exercício</button>`}
     </div></div>
     <div class="row" style="justify-content:center;margin-top:12px"><button class="icon danger" type="button" data-act="st-del" data-v="${s.id}">Remover aluno</button></div>
@@ -2839,22 +1722,20 @@ function editEx(ex, i, n){
   return `<div class="edit-ex ${hasM ? 'hasm' : ''}">
     ${hasM ? `<div class="mband">${methPill(ex.method)}<p>${esc(meth(ex.method).desc)}</p></div>` : ''}
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
+      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Alternativa: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Alternativa (aparelho ocupado)</button>`}</span>
       <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Pôr vídeo</button>`}
-      <button type="button" class="icon exl" data-act="exlib-edit" data-v="${ex.id}:${k}" aria-pressed="${state.exLib === ex.id + ':' + k}">Editar</button><button type="button" class="icon exl" data-act="exlib-copy" data-v="${ex.id}:${k}">Copiar</button><button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
+      <button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
       ${ex.items.length > 1 ? `<button type="button" class="icon" data-act="p-unpart" data-ex="${ex.id}" data-i="${k}" aria-label="Tirar ${esc(l.name)} do conjugado">✕</button>` : ''}</span></div>`; }).join('')}</div>
-    ${exLibEditor(ex)}
     <div class="grid4">
       <label>Método<select id="e-method-${ex.id}" data-ef="method" data-ex="${ex.id}">${db.methods.map(m => `<option value="${m.id}" ${ex.method === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>
       <label>Intervalo<input id="e-rest-${ex.id}" data-ef="rest" data-ex="${ex.id}" value="${esc(ex.rest)}"></label>
-      ${ex.items.map((id, k) => `<label>Medida${ex.items.length > 1 ? ' ' + L(k) : ''}<select id="e-meas-${ex.id}-${k}" data-meas="${k}" data-ex="${ex.id}">${measOpts(ex, k)}</select></label>`).join('')}
+      ${ex.items.map((id, k) => `<label>Medida${ex.items.length > 1 ? ' ' + L(k) : ''}<select id="e-meas-${ex.id}-${k}" data-meas="${k}" data-ex="${ex.id}"><option value="reps" ${measOf(ex, k) === 'reps' ? 'selected' : ''}>Séries × repetições</option><option value="tempo" ${measOf(ex, k) === 'tempo' ? 'selected' : ''}>Séries × tempo (seg)</option></select></label>`).join('')}
     </div>
-    ${tecBox(ex)}
     <div class="sered"><span class="lbl2">Séries</span>
       ${ex.series.map((s, k) => `<div class="serow">${dot(s.type)}<span class="sn3">${k + 1}</span>
         <select id="sr-t-${ex.id}-${k}" data-srt="${k}" data-ex="${ex.id}" aria-label="Tipo da série ${k + 1}">${Object.entries(STYPES).map(([t, o]) => `<option value="${t}" ${s.type === t ? 'selected' : ''}>${o.l}</option>`).join('')}</select>
         <input id="sr-r-${ex.id}-${k}" data-srr="${k}" data-ex="${ex.id}" value="${esc(s.reps)}" aria-label="Meta da série ${k + 1}" placeholder="${ex.items.every((_, j) => measOf(ex, j) === 'tempo') ? 'Segundos (ex.: 30 a 45)' : 'Reps'}">
-        ${tecChip(ex, k)}<button type="button" class="icon" data-act="sr-del" data-ex="${ex.id}" data-i="${k}" ${ex.series.length < 2 ? 'disabled' : ''} aria-label="Remover série ${k + 1}">✕</button></div>`).join('')}
+        <button type="button" class="icon" data-act="sr-del" data-ex="${ex.id}" data-i="${k}" ${ex.series.length < 2 ? 'disabled' : ''} aria-label="Remover série ${k + 1}">✕</button></div>`).join('')}
       <div class="tools"><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="trab">+ Série de trabalho</button><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="aq">+ Aquecimento</button><button type="button" class="icon" data-act="sr-add" data-ex="${ex.id}" data-v="prep">+ Preparatória</button></div>
       <span class="hint">Aquecimento e preparatória entram antes das séries de trabalho. Em conjugado, separe as metas com + (12 a 15 + 12 a 15). ${ex.items.some((_, j) => measOf(ex, j) === 'tempo') ? 'Nas séries por tempo, escreva só os segundos (ex.: 30 a 45); o app mostra "s".' : ''}</span>
     </div>
@@ -2869,11 +1750,10 @@ function pickerHTML(t){
 }
 function pickResults(){
   const q = norm(state.picker.q.trim());
-  let items = pickCat(db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q))), q)
-    .sort((a, b) => (q ? (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) : 0) || a.name.localeCompare(b.name, 'pt'));
+  let items = db.library.filter(l => !q || norm(l.name).includes(q) || l.primary.some(m => norm(MNAME[m]).includes(q)));
   items = items.slice(0, q ? 20 : 12);
   const exact = db.library.some(l => norm(l.name) === q);
-  return items.map(l => `<button type="button" data-act="pick" data-v="${l.id}">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}${pickRef(l.id)}</small></button>`).join('')
+  return items.map(l => `<button type="button" data-act="pick" data-v="${l.id}">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Personalizado')}${pickRef(l.id)}</small></button>`).join('')
     + (q && !exact ? `<button type="button" class="new" data-act="pick-new">+ Criar "${esc(state.picker.q.trim())}" na biblioteca</button>` : '')
     + (!items.length && !q ? '<p class="muted small">Biblioteca vazia.</p>' : '');
 }
@@ -2881,7 +1761,7 @@ function logCard(st, l, prMap, html){ return state.editLog === l.id ? logEditHTM
 function logViewHTML(st, l, prMap){
   return `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.auto ? `<p class="effline autoline">Finalizado automaticamente</p>` : ''}${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => partTxt(e, p, pi)).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(x => `${dot(x.type || 'trab')} ` + esc(x.parts.map((p, pi) => (p.kg || '–') + ' kg × ' + (p.reps || '–') + (e.meas && e.meas[pi] === 'tempo' ? ' s' : '')).join(' + '))).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`;
 }
 function logEditHTML(st, l){
@@ -2891,7 +1771,7 @@ function logEditHTML(st, l){
     ${d.entries.map((e, ei) => `<div class="le"><b class="le-n">${esc(e.items.map(i => lib(i).name).join(' + '))}</b>
       ${e.sets.map((x, si) => `<div class="le-row">${dot(x.type || 'trab')}<span class="sn3">${si + 1}</span>
         ${x.parts.map((p, pi) => `<label class="fld"><input id="le-kg-${ei}-${si}-${pi}" inputmode="decimal" autocomplete="off" data-le="kg" data-e="${ei}" data-s="${si}" data-p="${pi}" value="${esc(p.kg)}" aria-label="Carga da série ${si + 1}"><span>kg</span></label><label class="fld"><input id="le-rp-${ei}-${si}-${pi}" inputmode="numeric" autocomplete="off" data-le="reps" data-e="${ei}" data-s="${si}" data-p="${pi}" value="${esc(p.reps)}" aria-label="Repetições da série ${si + 1}"><span>reps</span></label>`).join('')}
-        <label class="le-done"><input id="le-d-${ei}-${si}" type="checkbox" data-led="1" data-e="${ei}" data-s="${si}" ${x.done ? 'checked' : ''}> feita</label></div>${leTec(e, ei, x, si)}`).join('')}
+        <label class="le-done"><input id="le-d-${ei}-${si}" type="checkbox" data-led="1" data-e="${ei}" data-s="${si}" ${x.done ? 'checked' : ''}> feita</label></div>`).join('')}
       <textarea id="le-c-${ei}" class="le-c" rows="1" data-lec="${ei}" placeholder="Observação">${esc(e.comment || '')}</textarea></div>`).join('')}
     <div class="tools"><button class="btn sm" type="button" data-act="log-save">Salvar correção</button><button class="btn sm quiet" type="button" data-act="log-cancel">Cancelar</button><button class="icon danger" type="button" data-act="log-del" data-v="${l.id}">Excluir treino</button></div>
   </article>`;
@@ -2908,14 +1788,14 @@ function trackView(){
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
   const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
-      ${l.auto ? `<p class="effline autoline">Finalizado automaticamente</p>` : ''}${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
+      <div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => (p.kg || '–') + ' kg × ' + (p.reps || '–') + (e.meas && e.meas[pi] === 'tempo' ? ' s' : '')).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button></div>
-    ${state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button></div>
+    ${state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
   </main>`;
 }
 
@@ -2925,30 +1805,25 @@ function libraryView(){
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Biblioteca de exercícios</h2></div><span class="muted small">${db.library.length} exercícios</span></div>
     <div class="filters"><input id="lib-q" class="search" placeholder="Buscar exercício" value="${esc(state.libQ)}" autocomplete="off">
       <select id="lib-m" class="selbox" data-change="libm" aria-label="Filtrar por músculo"><option value="">Todos os músculos</option>${MUSCLES.map(([k, l]) => `<option value="${k}" ${state.libM === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    ${libCats()}
-    ${libDupHTML()}
-    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício${state.libC === 'mob' ? ' de mobilidade' : ''}</button>
+    <button class="btn block ghost" type="button" data-act="lib-new">+ Criar exercício personalizado</button>
     <div class="list libcols" id="lib-list">${libList()}</div>
   </main>`;
 }
 function libList(){
   const q = norm(state.libQ.trim());
-  const items = db.library.filter(l => (!q || norm(l.name).includes(q)) && (!state.libM || l.primary.includes(state.libM) || l.secondary.includes(state.libM))).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-  const vis = items.filter(l => !state.libC || catOf(l) === state.libC);
-  if (!vis.length) return '<div class="empty">Nenhum exercício encontrado. Crie um novo.</div>';
-  if (state.libC) return vis.map(libItem).join('');
-  return CATS.map(([k, n]) => { const g = vis.filter(l => catOf(l) === k); return g.length ? `<h3 class="libgrp">${n}<span>${g.length}</span></h3>` + g.map(libItem).join('') : ''; }).join('');
+  const items = db.library.filter(l => (!q || norm(l.name).includes(q)) && (!state.libM || l.primary.includes(state.libM) || l.secondary.includes(state.libM)));
+  if (!items.length) return '<div class="empty">Nenhum exercício encontrado. Crie um personalizado.</div>';
+  return items.map(libItem).join('');
 }
 function libItem(l){
   const open = state.libOpen === l.id, u = usage(l.id), yt = ytId(l.video);
   const chips = (key, cls) => `<div class="mchips ${cls}">${MUSCLES.map(([k, n]) => `<button type="button" data-act="lib-m" data-lib="${l.id}" data-key="${key}" data-v="${k}" aria-pressed="${l[key].includes(k)}">${n}</button>`).join('')}</div>`;
   const lv = {}; MUSCLES.forEach(([k]) => lv[k] = l.primary.includes(k) ? 2 : l.secondary.includes(k) ? 1 : 0);
   return `<article class="libitem ${open ? 'open' : ''}" id="lib-${l.id}">
-    <div class="libhead"><div class="nm"><b>${esc(l.name)}</b><small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')} · ${yt ? 'vídeo do YouTube' : l.video ? 'vídeo' : 'sem vídeo'} · ${u ? 'em ' + u + (u === 1 ? ' ficha' : ' fichas') : 'não usado'}</small></div>
+    <div class="libhead"><div class="nm"><b>${esc(l.name)}${l.custom ? '<span class="tagc">Personalizado</span>' : ''}</b><small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')} · ${yt ? 'vídeo do YouTube' : l.video ? 'vídeo' : 'sem vídeo'} · ${u ? 'em ' + u + (u === 1 ? ' ficha' : ' fichas') : 'não usado'}</small></div>
       <button type="button" class="icon" data-act="lib-open" data-v="${l.id}" aria-expanded="${open}">${open ? 'Fechar' : 'Editar'}</button></div>
     ${open ? `<div class="libed">
       <label>Nome<input id="l-name-${l.id}" data-lf="name" data-lib="${l.id}" value="${esc(l.name)}"></label>
-      <label>Categoria<select id="l-cat-${l.id}" data-lcat="${l.id}">${CATS.map(([k, n]) => `<option value="${k}" ${catOf(l) === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <div class="libgrid"><div style="display:grid;gap:12px;min-width:0">
         <label>Músculos principais</label>${chips('primary', '')}
         <label>Músculos auxiliares</label>${chips('secondary', 'sec')}
@@ -2956,7 +1831,7 @@ function libItem(l){
       <label>Como fazer<textarea id="l-ins-${l.id}" rows="3" data-lf="instructions" data-lib="${l.id}">${esc(l.instructions)}</textarea></label>
       <label>Vídeo do YouTube<input id="l-vid-${l.id}" type="url" data-lf="video" data-lib="${l.id}" value="${esc(l.video)}" placeholder="https://youtube.com/watch?v=... ou link de Shorts"></label>
       <span id="l-vst-${l.id}">${videoStatus(l)}</span>
-      <div class="tools"><button type="button" class="icon" data-act="lib-copy" data-v="${l.id}">Copiar exercício</button>${libDelHTML(l)}</div>
+      <div class="tools">${u ? `<span class="hint">Usado em ${u} ${u === 1 ? 'ficha' : 'fichas'}. Tire das fichas para poder apagar.</span>` : `<button type="button" class="icon danger" data-act="lib-del" data-v="${l.id}">Apagar da biblioteca</button>`}</div>
     </div>` : ''}
   </article>`;
 }
@@ -2974,8 +1849,7 @@ function methodsView(){
     <div class="list mcols">${db.methods.map(m => { const u = methodUsage(m.id); return `<div class="edit-ex">
       <label>Nome<input id="m-name-${m.id}" data-mf="name" data-m="${m.id}" value="${esc(m.name)}"></label>
       <label>Explicação para o aluno<textarea id="m-desc-${m.id}" rows="2" data-mf="desc" data-m="${m.id}">${esc(m.desc)}</textarea></label>
-      ${m.id !== 'normal' && m.id !== 'conjugado' ? `<label>O que o aluno anota na série<select id="m-tec-${m.id}" data-mtec="${m.id}"><option value="" ${!m.tec ? 'selected' : ''}>Só a carga e as reps de sempre</option><option value="drop" ${m.tec === 'drop' ? 'selected' : ''}>Drops: carga e reps de cada drop</option><option value="blocos" ${m.tec === 'blocos' ? 'selected' : ''}>Blocos: reps de cada bloco</option></select></label>` : ''}
-      <div class="tools"><span class="hint">${u ? 'Usado em ' + u + (u === 1 ? ' exercício' : ' exercícios') : 'Ainda não usado'}</span>${methDelHTML(m, u)}</div>
+      <div class="tools"><span class="hint">${u ? 'Usado em ' + u + (u === 1 ? ' exercício' : ' exercícios') : 'Ainda não usado'}</span>${m.id !== 'normal' && !u ? `<button type="button" class="icon danger" data-act="m-del" data-v="${m.id}">Apagar</button>` : ''}</div>
     </div>`; }).join('')}</div>
     <button class="btn block ghost" type="button" data-act="m-new">+ Novo método</button>
   </main>`;
@@ -2983,12 +1857,12 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ autoFinish();
+function render(){
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
   app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView());
   drawCharts();
-  if (state.done && state.mode === 'aluno' && state.done.step !== 'eff') renderSticker();
+  if (state.done && state.mode === 'aluno') renderSticker();
 }
 
 /* ---------- timer ---------- */
@@ -2996,7 +1870,7 @@ const T = {el: document.getElementById('timer'), end: 0, total: 0, iv: null};
 let wake = null;
 async function keepAwake(){ try { if (!wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); } } catch(e){} }
 function startTimer(ex){
-  const sec = restSecs(ex.rest); audioUnlock();
+  const sec = restSecs(ex.rest);
   T.total = sec; T.end = Date.now() + sec * 1000;
   document.getElementById('tmeta').textContent = 'meta ' + ex.rest;
   T.el.hidden = false; T.el.classList.remove('over');
@@ -3009,7 +1883,7 @@ function tick(){
   if (left <= 0){
     clearInterval(T.iv); T.el.classList.add('over');
     document.getElementById('tlabel').textContent = 'Bora, próxima série';
-    if (left > -3){ restBeep(); try { navigator.vibrate && navigator.vibrate([300, 120, 300, 120, 300]); } catch(e){} }
+    try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch(e){}
   } else document.getElementById('tlabel').textContent = 'Descanso';
 }
 document.getElementById('tplus').addEventListener('click', () => {
@@ -3031,12 +1905,12 @@ function arm(b, label, reset){
   return false;
 }
 function top(){ window.scrollTo(0, 0); }
-function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secondary: [], instructions: '', video: '', custom: true, cat: 'musc'}; db.library.unshift(l); return l; }
+function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secondary: [], instructions: '', video: '', custom: true}; db.library.unshift(l); return l; }
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
-  if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
+  if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'alunos'; } render(); top(); }
   else if (act === 'stab'){ state.done = null; state.editLog = null; state.stab = v; render(); top(); }
   else if (act === 'psec'){ state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
   else if (act === 'day'){ state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
@@ -3068,56 +1942,6 @@ document.addEventListener('click', e => {
     const p = document.getElementById('prog'); if (p) p.textContent = progText(stu().days[state.day]);
     save();
   }
-  else if (act === 'tec-apply'){ const f = findEx(b.dataset.ex); if (!f) return; f.ex.series.forEach(x => delete x.m);
-    const w = f.ex.series.map((x, i) => x.type === 'trab' ? i : -1).filter(i => i >= 0);
-    (v === 'all' ? w : [w.length ? w[w.length - 1] : f.ex.series.length - 1]).forEach(i => { if (f.ex.series[i]) f.ex.series[i].m = true; }); save(); render(); }
-  else if (act === 'tec-tog'){ const f = findEx(b.dataset.ex); if (!f) return; const x = f.ex.series[+b.dataset.i]; if (x){ if (x.m) delete x.m; else x.m = true; } save(); render(); }
-  else if (act === 'train-start'){ db.draftMeta = db.draftMeta || {}; db.draftMeta[draftKey()] = Date.now(); audioUnlock(); save(); render();
-    const l = document.querySelector('.list'); if (l) l.scrollIntoView({block: 'start', behavior: 'smooth'}); }
-  else if (act === 'theme'){ try { localStorage.setItem(THEME_KEY, v); } catch(e){} themeApply(v); render(); }
-  else if (act === 'mob-del'){ const d = stu().days[state.editDay]; d.mob = (d.mob || []).filter(m => m.id !== v); save(); render(); }
-  else if (act === 'mob-up'){ const d = stu().days[state.editDay], a = d.mob || [], i = a.findIndex(m => m.id === v); if (i > 0){ [a[i - 1], a[i]] = [a[i], a[i - 1]]; save(); render(); } }
-  else if (act === 'mob-done'){
-    touchStart(); const dd = draft(), k = 'mob:' + v, on = !dd[k]; if (on) dd[k] = {done: true}; else delete dd[k]; save();
-    const car0 = document.getElementById('mobcar'), sl = car0 ? car0.scrollLeft : 0; render();
-    const car = document.getElementById('mobcar'); if (car){ car.scrollLeft = sl; const nx = on && document.getElementById('mob-' + v) && document.getElementById('mob-' + v).nextElementSibling; if (nx) setTimeout(() => car.scrollTo({left: nx.offsetLeft - car.offsetLeft - 16, behavior: 'smooth'}), 450); }
-  }
-  else if (act === 'libc'){ state.libC = v; state.libOpen = null; render(); }
-  else if (act === 'exlib-edit'){ state.exLib = state.exLib === v ? null : v; render(); const e = document.querySelector('.exlibed'); if (e) e.scrollIntoView({block: 'center'}); }
-  else if (act === 'exlib-close'){ state.exLib = null; render(); }
-  else if (act === 'exlib-copy'){
-    const [exId, k] = v.split(':'), f = findEx(exId); if (!f) return;
-    const o = lib(f.ex.items[+k]), c = JSON.parse(JSON.stringify(o)); c.id = 'c-' + uid(); c.name = o.name + ' (cópia)'; c.custom = true; if (!c.cat) c.cat = 'musc';
-    db.library.push(c); f.ex.items[+k] = c.id; state.exLib = exId + ':' + k; save(); render();
-    const i = document.getElementById('l-name-' + c.id); if (i){ i.scrollIntoView({block: 'center'}); i.focus(); i.select(); }
-    toast('Cópia criada e colocada nesta ficha. Mude o nome e o que precisar.');
-  }
-  else if (act === 'pan-f'){ state.panF = v; render(); }
-  else if (act === 'pan-open'){ state.sid = v; state.psec = 'alunos'; state.pview = 'track'; state.ptab = 'hist'; render(); top(); }
-  else if (act === 'eff-pick'){ const m = document.getElementById('eff-msg'); if (m) state.done.msg = m.value; state.done.eff = +v; render(); }
-  else if (act === 'eff-save' || act === 'eff-skip'){
-    const st = stu(), l = st.logs.find(x => x.id === state.done.logId), m = document.getElementById('eff-msg');
-    if (l && act === 'eff-save' && state.done.eff){ l.effort = state.done.eff; const t = ((m && m.value) || '').trim(); if (t) l.effortMsg = t; else delete l.effortMsg; dataVer++; save(); }
-    state.done.step = null; render(); top();
-  }
-  else if (act === 'bk-go'){ doBackup(b); }
-  else if (act === 'fb-open'){ state.fbOpen = v; render(); const t = document.getElementById('fb-note'); if (t) t.focus(); }
-  else if (act === 'fb-hist'){ state.sid = v; state.psec = 'alunos'; state.pview = 'track'; state.ptab = 'fb'; state.fbOpen = null; state.fbEdit = null; render(); top(); }
-  else if (act === 'fb-edit'){ state.fbEdit = +v; state.fbDel = null; render(); const t = document.getElementById('fb-edit'); if (t) t.focus(); }
-  else if (act === 'fb-ecancel'){ state.fbEdit = null; state.fbDel = null; render(); }
-  else if (act === 'fb-esave'){ const s = stu(), x = (s.fbLog || [])[+v]; if (x){ x.t = ((document.getElementById('fb-edit') || {}).value || '').trim(); save(); toast('Feedback atualizado.'); } state.fbEdit = null; render(); }
-  else if (act === 'fb-del'){ if (state.fbDel !== +v){ state.fbDel = +v; render(); return; }
-    const s = stu(); s.fbLog.splice(+v, 1); s.fbLast = s.fbLog.length ? s.fbLog.reduce((m, x) => x.d > m ? x.d : m, '') : undefined; if (!s.fbLast) delete s.fbLast;
-    state.fbEdit = null; state.fbDel = null; save(); render(); toast('Feedback apagado.'); }
-  else if (act === 'fb-all'){ state.fbAll = true; render(); }
-  else if (act === 'fb-cancel'){ state.fbOpen = null; render(); }
-  else if (act === 'fb-save'){ const s = db.students.find(x => x.id === v); if (!s) return; const t = ((document.getElementById('fb-note') || {}).value || '').trim();
-    s.fbLast = isoToday(); (s.fbLog = s.fbLog || []).push({d: s.fbLast, t}); if (s.fbLog.length > 60) s.fbLog = s.fbLog.slice(-60);
-    state.fbOpen = null; save(); render(); toast('Feedback de ' + s.name.split(' ')[0] + ' registrado. Próximo em ' + fbEvery(s) + ' dias.'); }
-  else if (act === 'al-f'){ state.alF = state.alF === v ? '' : v; render(); }
-  else if (act === 'al-anam'){ const s = db.students.find(x => x.id === v); if (!s) return; s.anam = 'ok'; save(); render(); toast('Anamnese de ' + s.name.split(' ')[0] + ' marcada como respondida.'); }
-  else if (act === 'al-renew'){ const s = db.students.find(x => x.id === v); if (!s) return; renewPlan(s); save(); render(); toast('Plano de ' + s.name.split(' ')[0] + ' renovado até ' + dueBR(s.planDue) + '.'); }
-  else if (act === 'auto-ok'){ state.autoFin = (state.autoFin || []).filter(x => x.sid !== stu().id); render(); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -3128,17 +1952,23 @@ document.addEventListener('click', e => {
         return; }
     }
     const achBefore = new Set(unlocked(st).map(a => a.id));
-    buildEntries(d, dr).forEach(e => entries.push(e));
-    if (!entries.length && !(d.mob || []).some(m => dr['mob:' + m.id])){ toast('Marque ou preencha pelo menos uma série'); return; }
+    d.ex.forEach(ex => {
+      const rec = dr[ex.id]; if (!rec) return;
+      const used = usedItems(ex, rec);
+      const sets = targets(ex).map((_, si) => { const s = (rec.sets || {})[si] || {};
+        return {done: !!s.done, type: stypeOf(ex, si), parts: used.map((_, pi) => ({kg: (s.parts && s.parts[pi] && s.parts[pi].kg) || '', reps: (s.parts && s.parts[pi] && s.parts[pi].reps) || ''}))}; });
+      const comment = (rec.comment || '').trim();
+      if (comment || sets.some(s => s.done || s.parts.some(p => p.kg || p.reps))) entries.push({exId: ex.id, items: used, alt: used.some((u, k) => u !== ex.items[k]), method: ex.method, meas: ex.items.map((_, k) => measOf(ex, k)), sets, comment});
+    });
+    if (!entries.length){ toast('Marque ou preencha pelo menos uma série'); return; }
     const now = new Date().toISOString(), id = uid(), start = (db.draftMeta || {})[draftKey()];
-    const cc = ((dr.__cardio || {}).comment || '').trim(); const dur = start ? Math.round((Date.now() - start) / 1000) : 0; st.logs.push(Object.assign({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries}, cc ? {cardioCmt: cc} : {}, dur >= 60 && dur <= 5 * 3600 ? {dur} : {}));
+    st.logs.push({id, date: now, day: state.day, title: d.title, protocol: st.protocol, entries});
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
-    state.done = {logId: id, start, newAch, step: 'eff'}; state.dayPicked = false;
+    state.done = {logId: id, start, newAch}; state.dayPicked = false;
     render(); top();
   }
-  else if (act === 'stk-go'){ const car = document.getElementById('stk-car'); if (car) car.scrollTo({left: +v * car.clientWidth, behavior: 'smooth'}); }
   else if (act === 'save-sticker'){ saveSticker(); }
   else if (act === 'feedf'){ state.feedF = v; state.feedN = 20; render(); }
   else if (act === 'feed-more'){ state.feedN += 20; render(); }
@@ -3175,15 +2005,12 @@ document.addEventListener('click', e => {
   else if (act === 'finish-cancel'){ const fa = document.getElementById('finish-area'); if (fa) fa.innerHTML = '<button class="btn block" type="button" data-act="finish">Finalizar treino</button>'; }
   else if (act === 'log-edit'){ const l = stu().logs.find(x => x.id === v); if (!l) return; state.editLog = v; state.logDraft = JSON.parse(JSON.stringify(l)); render(); const el = document.getElementById('log-' + v); if (el) el.scrollIntoView({block:'start'}); }
   else if (act === 'log-cancel'){ state.editLog = null; state.logDraft = null; render(); }
-  else if (act === 'log-save'){ const st = stu(), l = st.logs.find(x => x.id === state.editLog); if (l && state.logDraft){ state.logDraft.entries.forEach(e => e.sets.forEach(x => x.parts.forEach(p => { if (p.drops && !p.drops.some(d => d && (d.kg || d.reps))) delete p.drops; if (p.blocks && !p.blocks.some(Boolean)) delete p.blocks; }))); l.entries = state.logDraft.entries; dataVer++; save(); } state.editLog = null; state.logDraft = null; render(); toast('Treino corrigido. Gráficos e recordes atualizados.'); }
+  else if (act === 'log-save'){ const st = stu(), l = st.logs.find(x => x.id === state.editLog); if (l && state.logDraft){ l.entries = state.logDraft.entries; dataVer++; save(); } state.editLog = null; state.logDraft = null; render(); toast('Treino corrigido. Gráficos e recordes atualizados.'); }
   else if (act === 'log-del'){ if (!arm(b, 'Toque de novo para excluir', 'Excluir treino')) return; const st = stu(); st.logs = st.logs.filter(x => x.id !== v); st.last = st.logs.reduce((m, x) => !m || x.date > m ? x.date : m, null); dataVer++; state.editLog = null; state.logDraft = null; save(); render(); toast('Treino excluído'); }
   else if (act === 'hist-more'){ state.histN += 10; render(); }
   else if (act === 'done-close'){ state.done = null; render(); top(); }
   else if (act === 'swap'){ const rec = drEx(b.dataset.ex); rec.swap = rec.swap || {}; const k = +b.dataset.i; rec.swap[k] = !rec.swap[k]; save(); render(); }
   else if (act === 'alt-del'){ const f = findEx(b.dataset.ex); if (f && f.ex.alt){ f.ex.alt[+b.dataset.i] = null; save(); render(); } }
-  else if (act === 'due-plus'){ const s = stu(); renewPlan(s); save(); render(); toast('Novo vencimento: ' + dueBR(s.planDue)); }
-  else if (act === 'vid-open'){ openVideo(v); }
-  else if (act === 'vid-close'){ closeVideo(); }
   else if (act === 'st-del'){ if (!arm(b, 'Toque de novo para remover o aluno e o histórico', 'Remover aluno')) return; db.students = db.students.filter(x => x.id !== v); state.sid = db.students[0] && db.students[0].id; state.pview = 'list'; save(); render(); top(); toast('Aluno removido'); }
   else if (act === 'nudge'){
     const st = db.students.find(x => x.id === v); if (!st) return; const msg = nudgeMsg(st);
@@ -3201,16 +2028,15 @@ document.addEventListener('click', e => {
   else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; st.protocol = nextProto(from); st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O histórico do ${from || 'protocolo anterior'} continua salvo.`); }
   else if (act === 'p-open'){ state.sid = v; state.mode = 'aluno'; state.stab = 'treino'; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); top(); }
   else if (act === 'p-back'){ state.pview = 'list'; state.picker = null; render(); top(); }
-  else if (act === 'p-day'){ state.exLib = null; state.editDay = v; state.picker = null; render(); }
+  else if (act === 'p-day'){ state.editDay = v; state.picker = null; render(); }
   else if (act === 'pick-open'){ state.picker = {target: v, q: ''}; render(); const q = document.getElementById('pick-q'); if (q){ q.focus(); q.scrollIntoView({block:'center'}); } }
   else if (act === 'pick-close'){ state.picker = null; render(); }
   else if (act === 'pick' || act === 'pick-new'){
     let l, created = false;
     if (act === 'pick-new'){ l = newLibItem(state.picker.q.trim()); created = true; } else l = lib(v);
     const day = stu().days[state.editDay];
-    if (state.picker.target === 'mob'){ if (created) l.cat = 'mob'; day.mob = day.mob || []; day.mob.push({id: uid(), lib: l.id, sets: '2', reps: l.defMeas === 'tempo' ? '30' : '10', meas: l.defMeas === 'tempo' ? 'tempo' : 'reps'}); state.picker = null; save(); render(); toast(created ? 'Criado na biblioteca. Ponha o vídeo por lá.' : l.name + ' adicionado à mobilidade'); return; }
     if (String(state.picker.target).startsWith('swap:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId);
-      if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } if (f.ex.nokg) f.ex.nokg[+k] = false; state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
+      if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
       return; }
     if (String(state.picker.target).startsWith('alt:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId); if (f){ f.ex.alt = f.ex.alt || []; f.ex.alt[+k] = l.id; } }
     else if (state.picker.target === 'new'){ const ne = P([l.id], 3, l.defMeas === 'tempo' ? '30 a 45' : '10 a 12', '1:30 a 2:00'); ne.meas = [l.defMeas || 'reps']; day.ex.push(ne); }
@@ -3220,7 +2046,7 @@ document.addEventListener('click', e => {
   }
   else if (act === 'p-unpart'){
     const f = findEx(b.dataset.ex); const k = +b.dataset.i; if (!f) return;
-    f.ex.items.splice(k, 1); if (f.ex.meas) f.ex.meas.splice(k, 1); if (f.ex.nokg) f.ex.nokg.splice(k, 1);
+    f.ex.items.splice(k, 1); if (f.ex.meas) f.ex.meas.splice(k, 1);
     f.ex.series.forEach(s => { const ps = String(s.reps).split(/\s*\+\s*/); if (ps.length > 1) ps.splice(k, 1); s.reps = ps.join(' + '); });
     if (f.ex.items.length === 1 && f.ex.method === 'conjugado') f.ex.method = 'normal';
     save(); render();
@@ -3241,39 +2067,15 @@ document.addEventListener('click', e => {
   else if (act === 'p-del'){ if (!arm(b, 'Confirmar remoção', 'Remover')) return; const f = findEx(v); if (f){ f.list.splice(f.i, 1); save(); render(); toast('Exercício removido da ficha'); } }
   else if (act === 'go-lib'){ state.psec = 'lib'; state.libOpen = v; state.libQ = ''; state.libM = ''; render(); const el = document.getElementById('lib-' + v); if (el) el.scrollIntoView({block:'start'}); }
   else if (act === 'lib-open'){ state.libOpen = state.libOpen === v ? null : v; document.getElementById('lib-list').innerHTML = libList(); }
-  else if (act === 'lib-new'){ const l = newLibItem(state.libC === 'mob' ? 'Nova mobilidade' : 'Novo exercício'); if (state.libC === 'mob') l.cat = 'mob'; state.libOpen = l.id; state.libQ = ''; state.libM = ''; save(); render(); const i = document.getElementById('l-name-' + l.id); if (i){ i.focus(); i.select(); } }
+  else if (act === 'lib-new'){ const l = newLibItem('Novo exercício'); state.libOpen = l.id; state.libQ = ''; state.libM = ''; save(); render(); const i = document.getElementById('l-name-' + l.id); if (i){ i.focus(); i.select(); } }
   else if (act === 'lib-m'){
     const l = lib(b.dataset.lib), key = b.dataset.key, other = key === 'primary' ? 'secondary' : 'primary';
     const arr = l[key], ix = arr.indexOf(v);
     if (ix > -1) arr.splice(ix, 1); else { arr.push(v); const o = l[other].indexOf(v); if (o > -1) l[other].splice(o, 1); }
-    save(); if (state.pview === 'edit' && state.exLib){ render(); return; } const el = document.getElementById('lib-' + l.id); if (el) el.outerHTML = libItem(l);
-  }
-  else if (act === 'lib-copy'){
-    const o = db.library.find(l => l.id === v); if (!o) return;
-    const c = JSON.parse(JSON.stringify(o)); c.id = 'c-' + uid(); c.name = o.name + ' (cópia)'; c.custom = true;
-    db.library.push(c); state.libOpen = c.id; state.libQ = ''; state.libM = ''; save(); render();
-    const el = document.getElementById('lib-' + c.id); if (el) el.scrollIntoView({block: 'start'});
-    const i = document.getElementById('l-name-' + c.id); if (i){ i.focus(); i.select(); }
-    toast('Cópia criada. Mude o nome e o que precisar.');
+    save(); const el = document.getElementById('lib-' + l.id); if (el) el.outerHTML = libItem(l);
   }
   else if (act === 'lib-del'){ if (!arm(b, 'Toque de novo para apagar', 'Apagar da biblioteca')) return; db.library = db.library.filter(l => l.id !== v); state.libOpen = null; save(); document.getElementById('lib-list').innerHTML = libList(); toast('Exercício apagado'); }
   else if (act === 'm-new'){ const m = {id: 'm-' + uid(), name: 'Novo método', desc: ''}; db.methods.push(m); save(); render(); const i = document.getElementById('m-name-' + m.id); if (i){ i.focus(); i.select(); } }
-  else if (act === 'lib-dup'){ state.libOpen = v; state.libQ = ''; state.libC = ''; state.libM = ''; state.libDel = null; render(); const e = document.getElementById('lib-' + v); if (e) e.scrollIntoView({block: 'start'}); }
-  else if (act === 'lib-delopen'){ state.libDel = v; document.getElementById('lib-list').innerHTML = libList(); }
-  else if (act === 'lib-delx'){ state.libDel = null; document.getElementById('lib-list').innerHTML = libList(); }
-  else if (act === 'lib-delgo'){ const sel = document.getElementById('libdel-to'), to = sel ? sel.value : '', l = db.library.find(x => x.id === v); if (!l) return;
-    if (!arm(b, to ? 'Toque de novo para confirmar' : 'Toque de novo para apagar', 'Substituir e apagar')) return;
-    const toName = to ? (db.library.find(x => x.id === to) || {}).name : '';
-    if (to) libReplace(v, to); else if (libRefs(v).f) return;
-    db.library = db.library.filter(x => x.id !== v); state.libDel = null; state.libOpen = to || null; save(); render(); toast(to ? '"' + l.name + '" apagado. Fichas e histórico agora usam "' + toName + '".' : '"' + l.name + '" apagado.'); }
-  else if (act === 'm-delopen'){ state.mDel = v; render(); }
-  else if (act === 'm-delx'){ state.mDel = null; render(); }
-  else if (act === 'm-delgo'){ const to = (document.getElementById('mdel-to') || {}).value || 'normal', m = db.methods.find(x => x.id === v); if (!m) return;
-    if (!arm(b, 'Toque de novo para confirmar', 'Trocar e apagar')) return;
-    const tn = (db.methods.find(x => x.id === to) || {}).name || 'Normal';
-    db.students.forEach(s => { Object.values(s.days || {}).forEach(d => (d.ex || []).forEach(e => { if (e.method === v) e.method = to; })); (s.logs || []).forEach(l => (l.entries || []).forEach(e => { if (e.method === v) e.method = to; })); });
-    if (typeof dataVer !== 'undefined') dataVer++;
-    db.methods = db.methods.filter(x => x.id !== v); state.mDel = null; save(); render(); toast('Método "' + m.name + '" apagado. Os exercícios agora usam "' + tn + '".'); }
   else if (act === 'm-del'){ if (!arm(b, 'Confirmar', 'Apagar')) return; db.methods = db.methods.filter(m => m.id !== v); save(); render(); }
   else if (act === 'logout'){ if (hasPending() && !arm(b, 'Há dados ainda não enviados. Toque de novo para sair mesmo assim', 'Sair')) return; logout(); }
   else if (act === 'auth-view'){ AUTH.view = v; AUTH.err = AUTH.msg = ''; render(); top(); }
@@ -3284,23 +2086,19 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
-  if (e.target.id === 'f-due' || e.target.id === 'f-plan' || e.target.id === 'f-anam'){ render(); return; }
   const t = e.target, c = t.dataset.change;
   if (c === 'cpst'){ if (state.copy){ state.copy.sid = t.value; render(); } return; }
   if (c === 'imptarget'){ if (state.imp) state.imp.target = t.value; return; }
   if (t.id === 'imp-file'){ impFile = t.files && t.files[0] || null; render(); return; }
-  if (t.dataset.impobs){ state.imp.useObs = t.checked; return; }
-  if (t.dataset.impmob){ const [k, mi] = t.dataset.impmob.split('|'); state.imp.data.dias[k].mob[+mi].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
   if (t.dataset.implib){ const [k, ei, ii] = t.dataset.implib.split('|'); state.imp.data.dias[k].exercicios[+ei].itens[+ii].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
   if (c === 'viewas'){ state.sid = t.value; state.evoLib = null; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); return; }
   if (t.dataset.sched !== undefined){ const st = stu(); st.schedule = t.value; if (st.schedule === 'seq' && !st.perWeek) st.perWeek = String(seqSlots(st).length || 3); save(); render(); return; }
   if (c === 'evo'){ state.evoLib = t.value; render(); return; }
   if (c === 'libm'){ state.libM = t.value; document.getElementById('lib-list').innerHTML = libList(); return; }
   if (t.dataset.led && state.logDraft){ state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].done = t.checked; return; }
-  if (t.dataset.mtec !== undefined){ const m = db.methods.find(x => x.id === t.dataset.mtec); if (m){ m.tec = t.value; save(); } return; }
-  if (t.dataset.meas !== undefined){ const f = findEx(t.dataset.ex); if (f){ const mk = +t.dataset.meas, mv = t.value; f.ex.meas = f.ex.items.map((_, j) => j === mk ? (mv.endsWith('tempo') ? 'tempo' : 'reps') : measOf(f.ex, j)); f.ex.nokg = f.ex.items.map((_, j) => j === mk ? mv.startsWith('s') : nkOf(f.ex, j)); save(); render(); } return; }
+  if (t.dataset.meas !== undefined){ const f = findEx(t.dataset.ex); if (f){ f.ex.meas = f.ex.items.map((_, j) => j === +t.dataset.meas ? t.value : measOf(f.ex, j)); save(); render(); } return; }
   if (t.dataset.srt !== undefined){ const f = findEx(t.dataset.ex); if (f){ f.ex.series[+t.dataset.srt].type = t.value; save(); render(); } return; }
-  if (t.dataset.ef === 'method' || t.dataset.ef === 'warmup'){ const f = findEx(t.dataset.ex); if (f){ f.ex[t.dataset.ef] = t.type === 'checkbox' ? t.checked : t.value; save(); if (t.dataset.ef === 'method'){ if (tecOfMeth(f.ex.method) && !f.ex.series.some(x => x.m)){ const w = f.ex.series.map((x, i) => x.type === 'trab' ? i : -1).filter(i => i >= 0), li = w.length ? w[w.length - 1] : f.ex.series.length - 1; if (f.ex.series[li]) f.ex.series[li].m = true; save(); } render(); } } }
+  if (t.dataset.ef === 'method' || t.dataset.ef === 'warmup'){ const f = findEx(t.dataset.ex); if (f){ f.ex[t.dataset.ef] = t.type === 'checkbox' ? t.checked : t.value; save(); if (t.dataset.ef === 'method') render(); } }
   if (t.dataset.ef === 'sets'){ render(); }
 });
 
@@ -3311,31 +2109,19 @@ document.addEventListener('input', e => {
     const rec = drEx(t.dataset.ex), si = +t.dataset.set, pi = +t.dataset.part;
     rec.sets[si] = rec.sets[si] || {parts: []};
     const s = rec.sets[si]; s.parts = s.parts || []; s.parts[pi] = s.parts[pi] || {};
-    const val = t.value.replace(',', '.'), P0 = s.parts[pi], kk = +t.dataset.k;
-    if (t.dataset.in === 'dkg' || t.dataset.in === 'dreps'){ P0.drops = P0.drops || []; P0.drops[kk] = P0.drops[kk] || {}; P0.drops[kk][t.dataset.in === 'dkg' ? 'kg' : 'reps'] = val; }
-    else if (t.dataset.in === 'blk'){ P0.blocks = P0.blocks || []; P0.blocks[kk] = val; }
-    else P0[t.dataset.in] = val;
+    s.parts[pi][t.dataset.in] = t.value.replace(',', '.');
     save(); return;
   }
-  if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p], v = t.value.replace(',', '.'), k = +t.dataset.k;
-    if (t.dataset.le === 'dkg' || t.dataset.le === 'dreps'){ p.drops = p.drops || []; while (p.drops.length <= k) p.drops.push({kg: '', reps: ''}); p.drops[k] = p.drops[k] || {kg: '', reps: ''}; p.drops[k][t.dataset.le === 'dkg' ? 'kg' : 'reps'] = v; }
-    else if (t.dataset.le === 'blk'){ p.blocks = p.blocks || []; while (p.blocks.length <= k) p.blocks.push(''); p.blocks[k] = v; }
-    else p[t.dataset.le] = v; return; }
+  if (t.dataset.le && state.logDraft){ const p = state.logDraft.entries[+t.dataset.e].sets[+t.dataset.s].parts[+t.dataset.p]; p[t.dataset.le] = t.value.replace(',', '.'); return; }
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
-  if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
-  if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
   if (t.id === 'pick-q'){ state.picker.q = t.value; document.getElementById('pick-res').innerHTML = pickResults(); return; }
   if (t.id === 'stu-q'){ const q = norm(t.value.trim()); let any = false; document.querySelectorAll('article.stu').forEach(r => { r.hidden = !!q && !r.dataset.name.includes(q); if (!r.hidden) any = true; }); const n = document.getElementById('stu-none'); if (n) n.hidden = any; return; }
   if (t.id === 'load-q'){ const q = norm(t.value.trim()); document.querySelectorAll('#load-list .loadrow').forEach(r => r.hidden = !!q && !r.dataset.name.includes(q)); return; }
-  if (t.id === 'pan-q'){ state.panQ = t.value; const l = document.getElementById('pan-list'); if (l) l.innerHTML = panList(); return; }
   if (t.id === 'lib-q'){ state.libQ = t.value; document.getElementById('lib-list').innerHTML = libList(); return; }
   if (t.dataset.lf){ const l = lib(t.dataset.lib); l[t.dataset.lf] = t.value; save();
     if (t.dataset.lf === 'video'){ const s = document.getElementById('l-vst-' + l.id); if (s) s.innerHTML = videoStatus(l); }
     return; }
-  if (t.dataset.tecn){ const f = findEx(t.dataset.tecn); if (f){ f.ex.tecN = t.value; save(); } return; }
-  if (t.dataset.mob){ const d = stu().days[state.editDay], m = (d.mob || []).find(x => x.id === t.dataset.mob); if (m){ m[t.dataset.mbf] = t.value; save(); if (t.dataset.mbf === 'meas') render(); } return; }
-  if (t.dataset.lcat){ const l = lib(t.dataset.lcat); l.cat = t.value === 'mob' ? 'mob' : 'musc'; save(); const li = document.getElementById('lib-list'); if (li){ li.innerHTML = libList(); const el = document.getElementById('lib-' + l.id); if (el) el.scrollIntoView({block: 'center'}); } const c = document.querySelector('.libcats'); if (c) c.outerHTML = libCats(); return; }
   if (t.dataset.mf){ const m = meth(t.dataset.m); m[t.dataset.mf] = t.value; save(); return; }
   if (t.dataset.imp && state.imp){ state.imp.data[t.dataset.imp] = t.value; return; }
   if (t.dataset.impday && state.imp){ state.imp.data.dias[t.dataset.impday].titulo = t.value; return; }
@@ -3365,7 +2151,7 @@ document.addEventListener('submit', e => {
   const days = {}; DAYS.forEach(x => days[x.k] = {title: x.k === 'dom' ? 'Descanso' : '', ex: []});
   const fromId = (document.getElementById('new-from') || {}).value, src = fromId && db.students.find(x => x.id === fromId);
   const em = ((document.getElementById('new-email') || {}).value || '').trim().toLowerCase();
-  const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), plan: ((document.getElementById('new-plan') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
+  const s = {id: uid(), name, email: em, protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
   db.students.push(s); save();
   state.sid = s.id; state.pview = 'edit'; state.editDay = 'seg'; state.newOpen = false; render(); top();
   toast(name.split(' ')[0] + ' adicionado. Monte a ficha.');

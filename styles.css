@@ -901,6 +901,9 @@ body::before{background:var(--safetop)}
 .photobtn{border-style:solid!important}
 .photobtn svg,.cardio svg{color:var(--accent)}
 
+/* pop-up do vídeo: card sólido e fundo desfocado, como no resumo do treino */
+.vidov{background:var(--obov)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.vidbox{background:var(--obcard)!important;border:1px solid var(--gline)!important;box-shadow:0 24px 60px rgba(0,0,0,.45)!important}
 /* tutorial inicial: card sólido e fundo escurecido para ler bem */
 .obov{background:var(--obov)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .obcard{background:var(--obcard)!important;border:1px solid var(--gline);border-radius:24px!important;box-shadow:0 24px 60px rgba(0,0,0,.45)!important}
