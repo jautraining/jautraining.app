@@ -1,3 +1,10 @@
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/montserrat-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/montserrat-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/montserrat-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/montserrat-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/montserrat-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:600;font-display:swap;src:url(fonts/cormorant-garamond-latin-600-italic.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:700;font-display:swap;src:url(fonts/cormorant-garamond-latin-700-italic.woff2) format('woff2')}
 /* Layout: brand-red band on top, one phone-width column of workout cards, fixed rest-timer bar at the bottom */
 :root{
   --bg:#F7F3F2; --surface:#FFFFFF; --sunk:#F0E9E8; --ink:#1D1515; --muted:#6F6363; --line:#E3D9D8;
@@ -1123,3 +1130,33 @@ body.pm .tabs button[aria-pressed="true"]{background:rgba(255,255,255,.16)}
 .libdel{display:grid;gap:8px;width:100%;border:1px solid var(--accent);border-radius:14px;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .libdel p{margin:0;font-size:.86rem}.libdel .row{display:flex;gap:8px;flex-wrap:wrap}
 .btn.danger{background:var(--accent);color:#fff}
+
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none;touch-action:manipulation}
+button,.btn,a.btn,nav,.tabs,.seg,.week,.chk,.albox,.wd,label.fld span{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img{-webkit-user-drag:none;-webkit-touch-callout:none}
+@media (prefers-reduced-motion: no-preference){
+  button,.btn{transition:transform .14s cubic-bezier(.3,.7,.4,1),background-color .2s,color .2s,border-color .2s,box-shadow .2s,opacity .2s}
+  button:active:not(:disabled),.btn:active,a.btn:active{transform:scale(.965)}
+  main.enter > *{animation:pEnter .42s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 40ms)}
+  main.enter-day > :not(.hello):not(.week):not(.wstrip):not(.seqnav):not(.planmsg):not(.autofin){animation:pDay .3s cubic-bezier(.2,.8,.2,1) backwards}
+  @keyframes pEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes pDay{from{opacity:0;transform:translateX(var(--dx,14px))}to{opacity:1;transform:none}}
+  .chk.pop{animation:pPop .36s cubic-bezier(.3,1.7,.5,1)}
+  @keyframes pPop{0%{transform:scale(.75)}55%{transform:scale(1.18)}100%{transform:scale(1)}}
+  .set{transition:background-color .25s ease,border-color .25s ease}
+  .ex.justdone{animation:pDone .5s cubic-bezier(.2,.8,.2,1) backwards}
+  @keyframes pDone{from{opacity:.35;transform:scale(.97)}to{opacity:1;transform:none}}
+  .tpop{animation:pTab .38s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes pTab{0%{transform:scale(.88)}100%{transform:scale(1)}}
+  details > summary ~ *{animation:pEnter .28s ease backwards}
+  .sumov{animation:pFade .22s ease backwards}.sumov-in{animation:pEnter .32s cubic-bezier(.2,.8,.2,1) backwards}
+  @keyframes pFade{from{opacity:0}to{opacity:1}}
+}
+/* esqueleto de carregamento */
+.skel{display:grid;gap:14px;padding-top:18px}
+.sk{border-radius:20px;background:linear-gradient(90deg,rgba(128,128,128,.10) 0%,rgba(128,128,128,.22) 50%,rgba(128,128,128,.10) 100%);background-size:200% 100%;animation:pShim 1.2s ease-in-out infinite}
+.sk-t{height:14px;width:34%;border-radius:8px}.sk-h{height:34px;width:62%;border-radius:10px}.sk-row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.sk-row .sk{height:58px;border-radius:16px}
+.sk-c{height:120px}.sk-c.tall{height:200px}
+@keyframes pShim{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (prefers-reduced-motion: reduce){.sk{animation:none}}

@@ -827,7 +827,7 @@ function authView(){
   const msg = AUTH.msg ? `<p class="authmsg" role="status">${esc(AUTH.msg)}</p>` : '';
   const out = AUTH.user ? `<button type="button" class="linkbtn" data-act="logout">Sair desta conta</button>` : '';
   const wrap = inner => band + `<main class="wrap auth">${inner}</main>`;
-  if (AUTH.screen === 'loading') return wrap(`<p class="muted center">Carregando seus treinos…</p>`);
+  if (AUTH.screen === 'loading') return band + `<main class="wrap skel" aria-busy="true" aria-label="Carregando seus treinos"><div class="sk sk-t"></div><div class="sk sk-h"></div><div class="sk-row">${'<div class="sk"></div>'.repeat(7)}</div><div class="sk sk-c"></div><div class="sk sk-c tall"></div><div class="sk sk-c"></div></main>`;
   if (AUTH.screen === 'error') return wrap(`<section class="card authcard"><h2>Não deu pra abrir</h2><p>${esc(AUTH.err)}</p><button class="btn block" type="button" data-act="auth-retry">Tentar de novo</button>${out}</section>`);
   if (AUTH.screen === 'waiting') return wrap(`<section class="card authcard"><p class="eyebrow">Conta criada</p><h2>Falta só o seu personal liberar</h2>
     <p>Você entrou com <b>${esc(AUTH.user && AUTH.user.email)}</b>. Assim que o Jau cadastrar este e-mail na sua ficha, ela aparece aqui.</p>
@@ -1331,6 +1331,18 @@ function methDelHTML(m, u){
   return `<div class="libdel"><p>Os exercícios com <b>${esc(m.name)}</b> passam para:</p>
     <select id="mdel-to" class="selbox" aria-label="Método que fica no lugar">${db.methods.filter(x => x.id !== m.id && x.id !== 'conjugado').map(x => `<option value="${x.id}" ${x.id === 'normal' ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
     <div class="row"><button type="button" class="btn sm danger" data-act="m-delgo" data-v="${m.id}">Trocar e apagar</button><button type="button" class="btn sm quiet" data-act="m-delx">Cancelar</button></div></div>`;
+}
+
+let ANIM = '', ANIMDX = 14, JUSTDONE = '';
+const RED_MOTION = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function polishAfter(){
+  if (ANIM && !RED_MOTION()){
+    const m = app.querySelector('main');
+    if (m){ [...m.children].slice(0, 12).forEach((c, i) => c.style.setProperty('--i', i)); m.style.setProperty('--dx', ANIMDX + 'px'); m.classList.add(ANIM === 'day' ? 'enter-day' : 'enter'); setTimeout(() => m.classList.remove('enter', 'enter-day'), 1000); }
+    if (ANIM === 'tab') document.querySelectorAll('[data-act=stab][aria-pressed=true],[data-act=psec][aria-pressed=true]').forEach(b => b.classList.add('tpop'));
+  }
+  if (JUSTDONE && !RED_MOTION()){ const e = document.getElementById('exc-' + JUSTDONE); if (e && e.classList.contains('exdone')){ e.classList.add('justdone'); JUSTDONE = ''; } }
+  ANIM = '';
 }
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
@@ -2983,7 +2995,8 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ autoFinish();
+function render(){ render0(); polishAfter(); }
+function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
   app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView());
@@ -3037,9 +3050,9 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
   if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
-  else if (act === 'stab'){ state.done = null; state.editLog = null; state.stab = v; render(); top(); }
-  else if (act === 'psec'){ state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
-  else if (act === 'day'){ state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
+  else if (act === 'stab'){ state.done = null; state.editLog = null; if (state.stab !== v) ANIM = 'tab'; state.stab = v; render(); top(); }
+  else if (act === 'psec'){ if (state.psec !== v) ANIM = 'tab'; state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
+  else if (act === 'day'){ if (state.day !== v){ ANIM = 'day'; const ia = DAYS.findIndex(x => x.k === state.day), ib = DAYS.findIndex(x => x.k === v); ANIMDX = ib >= ia ? 14 : -14; } state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
   else if (act === 'meth'){ const box = document.getElementById('mx-' + v); if (box){ box.hidden = !box.hidden; b.setAttribute('aria-expanded', !box.hidden); } }
   else if (act === 'goevo'){ state.stab = 'evolucao'; state.evoLib = v; render(); top(); }
   else if (act === 'evo'){ state.evoLib = v; render(); }
@@ -3051,12 +3064,12 @@ document.addEventListener('click', e => {
     const before = f ? draftPRs(st, f.ex, rec) : new Set();
     rec.sets[si] = rec.sets[si] || {parts: []};
     const s = rec.sets[si]; s.done = !s.done; s.parts = s.parts || [];
-    if (f && s.done && targets(f.ex).every((_, k) => rec.sets[k] && rec.sets[k].done)){ delete state.openEx[exId]; setTimeout(() => { if (state.mode === 'aluno' && !state.done && !document.querySelector('.fconfirm')) render(); }, 900); }
+    if (f && s.done && targets(f.ex).every((_, k) => rec.sets[k] && rec.sets[k].done)){ delete state.openEx[exId]; JUSTDONE = exId; setTimeout(() => { if (state.mode === 'aluno' && !state.done && !document.querySelector('.fconfirm')) render(); }, 900); }
     if (s.done && f) f.ex.items.forEach((_, pi) => ['kg', 'reps'].forEach(k => {
       const inp = document.getElementById((k === 'kg' ? 'kg-' : 'rp-') + exId + '-' + si + '-' + pi); s.parts[pi] = s.parts[pi] || {};
       if (inp && !inp.value && inp.placeholder){ inp.value = inp.placeholder; s.parts[pi][k] = inp.placeholder; } }));
     document.getElementById('set-' + exId + '-' + si).classList.toggle('done', s.done);
-    b.setAttribute('aria-pressed', s.done);
+    b.setAttribute('aria-pressed', s.done); if (s.done){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); try { navigator.vibrate && navigator.vibrate(12); } catch(e){} }
     if (f){
       const after = draftPRs(st, f.ex, rec), used = usedItems(f.ex, rec);
       targets(f.ex).forEach((_, k) => { const row = document.getElementById('set-' + exId + '-' + k); if (row) row.classList.toggle('pr', f.ex.items.some((_, pi) => after.has(k + '-' + pi))); });
@@ -3135,7 +3148,7 @@ document.addEventListener('click', e => {
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
-    state.done = {logId: id, start, newAch, step: 'eff'}; state.dayPicked = false;
+    state.done = {logId: id, start, newAch, step: 'eff'}; ANIM = 'tab'; state.dayPicked = false;
     render(); top();
   }
   else if (act === 'stk-go'){ const car = document.getElementById('stk-car'); if (car) car.scrollTo({left: +v * car.clientWidth, behavior: 'smooth'}); }
