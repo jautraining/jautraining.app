@@ -1388,6 +1388,11 @@ function homeLogs(st){
         <span class="hlt"><b>${esc(l.title || 'Treino')}</b><small>${[l.dur ? hDur(l.dur) : '', s.sets + ' séries', hVol(s.vol)].filter(Boolean).join(' · ')}</small></span>${l.effort ? effChip(l.effort) : ''}</div>`; }).join('')
       : '<p class="muted small">Nenhum treino registrado nesta semana ainda.</p>'}</section>`;
 }
+function profWeek(st){
+  const seq = isSeq(st), ks = seq ? seqSlots(st) : DAYS.map(x => x.k);
+  return `<nav class="week pfweek" aria-label="Treinos da semana" style="grid-template-columns:repeat(${Math.max(ks.length, 1)},minmax(0,1fr))">${ks.map(k => { const t = st.days[k] ? st.days[k].title : '';
+    return `<button type="button" data-act="pf-day" data-v="${k}" class="${!seq && k === todayKey ? 'today' : ''}" title="Ver o treino de ${esc(t || 'descanso')}"><span class="d">${seq ? slotShort(st, k) : DAYS.find(x => x.k === k).l}</span><span class="t">${esc(shortTitle(t))}</span></button>`; }).join('')}</nav>`;
+}
 function homeView(st){ return `<div class="hgrid"><div class="hcol">${homeToday(st)}${homeWeek(st)}</div><div class="hcol">${homeHigh(st)}${homeLogs(st)}</div></div>`; }
 
 let ANIM = '', ANIMDX = 14, JUSTDONE = '', LASTSIG = '';
@@ -2529,7 +2534,7 @@ function weekStrip(st){
 }
 function profile(st){
   return `    <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
-      ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
+      ${profWeek(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
     ${(() => { const p = planState(st), d = st.planDue ? daysTo(st.planDue) : null;
       const chip = !p ? '' : p === 'ok' ? '<span class="plchip ok">Em dia</span>' : p === 'breve' ? '<span class="plchip breve">Vence em ' + d + (d === 1 ? ' dia' : ' dias') + '</span>' : p === 'hoje' ? '<span class="plchip hoje">Vence hoje</span>' : '<span class="plchip vencido">Vencido há ' + (-d) + (d === -1 ? ' dia' : ' dias') + '</span>';
       const urgent = p === 'hoje' || p === 'vencido' || p === 'breve', tipo = st.plan && typeof planLbl === 'function' ? planLbl(st) : '';
@@ -3305,6 +3310,7 @@ document.addEventListener('click', e => {
   else if (act === 'al-anam'){ const s = db.students.find(x => x.id === v); if (!s) return; s.anam = 'ok'; save(); render(); toast('Anamnese de ' + s.name.split(' ')[0] + ' marcada como respondida.'); }
   else if (act === 'al-renew'){ const s = db.students.find(x => x.id === v); if (!s) return; renewPlan(s); save(); render(); toast('Plano de ' + s.name.split(' ')[0] + ' renovado até ' + dueBR(s.planDue) + '.'); }
   else if (act === 'auto-ok'){ state.autoFin = (state.autoFin || []).filter(x => x.sid !== stu().id); render(); }
+  else if (act === 'pf-day'){ state.stab = 'treino'; state.day = v; state.dayPicked = true; render(); top(); }
   else if (act === 'home-go'){ ANIM = 'tab'; state.stab = 'treino'; state.day = v; state.dayPicked = true; render(); top(); const bt = document.querySelector('[data-act=train-start]'); if (bt) bt.click(); }
   else if (act === 'volr-def'){ const s = stu(); db.settings = Object.assign({}, db.settings, {volRange: volRange(s)}); delete s.volRange; save(); render(); toast('Faixa ' + db.settings.volRange.lo + ' a ' + db.settings.volRange.hi + ' agora é o padrão de todos.'); }
   else if (act === 'volr-reset'){ const s = stu(); delete s.volRange; save(); render(); }
