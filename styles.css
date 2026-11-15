@@ -1265,3 +1265,13 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
 
 :root{--display:"Playfair Display", Georgia, "Times New Roman", serif}
 .serif,.restday h3,.sbrand,.brand-name{font-size-adjust:.43}
+
+.cardio.cdtap{cursor:pointer;transition:border-color .2s,box-shadow .2s}
+@media (hover:hover){.cardio.cdtap:hover{border-color:var(--t-aq);box-shadow:0 0 0 3px color-mix(in srgb,var(--t-aq) 14%,transparent)}}
+.cdobs{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;min-height:40px;padding:8px 14px;border-radius:999px;border:1px dashed color-mix(in srgb,var(--t-aq) 55%,var(--line));background:transparent;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.cdobs svg{width:16px;height:16px;color:var(--t-aq)}
+.cdobs:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cdok{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ok,#2e9e5b)}
+.cdok svg{width:14px;height:14px;color:currentColor}
+.cardio .cddone{margin-top:2px}
+.cdhint{margin:-4px 0 0;font-size:.72rem;color:var(--muted);text-align:center}

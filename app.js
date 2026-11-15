@@ -1339,18 +1339,18 @@ function hWeek(st, off, upToNow){
   const ws = +weekStart(new Date()), a = ws - off * 7 * DAY_MS, b = upToNow ? a + (Date.now() - ws) : a + 7 * DAY_MS;
   return st.logs.filter(l => { const t = +new Date(l.date); return t >= a && t < b; }).sort((x, y) => x.date < y.date ? -1 : 1);
 }
-function hTot(ls){ let sets = 0, vol = 0, dur = 0; ls.forEach(l => { const s = logStats(l); sets += s.sets; vol += s.vol; dur += l.dur || 0; }); return {sets, vol, dur, n: ls.length}; }
+function hTot(ls){ let sets = 0, vol = 0, dur = 0; ls.forEach(l => { const s = logStats(l); sets += s.sets; vol += s.vol; dur += l.dur || 0; }); return {sets, vol, dur, n: ls.filter(l => !l.cardioOnly).length}; }
 const hVol = v => v.toLocaleString('pt-BR') + ' kg';
 const hDur = s => { const m = Math.round(s / 60); return m < 60 ? m + ' min' : Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); };
 function hDelta(a, b){ if (!b) return '<small class="hdl">—</small>'; const p = Math.round((a - b) / b * 100); return `<small class="hdl ${p > 0 ? 'up' : p < 0 ? 'down' : ''}">${p > 0 ? '▲ ' + p + '%' : p < 0 ? '▼ ' + (-p) + '%' : 'igual'}</small>`; }
 function hMuscles(d){ const c = {}; d.ex.forEach(ex => ex.items.forEach(id => lib(id).primary.forEach(m => c[m] = (c[m] || 0) + 1))); return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => MNAME[k]); }
 function homeToday(st){
   const seq = isSeq(st), k = seq ? nextSlot(st) : todayKey, d = st.days[k] || {title: '', ex: []};
-  const today = st.logs.filter(l => dayKeyOf(l.date) === dayKeyOf(new Date()));
+  const today = st.logs.filter(l => dayKeyOf(l.date) === dayKeyOf(new Date()) && (!l.cardioOnly || l.day === k));
   if (today.length && !seq){ const l = today[today.length - 1], s = logStats(l);
-    return `<section class="card htoday done"><p class="eyebrow">Treino de hoje</p><div class="htop"><span class="hok">${ICON_CHECK}</span><div><h2 class="serif">${esc(l.title || 'Treino')}</h2><p class="muted small">Concluído${l.dur ? ' em ' + hDur(l.dur) : ''} · ${s.sets} séries · ${hVol(s.vol)}${l.effort ? ' · ' + effTxt(l.effort).toLowerCase() : ''}</p></div></div>
+    return `<section class="card htoday done"><p class="eyebrow">Treino de hoje</p><div class="htop"><span class="hok">${ICON_CHECK}</span><div><h2 class="serif">${esc(l.title || 'Treino')}</h2><p class="muted small">${l.cardioOnly ? 'Cardio concluído' : `Concluído${l.dur ? ' em ' + hDur(l.dur) : ''} · ${s.sets} séries · ${hVol(s.vol)}${l.effort ? ' · ' + effTxt(l.effort).toLowerCase() : ''}`}</p></div></div>
       <p class="small">Mandou bem! Descanse, coma bem e durma bem: é aí que o músculo cresce.</p></section>`; }
-  const has = Object.keys(db.drafts[state.sid + '|' + k] || {}).length > 0;
+  const has = Object.keys(db.drafts[state.sid + '|' + k] || {}).some(x => x !== '__cardio');
   if (!d.ex.length && !(d.mob || []).length && !cardioList(d).length){
     const nx = DAYS.map((x, i) => DAYS[(DAYS.findIndex(y => y.k === todayKey) + 1 + i) % 7]).find(x => st.days[x.k] && st.days[x.k].ex.length);
     return `<section class="card htoday rest"><p class="eyebrow">Hoje · ${esc(DAYS.find(x => x.k === todayKey).l)}</p><h2 class="serif">${esc(d.title || 'Dia de descanso')}</h2>
@@ -1385,7 +1385,7 @@ function homeLogs(st){
   const ls = hWeek(st, 0).reverse();
   return `<section class="card hlogs"><div class="sechd"><p class="eyebrow">Treinos desta semana</p><button type="button" class="linkbtn small" data-act="stab" data-v="evolucao">Histórico completo</button></div>
     ${ls.length ? ls.map(l => { const s = logStats(l); return `<div class="hlog"><span class="hld"><b>${esc(dateBR(l.date, {weekday: 'short'}).replace('.', ''))}</b><small>${esc(dateBR(l.date, {day: '2-digit', month: '2-digit'}))}</small></span>
-        <span class="hlt"><b>${esc(l.title || 'Treino')}</b><small>${[l.dur ? hDur(l.dur) : '', s.sets + ' séries', hVol(s.vol)].filter(Boolean).join(' · ')}</small></span>${l.effort ? effChip(l.effort) : ''}</div>`; }).join('')
+        <span class="hlt"><b>${esc(l.title || 'Treino')}</b><small>${l.cardioOnly ? 'Cardio' + (l.cardioCmt ? ' · com observação' : '') : [l.dur ? hDur(l.dur) : '', s.sets + ' séries', hVol(s.vol)].filter(Boolean).join(' · ')}</small></span>${l.effort ? effChip(l.effort) : ''}</div>`; }).join('')
       : '<p class="muted small">Nenhum treino registrado nesta semana ainda.</p>'}</section>`;
 }
 function profWeek(st){
@@ -1565,8 +1565,8 @@ function tecSub(ex, si, s, np, conj){
 }
 const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
 function startHTML(d){
-  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
-  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d)}
+  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).some(x => x !== '__cardio');
+  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, 'start')}
     <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar de onde parei' : 'Começar treino'}</b><small>${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') + ' · ' + ns + ' séries · cerca de ' + Math.max(15, Math.round(ns * 2.6 / 5) * 5) + ' min' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : ''].filter(Boolean).join(' · ')}</small></span></button>`;
 }
 /* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
@@ -1952,12 +1952,21 @@ const WHEN = {antes: 'Antes do treino', depois: 'Depois do treino', separado: 'E
 const CD_MODS = ['Esteira', 'Esteira inclinada', 'Caminhada', 'Corrida', 'Bicicleta', 'Bike de spinning', 'Elíptico', 'Escada', 'Remo', 'Natação', 'Pular corda', 'HIIT'];
 const cardioList = d => ((d && d.cardio) || []).filter(c => c.mod || c.dur || c.obs || c.int);
 const cardioTxt = c => [c.mod || 'Cardio', c.dur, c.when && c.when !== 'livre' ? (WHEN[c.when] || '').toLowerCase() : ''].filter(Boolean).join(' · ');
-function cardioCard(d, cm){
+function cardioCard(d, mode){
   const cs = cardioList(d); if (!cs.length) return '';
-  return `<section class="cardio" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b></div>
+  const k = draftKey(), solo = mode === 'solo', today = solo ? cardioToday(d) : null;
+  const val = today && state.cdEdit !== k ? (today.cardioCmt || '') : (((db.drafts[k] || {}).__cardio || {}).comment || '');
+  const open = state.cdOpen === k || !!val, tap = !open ? ' cdtap" data-act="cd-obs' : '';
+  return `<section class="cardio${tap}" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b>${today ? `<span class="cdok">${ICON_CHECK}Feito hoje</span>` : ''}</div>
     ${cs.map(c => `<div class="cdi"><p class="cdm"><b>${esc(c.mod || 'Cardio')}</b>${c.dur ? `<span class="cdd">${esc(c.dur)}</span>` : ''}${WHEN[c.when] ? `<span class="cdw">${WHEN[c.when]}</span>` : ''}</p>
       ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}
-    ${cm ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="1" data-cardiocm="1" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(((db.drafts[draftKey()] || {}).__cardio || {}).comment || '')}</textarea></div>` : ''}</section>`;
+    ${open ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="2" data-cardiocm="${today ? 'log' : '1'}" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(val)}</textarea></div>`
+      : `<button type="button" class="cdobs" data-act="cd-obs">${ICON_CHAT}<span>${today ? 'Anotar como foi' : 'Anotar observação do cardio'}</span></button>`}
+    ${solo ? `<button type="button" class="btn block cddone" data-act="cardio-done">${today ? 'Salvar observação' : 'Concluir cardio'}</button>${today ? '' : '<p class="cdhint">Fica no seu histórico e chega para o personal.</p>'}` : ''}</section>`;
+}
+function cardioToday(d){
+  const st = stu(); if (!st) return null; const t = dayKeyOf(new Date());
+  return (st.logs || []).slice().reverse().find(l => l.cardioOnly && l.day === state.day && dayKeyOf(l.date) === t) || null;
 }
 function cardioSum(d){
   const cs = cardioList(d); if (!cs.length) return '';
@@ -2034,7 +2043,7 @@ function feedItem(st, l){
     <div class="fhead"><span class="fav" aria-hidden="true">${esc(st.name.trim().charAt(0).toUpperCase())}</span>
       <div class="fwho"><b>${esc(st.name)}</b><span>${esc(whenTxt(l.date))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</span></div>
       ${seen ? '' : '<span class="fdot" title="Não lido"></span>'}</div>
-    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''} · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
+    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''}${l.cardioOnly ? ' · cardio' : ` · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}`}</p>
     ${prs.length ? `<div class="fprs">${prs.map(p => `<span class="mpill gold">${ICON_TROPHY}${esc(lib(p.libId).name)}: ${esc(markTxt(p))}</span>`).join('')}</div>` : ''}
     ${l.effortMsg ? `<div class="cmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
     <div class="row"><button type="button" class="btn sm quiet" data-act="feed-open" data-v="${st.id}" data-log="${l.id}">Ver treino completo</button><button type="button" class="linkbtn" data-act="feed-seen" data-v="${l.id}">${seen ? 'Marcar como não lido' : 'Marcar como lido'}</button></div>
@@ -2487,7 +2496,7 @@ function loadDetail(s, id, cur){
 const DAY_MS = 864e5;
 function weekStart(d){ const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
 function dayKeyOf(d){ const x = new Date(d); return x.getFullYear() + '-' + (x.getMonth() + 1) + '-' + x.getDate(); }
-function trainedDays(st){ const m = new Map(); st.logs.forEach(l => { const k = dayKeyOf(l.date); if (!m.has(k)) m.set(k, new Date(l.date)); }); return [...m.values()].sort((a, b) => a - b); }
+function trainedDays(st){ const m = new Map(); st.logs.forEach(l => { if (l.cardioOnly) return; const k = dayKeyOf(l.date); if (!m.has(k)) m.set(k, new Date(l.date)); }); return [...m.values()].sort((a, b) => a - b); }
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 const isSeq = st => !!st && st.schedule === 'seq';
 const slotIdx = k => DAYS.findIndex(x => x.k === k);
@@ -2840,7 +2849,7 @@ function studentView(){
   let body;
   if (!d.ex.length && !(d.mob || []).length){
     const isCardio = /barquinho|remo|cardio|corrida|bike/i.test(d.title);
-    body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
+    body = cardioList(d).length ? cardioCard(d, 'solo') : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
     body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
@@ -3228,6 +3237,11 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'cd-obs'){ state.cdOpen = draftKey(); render(); const ta = document.getElementById('cm-cardio'); if (ta){ ta.focus(); ta.scrollIntoView({block:'center', behavior:'smooth'}); } return; }
+  if (act === 'cardio-done'){ const st = stu(), d = st && st.days[state.day]; if (!d) return; const k = draftKey(), dr = db.drafts[k] || {}, cc = ((dr.__cardio || {}).comment || '').trim(), ex = cardioToday(d), now = new Date().toISOString();
+    if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
+    else { st.logs = st.logs || []; st.logs.push(Object.assign({id: uid(), date: now, day: state.day, title: d.title || 'Cardio', protocol: st.protocol, entries: [], cardioOnly: 1}, cc ? {cardioCmt: cc} : {})); st.last = now; toast(cc ? 'Cardio concluído. Sua observação foi para o personal.' : 'Cardio concluído'); if (navigator.vibrate) try { navigator.vibrate(18); } catch(_){} }
+    delete db.drafts[k]; if (db.draftMeta) delete db.draftMeta[k]; state.cdEdit = null; state.cdOpen = null; save(); render(); return; }
   if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
   else if (act === 'stab'){ state.done = null; state.editLog = null; if (state.stab !== v) ANIM = 'tab'; state.stab = v; render(); top(); }
   else if (act === 'psec'){ if (state.psec !== v) ANIM = 'tab'; state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
@@ -3532,7 +3546,8 @@ document.addEventListener('input', e => {
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
   if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
   if (t.dataset.volr){ const s = stu(), n = parseInt(t.value); if (isNaN(n) || n < 0) return; const r = volRange(s); r[t.dataset.volr] = n; if (r.lo > r.hi) return; s.volRange = r; save(); clearTimeout(window.__vrT); window.__vrT = setTimeout(() => { const id = document.activeElement && document.activeElement.id; render(); const el = id && document.getElementById(id); if (el){ el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch(e){} } }, 500); return; }
-  if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
+  if (t.dataset.cardiocm === 'log'){ state.cdEdit = draftKey(); draft().__cardio = {comment: t.value}; save(); return; }
+  if (t.dataset.cardiocm){ if (trainOpen()) touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
   if (t.id === 'pick-q'){ state.picker.q = t.value; document.getElementById('pick-res').innerHTML = pickResults(); return; }
   if (t.id === 'stu-q'){ const q = norm(t.value.trim()); let any = false; document.querySelectorAll('article.stu').forEach(r => { r.hidden = !!q && !r.dataset.name.includes(q); if (!r.hidden) any = true; }); const n = document.getElementById('stu-none'); if (n) n.hidden = any; return; }
