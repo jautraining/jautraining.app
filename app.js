@@ -1389,9 +1389,9 @@ function homeLogs(st){
       : '<p class="muted small">Nenhum treino registrado nesta semana ainda.</p>'}</section>`;
 }
 function profWeek(st){
-  const seq = isSeq(st), ks = seq ? seqSlots(st) : DAYS.map(x => x.k);
+  const seq = isSeq(st), ks = seq ? seqSlots(st) : DAYS.map(x => x.k), cur = seq ? nextSlot(st) : todayKey;
   return `<nav class="week pfweek" aria-label="Treinos da semana" style="grid-template-columns:repeat(${Math.max(ks.length, 1)},minmax(0,1fr))">${ks.map(k => { const t = st.days[k] ? st.days[k].title : '';
-    return `<button type="button" data-act="pf-day" data-v="${k}" class="${!seq && k === todayKey ? 'today' : ''}" title="Ver o treino de ${esc(t || 'descanso')}"><span class="d">${seq ? slotShort(st, k) : DAYS.find(x => x.k === k).l}</span><span class="t">${esc(shortTitle(t))}</span></button>`; }).join('')}</nav>`;
+    return `<button type="button" data-act="pf-day" data-v="${k}" aria-pressed="${k === cur}" class="${!seq && k === todayKey ? 'today' : ''}" title="Ver o treino de ${esc(t || 'descanso')}"><span class="d">${seq ? slotShort(st, k) : DAYS.find(x => x.k === k).l}</span><span class="t">${esc(shortTitle(t))}</span></button>`; }).join('')}</nav>`;
 }
 function homeView(st){ return `<div class="hgrid"><div class="hcol">${homeToday(st)}${homeWeek(st)}</div><div class="hcol">${homeHigh(st)}${homeLogs(st)}</div></div>`; }
 
