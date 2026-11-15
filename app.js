@@ -964,7 +964,7 @@ function mobEditor(d){
   const pk = state.picker, list = d.mob || [];
   return `<section class="card mobed form"><div class="mobhd"><div><p class="eyebrow">Mobilidade</p><b>Antes dos exercícios</b></div><span class="hint">O aluno vê em cards que passam para o lado e só marca como feito.</span></div>
     ${list.map((m, i) => { const l = lib(m.lib); return `<div class="mobrow"><span class="num">${i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Pôr vídeo</button>`}</small></span>
+      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Adicionar vídeo</button>`}</small></span>
       <span class="macts"><button type="button" class="icon" data-act="mob-up" data-v="${m.id}" ${i === 0 ? 'disabled' : ''} aria-label="Subir ${esc(l.name)}">↑</button><button type="button" class="icon" data-act="mob-del" data-v="${m.id}" aria-label="Remover ${esc(l.name)}">✕</button></span>
       <div class="mobf"><label>Séries<input id="mb-s-${m.id}" inputmode="numeric" data-mob="${m.id}" data-mbf="sets" value="${esc(m.sets || '')}"></label>
       <label>${m.meas === 'tempo' ? 'Segundos' : 'Reps'}<input id="mb-r-${m.id}" data-mob="${m.id}" data-mbf="reps" value="${esc(m.reps || '')}" placeholder="${m.meas === 'tempo' ? '30' : '10'}"></label>
@@ -1021,7 +1021,7 @@ function panInfo(){
     return {s, fs, a, last, idle, today, p, due, planned};
   });
 }
-const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Vencendo'], ['semtreinar', 'Sem treinar']];
+const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Renovação'], ['semtreinar', 'Sem treinar']];
 const panMatch = (x, f) => f === 'atencao' ? !!x.a : f === 'vencendo' ? (x.p === 'hoje' || x.p === 'vencido' || x.p === 'breve') : f === 'semtreinar' ? (x.idle === null || x.idle >= 7) : true;
 function panList(){
   const q = norm((state.panQ || '').trim()), f = state.panF || 'todos';
@@ -1066,11 +1066,11 @@ function panelView(){
         <div class="pfil">${PANF.map(([k, l]) => `<button type="button" data-act="pan-f" data-v="${k}" aria-pressed="${f === k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
         <div class="plist" id="pan-list">${panList()}</div></section>
       <div class="pcolM">
-        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
+        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'ainda não treinou' : 'ainda não treinaram'}</span></div>
           ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
           ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
+        <section class="card"><div class="phd"><p class="eyebrow">Treinos por dia · últimos 14 dias</p></div>${panChart()}</section>
+        <section class="card"><div class="phd"><p class="eyebrow">Renovações</p></div><div class="ptwrap">${panDue()}</div></section>
       </div>
       <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
     </div>
@@ -1156,7 +1156,7 @@ function fbHTML(){
   const soon = all.filter(x => !x.f.due && x.f.d <= 3).sort((a, b) => a.f.d - b.f.d);
   return `<section class="card pfb"><div class="phd"><p class="eyebrow">Feedbacks</p><span class="muted small">${due.length ? due.length + (due.length === 1 ? ' pendente' : ' pendentes') : 'em dia'}</span></div>
     ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><button type="button" class="pfbname" data-act="fb-hist" data-v="${s.id}" title="Ver histórico de feedbacks">${esc(s.name)}</button><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
-        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar</button>`}</div>
+        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar feedback</button>`}</div>
         ${state.fbOpen === s.id ? `<div class="pfbform"><textarea id="fb-note" rows="2" placeholder="Anotação do feedback (opcional): como o aluno está, o que ajustar..."></textarea>
           <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}`).join('')}</div>${due.length > 6 && !state.fbAll ? `<button type="button" class="linkbtn" data-act="fb-all">Ver todos os ${due.length}</button>` : ''}`
       : '<p class="muted small">Nenhum feedback pendente. Tudo em dia!</p>'}
@@ -1390,9 +1390,11 @@ function homeLogs(st){
 }
 function homeView(st){ return `<div class="hgrid"><div class="hcol">${homeToday(st)}${homeWeek(st)}</div><div class="hcol">${homeHigh(st)}${homeLogs(st)}</div></div>`; }
 
-let ANIM = '', ANIMDX = 14, JUSTDONE = '';
+let ANIM = '', ANIMDX = 14, JUSTDONE = '', LASTSIG = '';
 const RED_MOTION = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 function polishAfter(){
+  const sig = [state.mode, state.stab, state.psec, state.pview, state.ptab, state.sid, state.done ? (state.done.step || 'fim') : '', state.volMode, state.fperiod].join('|');
+  if (!ANIM && LASTSIG && sig !== LASTSIG) ANIM = 'tab'; LASTSIG = sig;
   if (ANIM && !RED_MOTION()){
     const m = app.querySelector('main');
     if (m){ [...m.children].slice(0, 12).forEach((c, i) => c.style.setProperty('--i', i)); m.style.setProperty('--dx', ANIMDX + 'px'); m.classList.add(ANIM === 'day' ? 'enter-day' : 'enter'); setTimeout(() => m.classList.remove('enter', 'enter-day'), 1000); }
@@ -1455,9 +1457,9 @@ function volView(s){
       <div class="vleg"><span class="lo">Menos de ${VR.lo}: baixo</span><span class="ok">${VR.lo} a ${VR.hi}: ideal</span><span class="hi">Mais de ${VR.hi}: alto</span></div>${volTable(va.week, vb && vb.week, true)}`
       : `<div class="vdays">${dayKeys.map(k => `<button type="button" data-act="volday" data-v="${k}" aria-pressed="${k === dk}"><b>${DAYS.find(x => x.k === k).l}</b><small>${esc(shortTitle((va.per[k] || (vb && vb.per[k]) || {}).title || ''))}</small></button>`).join('')}</div>
          ${dk ? `<p class="small"><b>${esc((va.per[dk] || {}).title || 'Sem treino no atual')}</b>${vb && vb.per[dk] ? ' <span class="muted">· antes: ' + esc(vb.per[dk].title || '—') + '</span>' : ''}</p>${volTable((va.per[dk] || {}).v || {}, vb ? ((vb.per[dk] || {}).v || {}) : null, false)}` : ''}`}
-    ${src.length < 2 ? '<p class="hint">Ainda não há protocolo anterior para comparar. Quando você trocar a ficha, toque em "Começar novo protocolo": o atual fica guardado aqui.</p>' : ''}
-    <div class="vact"><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button><button type="button" class="btn sm quiet" data-act="proto-new">Começar novo protocolo</button></div>
-    <p class="hint">"Começar novo protocolo" guarda a ficha atual como versão anterior (para comparar) e muda o nome para o próximo número. Depois é só editar a ficha.</p>
+    ${src.length < 2 ? '<p class="hint">Ainda não há protocolo anterior para comparar. Quando você trocar a ficha, toque em "Iniciar próximo protocolo" (ou troque o nome do protocolo na ficha): o atual fica guardado aqui.</p>' : ''}
+    <div class="vact"><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button><button type="button" class="btn sm quiet" data-act="new-proto">Iniciar próximo protocolo</button></div>
+    <p class="hint">"Iniciar próximo protocolo" guarda a ficha atual para comparar aqui e muda o nome para o próximo número. Trocar o nome do protocolo na ficha faz o mesmo. Ajustes que mantêm o nome só atualizam a ficha atual.</p>
   </section>`;
 }
 function protoSave(s, name, days){
@@ -1775,7 +1777,7 @@ function attentionHTML(){
   if (!list.length) return `<section class="attn okk"><b>Todos os alunos em dia</b><span>Ninguém está há 4 dias ou mais sem treinar.</span></section>`;
   return `<section class="attn"><div class="attn-h"><b>Precisam de atenção</b><span class="cnt">${list.length}</span></div>
     ${list.map(({s, a}) => `<div class="attn-row ${a.lvl}"><i class="lv"></i><div class="who"><b>${esc(s.name)}</b><span>${esc(a.t)}</span></div>
-      <div class="acts"><button type="button" class="icon" data-act="nudge" data-v="${s.id}">Copiar mensagem</button><button type="button" class="icon" data-act="p-track" data-v="${s.id}">Ver</button></div></div>`).join('')}
+      <div class="acts"><button type="button" class="icon" data-act="nudge" data-v="${s.id}">Copiar mensagem</button><button type="button" class="icon" data-act="p-track" data-v="${s.id}">Ver aluno</button></div></div>`).join('')}
     <p class="hint">Alerta quando o aluno fica 4 dias ou mais sem treinar, ou faz menos da metade do planejado nas últimas 2 semanas.</p></section>`;
 }
 function nextProto(p){ p = String(p || 'Protocolo 0'); const m = p.match(/(\d+)\s*$/); return m ? p.replace(/(\d+)\s*$/, String(+m[1] + 1)) : p + ' 2'; }
@@ -2528,7 +2530,13 @@ function weekStrip(st){
 function profile(st){
   return `    <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
       ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
-    <section class="card"><p class="eyebrow">Seu plano</p><h3>${typeof planLbl === 'function' && st.plan ? esc(planLbl(st)) : 'Plano'}</h3><p class="muted small">${st.planDue ? 'Vence em ' + esc(dueBR(st.planDue)) : 'Sem data de vencimento cadastrada'}</p></section>
+    ${(() => { const p = planState(st), d = st.planDue ? daysTo(st.planDue) : null;
+      const chip = !p ? '' : p === 'ok' ? '<span class="plchip ok">Em dia</span>' : p === 'breve' ? '<span class="plchip breve">Vence em ' + d + (d === 1 ? ' dia' : ' dias') + '</span>' : p === 'hoje' ? '<span class="plchip hoje">Vence hoje</span>' : '<span class="plchip vencido">Vencido há ' + (-d) + (d === -1 ? ' dia' : ' dias') + '</span>';
+      const urgent = p === 'hoje' || p === 'vencido' || p === 'breve', tipo = st.plan && typeof planLbl === 'function' ? planLbl(st) : '';
+      return `<section class="card plancard"><div class="sechd"><p class="eyebrow">Seu plano</p>${chip}</div>
+        <div class="plgrid"><div><span>Plano</span><b>${tipo ? esc(tipo) : 'Não informado'}</b></div><div><span>Renovação</span><b>${st.planDue ? esc(dateBR(st.planDue + 'T12:00', {day: '2-digit', month: '2-digit', year: 'numeric'})) : 'Sem data'}</b></div></div>
+        ${p === 'vencido' ? '<p class="small plnote">Seu plano venceu. Renove para continuar recebendo treinos atualizados.</p>' : p === 'hoje' ? '<p class="small plnote">Seu plano vence hoje. Renove para não ficar sem acompanhamento.</p>' : p === 'breve' ? '<p class="small plnote">Falta pouco para a renovação. Já pode garantir o próximo período.</p>' : ''}
+        ${waNum() ? `<a class="btn block ${urgent ? '' : 'ghost'}" href="${esc(waLink('Oi! Quero renovar meu plano' + (tipo ? ' ' + tipo.toLowerCase() : '') + '.'))}" target="_blank" rel="noopener">${ICON_CHAT}Renovar pelo WhatsApp</a>` : ''}</section>`; })()}
     ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Chamar o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
     ${themeHTML()}
     <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Rever o tutorial</button></div>
@@ -2816,9 +2824,10 @@ function studentView(){
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
   const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
+  const minip = preview + autoBanner(st);
   if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
-  if (state.stab === 'perfil') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
+  if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
   if (seq && (!state.dayPicked || !seqSlots(st).includes(state.day))) state.day = nxt;
   const d = st.days[state.day] || {title:'', ex:[]};
@@ -2957,7 +2966,7 @@ function trainerView(){
       ${splitChips(s)}
       <div class="row"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button>
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
-        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
+        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
     ${bkHTML()}
@@ -2993,7 +3002,7 @@ function editView(){
       <label>Orientações gerais de cardio <span class="hint">Opcional. O cardio de cada dia é prescrito dentro do dia, logo abaixo.</span><input id="f-cardio" data-sf="cardio" value="${esc(s.cardio)}"></label>
     </div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê. O aluno não tem acesso.</span><textarea id="f-priv" data-sf="privNotes" rows="3" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="newproto"><button class="icon" type="button" data-act="new-proto">Iniciar próximo protocolo</button><span class="hint">Avança o número do protocolo (${esc(s.protocol || '—')} → ${esc(nextProto(s.protocol))}) e mantém todo o histórico de cargas. Quando um exercício antigo volta pra ficha, a última carga dele aparece como referência.</span></div>
+    <div class="newproto"><button class="icon" type="button" data-act="new-proto">Iniciar próximo protocolo</button><span class="hint">Avança o número do protocolo (${esc(s.protocol || '—')} → ${esc(nextProto(s.protocol))}) e guarda a ficha atual para comparar na aba Volume. O histórico de cargas continua: quando um exercício antigo volta para a ficha, a última carga dele aparece como referência.</span></div>
     </details>
     ${volumeCard(s)}
     ${d.ex.length ? muscleCard(d, 'Músculos deste treino', true) : ''}
@@ -3016,8 +3025,8 @@ function editEx(ex, i, n){
   return `<div class="edit-ex ${hasM ? 'hasm' : ''}">
     ${hasM ? `<div class="mband">${methPill(ex.method)}<p>${esc(meth(ex.method).desc)}</p></div>` : ''}
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
-      <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Pôr vídeo</button>`}
+      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">Remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
+      <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Adicionar vídeo</button>`}
       <button type="button" class="icon exl" data-act="exlib-edit" data-v="${ex.id}:${k}" aria-pressed="${state.exLib === ex.id + ':' + k}">Editar</button><button type="button" class="icon exl" data-act="exlib-copy" data-v="${ex.id}:${k}">Copiar</button><button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
       ${ex.items.length > 1 ? `<button type="button" class="icon" data-act="p-unpart" data-ex="${ex.id}" data-i="${k}" aria-label="Tirar ${esc(l.name)} do conjugado">✕</button>` : ''}</span></div>`; }).join('')}</div>
     ${exLibEditor(ex)}
@@ -3387,7 +3396,7 @@ document.addEventListener('click', e => {
   else if (act === 'load-open'){ state.loadLib = v; render(); top(); }
   else if (act === 'load-back'){ state.loadLib = null; render(); }
   else if (act === 'load-chart'){ state.ptab = 'evo'; state.evoLib = v; state.loadLib = null; render(); top(); }
-  else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; st.protocol = nextProto(from); st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O histórico do ${from || 'protocolo anterior'} continua salvo.`); }
+  else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; { const B = state.editBase; protoSave(st, from, B && B.sid === st.id ? B.days : st.days); } st.protocol = nextProto(from); state.editBase = {sid: st.id, name: st.protocol, days: JSON.parse(JSON.stringify(st.days))}; st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O ${from || 'protocolo anterior'} ficou guardado para comparar na aba Volume.`); }
   else if (act === 'p-open'){ state.sid = v; state.mode = 'aluno'; state.stab = 'treino'; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); top(); }
   else if (act === 'p-back'){ state.pview = 'list'; state.picker = null; render(); top(); }
   else if (act === 'p-day'){ state.exLib = null; state.editDay = v; state.picker = null; render(); }
