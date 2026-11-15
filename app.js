@@ -2536,7 +2536,7 @@ function profile(st){
       return `<section class="card plancard"><div class="sechd"><p class="eyebrow">Seu plano</p>${chip}</div>
         <div class="plgrid"><div><span>Plano</span><b>${tipo ? esc(tipo) : 'Não informado'}</b></div><div><span>Renovação</span><b>${st.planDue ? esc(dateBR(st.planDue + 'T12:00', {day: '2-digit', month: '2-digit', year: 'numeric'})) : 'Sem data'}</b></div></div>
         ${p === 'vencido' ? '<p class="small plnote">Seu plano venceu. Renove para continuar recebendo treinos atualizados.</p>' : p === 'hoje' ? '<p class="small plnote">Seu plano vence hoje. Renove para não ficar sem acompanhamento.</p>' : p === 'breve' ? '<p class="small plnote">Falta pouco para a renovação. Já pode garantir o próximo período.</p>' : ''}
-        ${waNum() ? `<a class="btn block ${urgent ? '' : 'ghost'}" href="${esc(waLink('Oi! Quero renovar meu plano' + (tipo ? ' ' + tipo.toLowerCase() : '') + '.'))}" target="_blank" rel="noopener">${ICON_CHAT}Renovar pelo WhatsApp</a>` : ''}</section>`; })()}
+        ${waNum() ? `<a class="btn block" href="${esc(waLink('Oi! Quero renovar meu plano' + (tipo ? ' ' + tipo.toLowerCase() : '') + '.'))}" target="_blank" rel="noopener">${ICON_CHAT}Renovar pelo WhatsApp</a>` : ''}</section>`; })()}
     ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Chamar o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
     ${themeHTML()}
     <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Rever o tutorial</button></div>
