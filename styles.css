@@ -1,10 +1,10 @@
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:600;font-display:swap;src:url(fonts/cormorant-garamond-latin-600-italic.woff2) format('woff2')}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:700;font-display:swap;src:url(fonts/cormorant-garamond-latin-700-italic.woff2) format('woff2')}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/montserrat-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/montserrat-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/montserrat-latin-600-normal.woff2) format('woff2')}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/montserrat-latin-700-normal.woff2) format('woff2')}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/montserrat-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:italic;font-weight:600;font-display:swap;src:url(fonts/playfair-display-latin-600-italic.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:italic;font-weight:700;font-display:swap;src:url(fonts/playfair-display-latin-700-italic.woff2) format('woff2')}
 /* Layout: brand-red band on top, one phone-width column of workout cards, fixed rest-timer bar at the bottom */
 :root{
   --bg:#F7F3F2; --surface:#FFFFFF; --sunk:#F0E9E8; --ink:#1D1515; --muted:#6F6363; --line:#E3D9D8;
@@ -1261,3 +1261,6 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
   :root:not([data-theme="dark"]) .tabhead .eyebrow{color:#7E0A0E}
 }
 :root[data-theme="light"] .hello .eyebrow,:root[data-theme="light"] .tabhead .eyebrow{color:#7E0A0E}
+
+:root{--display:"Playfair Display", Georgia, "Times New Roman", serif}
+.serif,.restday h3,.sbrand,.brand-name{font-size-adjust:.43}

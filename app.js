@@ -1853,8 +1853,8 @@ function fitOneLine(ctx, text, max){
 }
 async function makeSticker(title, vol, sets, pr, align){
   const LEFT = align === 'left';
-  const serif = '"Cormorant Garamond", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
-  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
+  const serif = '"Playfair Display", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
+  try { await Promise.all(['italic 700 120px "Playfair Display"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
   const logo = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = LOGO_HI; });
   const W = 1080, PAD = 64, MAX = W - PAD * 2, c = document.createElement('canvas'), ctx = c.getContext('2d');
   const logoW = 400, logoH = Math.round(logoW * logo.height / logo.width);
