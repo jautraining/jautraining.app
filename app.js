@@ -421,7 +421,7 @@ let saveT;
 function save(){ clearTimeout(saveT); saveT = setTimeout(() => { cacheWrite(); scheduleSync(); }, 150); }
 let db = emptyDb();
 
-const state = {mode:'aluno', sid: undefined, day: todayKey, dayPicked:false, feedF:'todos', feedN:20, copy:null, imp:null, sumOpen:false, obStep:0, newOpen:false, sdataOpen:false, volOpen:false, openEx:{}, editLog:null, logDraft:null, histN:5, stab:'treino', evoLib:null, evoMode:'serie', fperiod:'semana',
+const state = {mode:'aluno', sid: undefined, day: todayKey, dayPicked:false, feedF:'todos', feedN:20, copy:null, imp:null, sumOpen:false, obStep:0, newOpen:false, sdataOpen:false, volOpen:false, openEx:{}, editLog:null, logDraft:null, histN:5, stab:'inicio', evoLib:null, evoMode:'serie', fperiod:'mes',
   psec:'painel', pview:'list', ptab:'hist', editDay:'seg', picker:null, libOpen:null, libQ:'', libM:''};
 const app = document.getElementById('app');
 
@@ -462,6 +462,7 @@ function snap(){
     db.methods.forEach((x, i) => { const {id, ...rest} = x; m['met:' + id] = JSON.stringify({ord: i, data: rest}); });
     m['set:wa'] = JSON.stringify((db.settings && db.settings.wa) || '');
     if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
+    if (db.settings && db.settings.volRange) m['set:volrange'] = JSON.stringify(db.settings.volRange);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
@@ -659,8 +660,8 @@ async function pullFull(P){
   return true;
 }
 function applySettings(set){
-  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver');
-  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0});
+  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange');
+  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {});
 }
 /* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
 async function pullDelta(P){
@@ -827,7 +828,7 @@ function authView(){
   const msg = AUTH.msg ? `<p class="authmsg" role="status">${esc(AUTH.msg)}</p>` : '';
   const out = AUTH.user ? `<button type="button" class="linkbtn" data-act="logout">Sair desta conta</button>` : '';
   const wrap = inner => band + `<main class="wrap auth">${inner}</main>`;
-  if (AUTH.screen === 'loading') return wrap(`<p class="muted center">Carregando seus treinos…</p>`);
+  if (AUTH.screen === 'loading') return band + `<main class="wrap skel" aria-busy="true" aria-label="Carregando seus treinos"><div class="sk sk-t"></div><div class="sk sk-h"></div><div class="sk-row">${'<div class="sk"></div>'.repeat(7)}</div><div class="sk sk-c"></div><div class="sk sk-c tall"></div><div class="sk sk-c"></div></main>`;
   if (AUTH.screen === 'error') return wrap(`<section class="card authcard"><h2>Não deu pra abrir</h2><p>${esc(AUTH.err)}</p><button class="btn block" type="button" data-act="auth-retry">Tentar de novo</button>${out}</section>`);
   if (AUTH.screen === 'waiting') return wrap(`<section class="card authcard"><p class="eyebrow">Conta criada</p><h2>Falta só o seu personal liberar</h2>
     <p>Você entrou com <b>${esc(AUTH.user && AUTH.user.email)}</b>. Assim que o Jau cadastrar este e-mail na sua ficha, ela aparece aqui.</p>
@@ -963,7 +964,7 @@ function mobEditor(d){
   const pk = state.picker, list = d.mob || [];
   return `<section class="card mobed form"><div class="mobhd"><div><p class="eyebrow">Mobilidade</p><b>Antes dos exercícios</b></div><span class="hint">O aluno vê em cards que passam para o lado e só marca como feito.</span></div>
     ${list.map((m, i) => { const l = lib(m.lib); return `<div class="mobrow"><span class="num">${i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Pôr vídeo</button>`}</small></span>
+      <span class="nm">${esc(l.name)}<small>${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${l.id}">Adicionar vídeo</button>`}</small></span>
       <span class="macts"><button type="button" class="icon" data-act="mob-up" data-v="${m.id}" ${i === 0 ? 'disabled' : ''} aria-label="Subir ${esc(l.name)}">↑</button><button type="button" class="icon" data-act="mob-del" data-v="${m.id}" aria-label="Remover ${esc(l.name)}">✕</button></span>
       <div class="mobf"><label>Séries<input id="mb-s-${m.id}" inputmode="numeric" data-mob="${m.id}" data-mbf="sets" value="${esc(m.sets || '')}"></label>
       <label>${m.meas === 'tempo' ? 'Segundos' : 'Reps'}<input id="mb-r-${m.id}" data-mob="${m.id}" data-mbf="reps" value="${esc(m.reps || '')}" placeholder="${m.meas === 'tempo' ? '30' : '10'}"></label>
@@ -1020,7 +1021,7 @@ function panInfo(){
     return {s, fs, a, last, idle, today, p, due, planned};
   });
 }
-const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Vencendo'], ['semtreinar', 'Sem treinar']];
+const PANF = [['todos', 'Todos'], ['atencao', 'Atenção'], ['vencendo', 'Renovação'], ['semtreinar', 'Sem treinar']];
 const panMatch = (x, f) => f === 'atencao' ? !!x.a : f === 'vencendo' ? (x.p === 'hoje' || x.p === 'vencido' || x.p === 'breve') : f === 'semtreinar' ? (x.idle === null || x.idle >= 7) : true;
 function panList(){
   const q = norm((state.panQ || '').trim()), f = state.panF || 'todos';
@@ -1065,11 +1066,11 @@ function panelView(){
         <div class="pfil">${PANF.map(([k, l]) => `<button type="button" data-act="pan-f" data-v="${k}" aria-pressed="${f === k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
         <div class="plist" id="pan-list">${panList()}</div></section>
       <div class="pcolM">
-        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'aguardando' : 'aguardando'}</span></div>
+        <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'ainda não treinou' : 'ainda não treinaram'}</span></div>
           ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
           ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Alunos que treinaram por dia · 14 dias</p></div>${panChart()}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Vencimentos</p></div><div class="ptwrap">${panDue()}</div></section>
+        <section class="card"><div class="phd"><p class="eyebrow">Treinos por dia · últimos 14 dias</p></div>${panChart()}</section>
+        <section class="card"><div class="phd"><p class="eyebrow">Renovações</p></div><div class="ptwrap">${panDue()}</div></section>
       </div>
       <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
     </div>
@@ -1091,8 +1092,8 @@ function effortView(st){
     <label class="effmsg" for="eff-msg">Quer contar algo ao personal? (opcional)</label>
     <textarea id="eff-msg" rows="3" data-effmsg="1" placeholder="Ex.: senti o ombro no supino, o leg press estava ocupado...">${esc(state.done.msg || '')}</textarea>
     <p class="small muted">Ele recebe junto com a nota.</p>
-    <button class="btn block" type="button" data-act="eff-save" ${sel ? '' : 'disabled'}>Salvar e ver o resumo</button>
-    <button class="linkbtn effskip" type="button" data-act="eff-skip">Pular</button>
+    <button class="btn block" type="button" data-act="eff-save" ${sel ? '' : 'disabled'}>Salvar e ver meu resultado</button>
+    <button class="linkbtn effskip" type="button" data-act="eff-skip">Agora não</button>
   </section></main>`;
 }
 
@@ -1155,7 +1156,7 @@ function fbHTML(){
   const soon = all.filter(x => !x.f.due && x.f.d <= 3).sort((a, b) => a.f.d - b.f.d);
   return `<section class="card pfb"><div class="phd"><p class="eyebrow">Feedbacks</p><span class="muted small">${due.length ? due.length + (due.length === 1 ? ' pendente' : ' pendentes') : 'em dia'}</span></div>
     ${due.length ? `<div class="pfblist">${due.slice(0, state.fbAll ? 999 : 6).map(({s, f}) => `<div class="pfbrow"><span class="pfbt"><button type="button" class="pfbname" data-act="fb-hist" data-v="${s.id}" title="Ver histórico de feedbacks">${esc(s.name)}</button><small>${f.first ? 'Primeiro feedback' : f.d === 0 ? 'É hoje' : 'Atrasado há ' + (-f.d) + (f.d === -1 ? ' dia' : ' dias')} · ${fbFreq(f.ev)}${s.fbLast ? ' · último em ' + esc(dueBR(s.fbLast)) : ''}</small></span>
-        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar</button>`}</div>
+        ${state.fbOpen === s.id ? '' : `<button type="button" class="btn sm" data-act="fb-open" data-v="${s.id}">Registrar feedback</button>`}</div>
         ${state.fbOpen === s.id ? `<div class="pfbform"><textarea id="fb-note" rows="2" placeholder="Anotação do feedback (opcional): como o aluno está, o que ajustar..."></textarea>
           <div class="row"><button type="button" class="btn sm" data-act="fb-save" data-v="${s.id}">Salvar feedback</button><button type="button" class="btn sm quiet" data-act="fb-cancel">Cancelar</button></div></div>` : ''}`).join('')}</div>${due.length > 6 && !state.fbAll ? `<button type="button" class="linkbtn" data-act="fb-all">Ver todos os ${due.length}</button>` : ''}`
       : '<p class="muted small">Nenhum feedback pendente. Tudo em dia!</p>'}
@@ -1332,6 +1333,183 @@ function methDelHTML(m, u){
     <select id="mdel-to" class="selbox" aria-label="Método que fica no lugar">${db.methods.filter(x => x.id !== m.id && x.id !== 'conjugado').map(x => `<option value="${x.id}" ${x.id === 'normal' ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
     <div class="row"><button type="button" class="btn sm danger" data-act="m-delgo" data-v="${m.id}">Trocar e apagar</button><button type="button" class="btn sm quiet" data-act="m-delx">Cancelar</button></div></div>`;
 }
+
+const HOMEI = '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+function hWeek(st, off, upToNow){
+  const ws = +weekStart(new Date()), a = ws - off * 7 * DAY_MS, b = upToNow ? a + (Date.now() - ws) : a + 7 * DAY_MS;
+  return st.logs.filter(l => { const t = +new Date(l.date); return t >= a && t < b; }).sort((x, y) => x.date < y.date ? -1 : 1);
+}
+function hTot(ls){ let sets = 0, vol = 0, dur = 0; ls.forEach(l => { const s = logStats(l); sets += s.sets; vol += s.vol; dur += l.dur || 0; }); return {sets, vol, dur, n: ls.filter(l => !l.cardioOnly).length}; }
+const hVol = v => v.toLocaleString('pt-BR') + ' kg';
+const hDur = s => { const m = Math.round(s / 60); return m < 60 ? m + ' min' : Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); };
+function hDelta(a, b){ if (!b) return '<small class="hdl">—</small>'; const p = Math.round((a - b) / b * 100); return `<small class="hdl ${p > 0 ? 'up' : p < 0 ? 'down' : ''}">${p > 0 ? '▲ ' + p + '%' : p < 0 ? '▼ ' + (-p) + '%' : 'igual'}</small>`; }
+function hMuscles(d){ const c = {}; d.ex.forEach(ex => ex.items.forEach(id => lib(id).primary.forEach(m => c[m] = (c[m] || 0) + 1))); return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => MNAME[k]); }
+function homeToday(st){
+  const seq = isSeq(st), k = seq ? nextSlot(st) : todayKey, d = st.days[k] || {title: '', ex: []};
+  const today = st.logs.filter(l => dayKeyOf(l.date) === dayKeyOf(new Date()) && (!l.cardioOnly || l.day === k));
+  if (today.length && !seq){ const l = today[today.length - 1], s = logStats(l);
+    return `<section class="card htoday done"><p class="eyebrow">Treino de hoje</p><div class="htop"><span class="hok">${ICON_CHECK}</span><div><h2 class="serif">${esc(l.title || 'Treino')}</h2><p class="muted small">${l.cardioOnly ? 'Cardio concluído' : `Concluído${l.dur ? ' em ' + hDur(l.dur) : ''} · ${s.sets} séries · ${hVol(s.vol)}${l.effort ? ' · ' + effTxt(l.effort).toLowerCase() : ''}`}</p></div></div>
+      <p class="small">Mandou bem! Descanse, coma bem e durma bem: é aí que o músculo cresce.</p></section>`; }
+  const has = Object.keys(db.drafts[state.sid + '|' + k] || {}).some(x => x !== '__cardio');
+  if (!d.ex.length && !(d.mob || []).length && !cardioList(d).length){
+    const nx = DAYS.map((x, i) => DAYS[(DAYS.findIndex(y => y.k === todayKey) + 1 + i) % 7]).find(x => st.days[x.k] && st.days[x.k].ex.length);
+    return `<section class="card htoday rest"><p class="eyebrow">Hoje · ${esc(DAYS.find(x => x.k === todayKey).l)}</p><h2 class="serif">${esc(d.title || 'Dia de descanso')}</h2>
+      <p class="muted small">Recuperação também é treino.${nx ? ' Próximo: <b>' + esc(nx.l) + '</b> · ' + esc(st.days[nx.k].title || 'treino') : ''}</p></section>`;
+  }
+  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), mu = hMuscles(d);
+  return `<section class="card htoday"><p class="eyebrow">${seq ? 'Próximo treino da sequência' : 'Treino de hoje · ' + esc(DAYS.find(x => x.k === todayKey).l)}</p><h2 class="serif">${esc(d.title || 'Treino')}</h2>
+    <p class="muted small">${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') : '', ns ? ns + ' séries' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : '', cardioList(d).length ? 'cardio' : ''].filter(Boolean).join(' · ')}</p>
+    ${mu.length ? `<div class="hchips">${mu.map(m => `<span>${esc(m)}</span>`).join('')}</div>` : ''}
+    <button type="button" class="btn block startbtn" data-act="home-go" data-v="${k}"><span class="st-ic">${ICON_PLAY}</span><span><b>${!d.ex.length ? 'Ver treino do dia' : has ? 'Continuar de onde parei' : 'Começar treino'}</b><small>${d.ex.length ? 'Cerca de ' + Math.max(15, Math.round(ns * 2.6 / 5) * 5) + ' min · abre a ficha do dia' : 'Abre na aba Treino'}</small></span></button></section>`;
+}
+function homeWeek(st){
+  const f = freqStats(st), m = freqMsg(f), cur = hTot(hWeek(st, 0)), prev = hTot(hWeek(st, 1, true));
+  return `<section class="card hweek"><div class="sechd"><p class="eyebrow">Sua semana</p><span class="muted small">${f.week} de ${f.plan} treinos</span></div>
+    <span class="wdots">${f.weekDays.map(d => `<span class="wd ${d.on ? 'on' : ''} ${d.today ? 'today' : ''}"><i>${d.on ? ICON_CHECK : ''}</i>${d.l[0]}</span>`).join('')}</span>
+    <p class="hmsg"><b>${esc(m.h)}</b> <span class="muted">${esc(m.s)}</span></p>
+    <div class="hstats">
+      <div><span>Volume</span><b>${cur.vol.toLocaleString('pt-BR')}<small> kg</small></b>${hDelta(cur.vol, prev.vol)}</div>
+      <div><span>Séries</span><b>${cur.sets}</b>${hDelta(cur.sets, prev.sets)}</div>
+      <div><span>Tempo</span><b>${cur.dur ? hDur(cur.dur) : '—'}</b>${cur.dur ? hDelta(cur.dur, prev.dur) : '<small class="hdl">sem cronômetro</small>'}</div>
+    </div><p class="hcmp">Setas: comparado com a semana passada até o mesmo dia.</p></section>`;
+}
+function homeHigh(st){
+  const ls = hWeek(st, 0), prs = prHistory(st).prs, out = [];
+  const seen = new Map(); ls.forEach(l => (prs[l.id] || []).forEach(p => seen.set(p.libId, {n: lib(p.libId).name, v: p.t ? p.reps + ' s' + (p.kg ? ' com ' + fmtKg(p.kg) + ' kg' : '') : fmtKg(p.kg) + ' kg × ' + p.reps})));
+  seen.forEach(v => out.push(v));
+  return `<section class="card hhigh"><div class="sechd"><p class="eyebrow">Recordes da semana</p>${out.length ? `<span class="muted small">${out.length}</span>` : ''}</div>
+    ${out.length ? `<div class="hprs">${out.slice(-4).reverse().map(p => `<div><span class="hpi">🏆</span><span><b>${esc(p.n)}</b><small>${esc(p.v)}</small></span></div>`).join('')}</div>`
+      : '<p class="muted small">Nenhum recorde ainda nesta semana. O próximo pode sair hoje.</p>'}</section>`;
+}
+function homeLogs(st){
+  const ls = hWeek(st, 0).reverse();
+  return `<section class="card hlogs"><div class="sechd"><p class="eyebrow">Treinos desta semana</p><button type="button" class="linkbtn small" data-act="stab" data-v="evolucao">Histórico completo</button></div>
+    ${ls.length ? ls.map(l => { const s = logStats(l); return `<div class="hlog"><span class="hld"><b>${esc(dateBR(l.date, {weekday: 'short'}).replace('.', ''))}</b><small>${esc(dateBR(l.date, {day: '2-digit', month: '2-digit'}))}</small></span>
+        <span class="hlt"><b>${esc(l.title || 'Treino')}</b><small>${l.cardioOnly ? 'Cardio' + (l.cardioCmt ? ' · com observação' : '') : [l.dur ? hDur(l.dur) : '', s.sets + ' séries', hVol(s.vol)].filter(Boolean).join(' · ')}</small></span>${l.effort ? effChip(l.effort) : ''}</div>`; }).join('')
+      : '<p class="muted small">Nenhum treino registrado nesta semana ainda.</p>'}</section>`;
+}
+function profWeek(st){
+  const seq = isSeq(st), ks = seq ? seqSlots(st) : DAYS.map(x => x.k), cur = seq ? nextSlot(st) : todayKey;
+  return `<nav class="week pfweek" aria-label="Treinos da semana" style="grid-template-columns:repeat(${Math.max(ks.length, 1)},minmax(0,1fr))">${ks.map(k => { const t = st.days[k] ? st.days[k].title : '';
+    return `<button type="button" data-act="pf-day" data-v="${k}" aria-pressed="${k === cur}" class="${!seq && k === todayKey ? 'today' : ''}" title="Ver o treino de ${esc(t || 'descanso')}"><span class="d">${seq ? slotShort(st, k) : DAYS.find(x => x.k === k).l}</span><span class="t">${esc(shortTitle(t))}</span></button>`; }).join('')}</nav>`;
+}
+function homeView(st){ return `<div class="hgrid"><div class="hcol">${homeToday(st)}${homeWeek(st)}</div><div class="hcol">${homeHigh(st)}${homeLogs(st)}</div></div>`; }
+
+let ANIM = '', ANIMDX = 14, JUSTDONE = '', LASTSIG = '';
+const RED_MOTION = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function polishAfter(){
+  const sig = [state.mode, state.stab, state.psec, state.pview, state.ptab, state.sid, state.done ? (state.done.step || 'fim') : '', state.volMode, state.fperiod].join('|');
+  if (!ANIM && LASTSIG && sig !== LASTSIG) ANIM = 'tab'; LASTSIG = sig;
+  if (ANIM && !RED_MOTION()){
+    const m = app.querySelector('main');
+    if (m){ [...m.children].slice(0, 12).forEach((c, i) => c.style.setProperty('--i', i)); m.style.setProperty('--dx', ANIMDX + 'px'); m.classList.add(ANIM === 'day' ? 'enter-day' : 'enter'); setTimeout(() => m.classList.remove('enter', 'enter-day'), 1000); }
+    if (ANIM === 'tab') document.querySelectorAll('[data-act=stab][aria-pressed=true],[data-act=psec][aria-pressed=true]').forEach(b => b.classList.add('tpop'));
+  }
+  if (JUSTDONE && !RED_MOTION()){ const e = document.getElementById('exc-' + JUSTDONE); if (e && e.classList.contains('exdone')){ e.classList.add('justdone'); JUSTDONE = ''; } }
+  ANIM = '';
+}
+
+const VOL_DEF = {lo: 10, hi: 18};
+const volRangeDef = () => Object.assign({}, VOL_DEF, (db.settings && db.settings.volRange) || {});
+const volRange = s => Object.assign(volRangeDef(), (s && s.volRange) || {});
+function volAdd(o, id, n){ const l = lib(id); (l.primary || []).forEach(m => o[m] = (o[m] || 0) + n); }
+const trabN = ex => (ex.series || []).filter(x => x.type === 'trab').length;
+function volOfDays(days){
+  const week = {}, per = {};
+  Object.entries(days || {}).forEach(([k, d]) => { if (!d || !(d.ex || []).length) return; const o = {}; d.ex.forEach(ex => (ex.items || []).forEach(id => volAdd(o, id, trabN(ex)))); per[k] = {title: d.title || '', v: o}; Object.entries(o).forEach(([m, n]) => week[m] = (week[m] || 0) + n); });
+  return {week, per};
+}
+function daysFromLogs(st, proto){
+  const out = {}, seen = {};
+  st.logs.filter(l => (l.protocol || '') === proto).sort((a, b) => a.date < b.date ? 1 : -1).forEach(l => {
+    if (!l.day || seen[l.day]) return; seen[l.day] = 1;
+    out[l.day] = {title: l.title || '', ex: l.entries.map(e => ({items: e.items, method: e.method, series: e.sets.map(x => ({type: x.type || 'trab', reps: ''}))}))};
+  });
+  return out;
+}
+function volSources(st){
+  const out = [{id: 'cur', label: (st.protocol || 'Protocolo atual') + ' · atual', days: st.days}];
+  (st.protos || []).slice().reverse().forEach((p, i) => out.push({id: 'v' + (st.protos.length - 1 - i), label: (p.name || 'Versão') + ' · guardado em ' + dueBR(p.to), days: p.days}));
+  const names = new Set((st.protos || []).map(p => p.name)); const seen = new Set();
+  st.logs.slice().sort((a, b) => a.date < b.date ? 1 : -1).forEach(l => { const p = l.protocol || ''; if (!p || p === st.protocol || names.has(p) || seen.has(p)) return; seen.add(p); out.push({id: 'l:' + p, label: p + ' · pelos treinos feitos', days: daysFromLogs(st, p)}); });
+  return out;
+}
+const fmtS = n => (Math.round(n * 2) / 2).toLocaleString('pt-BR');
+let VR = VOL_DEF;
+const volCls = n => n < VR.lo ? 'lo' : n > VR.hi ? 'hi' : 'ok';
+function volTable(a, b, weekly){
+  const ms = MUSCLES.map(([k]) => k).filter(k => (a[k] || 0) + (b ? b[k] || 0 : 0) > 0).sort((x, y) => (a[y] || 0) - (a[x] || 0) || (b ? (b[y] || 0) - (b[x] || 0) : 0));
+  if (!ms.length) return '<p class="muted small">Sem séries de trabalho cadastradas.</p>';
+  const max = Math.max(1, ...ms.map(k => Math.max(a[k] || 0, b ? b[k] || 0 : 0)));
+  return `<div class="vtab" role="table"><div class="vtr vth" role="row"><span role="columnheader">Grupo muscular</span><span role="columnheader">Atual</span>${b ? '<span role="columnheader"><span class="vlg">Anterior</span><span class="vsm" aria-hidden="true">Antes</span></span><span role="columnheader"><span class="vlg">Diferença</span><span class="vsm" aria-hidden="true">Dif.</span></span>' : ''}</div>
+    ${ms.map(k => { const x = a[k] || 0, y = b ? b[k] || 0 : 0, d = x - y; return `<div class="vtr" role="row"><span class="vtm" role="cell"><b>${esc(MNAME[k])}</b><i class="vbar ${weekly ? volCls(x) : ''}" style="width:${(x / max * 100).toFixed(1)}%"></i>${b ? `<i class="vbar prev" style="width:${(y / max * 100).toFixed(1)}%"></i>` : ''}</span>
+      <span role="cell" class="vnum ${weekly ? volCls(x) : ''}"><b>${fmtS(x)}</b><span class="vlg"> séries</span></span>${b ? `<span role="cell" class="vnum muted">${fmtS(y)}</span><span role="cell" class="vdif ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : ''}${d ? fmtS(d) : '='}</span>` : ''}</div>`; }).join('')}</div>`;
+}
+function volView(s){
+  VR = volRange(s); const dr = volRangeDef(), own = !!s.volRange;
+  const src = volSources(s), A = src[0], bId = state.volB && src.some(x => x.id === state.volB) ? state.volB : (src[1] || {}).id, B = src.find(x => x.id === bId);
+  const va = volOfDays(A.days), vb = B ? volOfDays(B.days) : null, mode = state.volMode || 'sem';
+  const tot = o => Object.values(o).reduce((x, y) => x + y, 0), ta = tot(va.week), tb = vb ? tot(vb.week) : 0;
+  const dayKeys = DAYS.map(x => x.k).filter(k => va.per[k] || (vb && vb.per[k]));
+  const dk = dayKeys.includes(state.volDay) ? state.volDay : dayKeys[0];
+  return `<section class="card volcmp">
+    <div class="vhd"><div><p class="eyebrow">Volume por grupo muscular</p><h3>Séries de trabalho planejadas</h3><p class="muted small">Mesma conta do quadro de volume do app: só os músculos principais, nas séries de trabalho.</p></div>
+      <div class="vtot"><span>Total semanal</span><b>${fmtS(ta)}</b><small>${vb ? 'anterior: ' + fmtS(tb) + ' · <em class="' + (ta - tb >= 0 ? 'up' : 'down') + '">' + (ta - tb > 0 ? '+' : '') + fmtS(ta - tb) + '</em>' : 'séries'}</small></div></div>
+    <div class="vctl"><label>Comparar com<select id="vol-b" class="selbox" data-change="volb">${src.length > 1 ? src.slice(1).map(x => `<option value="${x.id}" ${x.id === bId ? 'selected' : ''}>${esc(x.label)}</option>`).join('') : '<option value="">Nenhum protocolo anterior ainda</option>'}</select></label>
+      <div class="seg" role="group" aria-label="Visão"><button type="button" data-act="volmode" data-v="sem" aria-pressed="${mode === 'sem'}">Semana</button><button type="button" data-act="volmode" data-v="dia" aria-pressed="${mode === 'dia'}">Por treino</button></div></div>
+    ${mode === 'sem' ? `<div class="vrange"><span class="vrl">Faixa ideal de ${esc(s.name.split(' ')[0])}</span><label class="vri"><input type="number" inputmode="numeric" min="0" max="60" step="1" id="vr-lo" data-volr="lo" value="${VR.lo}" aria-label="Mínimo de séries por semana"></label><span>a</span><label class="vri"><input type="number" inputmode="numeric" min="0" max="60" step="1" id="vr-hi" data-volr="hi" value="${VR.hi}" aria-label="Máximo de séries por semana"></label><span>séries por semana</span>
+        <span class="vrb">${own ? `<button type="button" class="linkbtn small" data-act="volr-def">Usar como padrão para todos</button><button type="button" class="linkbtn small" data-act="volr-reset">Voltar ao padrão (${dr.lo} a ${dr.hi})</button>` : `<span class="muted small">Padrão de todos os alunos</span>`}</span></div>
+      <div class="vleg"><span class="lo">Menos de ${VR.lo}: baixo</span><span class="ok">${VR.lo} a ${VR.hi}: ideal</span><span class="hi">Mais de ${VR.hi}: alto</span></div>${volTable(va.week, vb && vb.week, true)}`
+      : `<div class="vdays">${dayKeys.map(k => `<button type="button" data-act="volday" data-v="${k}" aria-pressed="${k === dk}"><b>${DAYS.find(x => x.k === k).l}</b><small>${esc(shortTitle((va.per[k] || (vb && vb.per[k]) || {}).title || ''))}</small></button>`).join('')}</div>
+         ${dk ? `<p class="small"><b>${esc((va.per[dk] || {}).title || 'Sem treino no atual')}</b>${vb && vb.per[dk] ? ' <span class="muted">· antes: ' + esc(vb.per[dk].title || '—') + '</span>' : ''}</p>${volTable((va.per[dk] || {}).v || {}, vb ? ((vb.per[dk] || {}).v || {}) : null, false)}` : ''}`}
+    ${src.length < 2 ? '<p class="hint">Ainda não há protocolo anterior para comparar. Quando você trocar a ficha, toque em "Iniciar próximo protocolo" (ou troque o nome do protocolo na ficha): o atual fica guardado aqui.</p>' : ''}
+    <div class="vact"><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button><button type="button" class="btn sm quiet" data-act="new-proto">Iniciar próximo protocolo</button></div>
+    <p class="hint">"Iniciar próximo protocolo" guarda a ficha atual para comparar aqui e muda o nome para o próximo número. Trocar o nome do protocolo na ficha faz o mesmo. Ajustes que mantêm o nome só atualizam a ficha atual.</p>
+  </section>`;
+}
+function protoSave(s, name, days){
+  if (!name) return false; s.protos = s.protos || [];
+  const same = s.protos.length && s.protos[s.protos.length - 1].name === name;
+  const v = {name, to: isoToday(), days: JSON.parse(JSON.stringify(days))};
+  if (same) s.protos[s.protos.length - 1] = v; else s.protos.push(v);
+  if (typeof dataVer !== 'undefined') dataVer++; return true;
+}
+const nextProtoName = n => { const m = String(n || '').match(/^(.*?)(\d+)\s*$/); return m ? m[1] + (+m[2] + 1) : (n ? n + ' 2' : 'Protocolo 2'); };
+function loadFirstLast(st, id){
+  const pts = []; st.logs.slice().sort((a, b) => a.date < b.date ? -1 : 1).forEach(l => l.entries.forEach(e => { const pi = e.items.indexOf(id); if (pi < 0) return; let m = 0; e.sets.forEach(x => { if ((x.type || 'trab') !== 'trab') return; const k = numKg((x.parts[pi] || {}).kg); if (k > m) m = k; }); if (m) pts.push({d: l.date, kg: m}); }));
+  return pts.length ? {first: pts[0], last: pts[pts.length - 1], n: pts.length} : null;
+}
+function presSlides(st){
+  VR = volRange(st);
+  const va = volOfDays(st.days), src = volSources(st), B = src[1], vb = B ? volOfDays(B.days) : null;
+  const days = DAYS.filter(x => st.days[x.k] && (st.days[x.k].ex || []).length);
+  const slides = [];
+  slides.push(`<div class="ps-cover"><img src="${LOGO}" alt="Jau Training" class="ps-logo"><p class="eyebrow">Apresentação do protocolo</p><h1 class="serif">${esc(st.protocol || 'Protocolo')}</h1><p class="ps-name">${esc(st.name)}</p><p class="muted">${esc(st.focus || '')}</p></div>`);
+  slides.push(`<p class="eyebrow">Divisão da semana</p><h2 class="serif">Como fica sua semana</h2><div class="ps-week">${DAYS.map(x => { const d = st.days[x.k] || {}; const n = (d.ex || []).reduce((a, ex) => a + trabN(ex), 0); return `<div class="${n ? '' : 'off'}"><b>${x.l}</b><span>${esc(d.title || 'Descanso')}</span><small>${n ? n + ' séries' : ''}</small></div>`; }).join('')}</div>`);
+  days.forEach(x => { const d = st.days[x.k]; slides.push(`<p class="eyebrow">${esc(x.l)} · treino</p><h2 class="serif">${esc(d.title || 'Treino')}</h2><ol class="ps-ex">${d.ex.map(ex => { const m = meth(ex.method); return `<li><b>${esc(ex.items.map(i => lib(i).name).join(' + '))}</b><span>${trabN(ex)} séries${(ex.series || [])[0] && ex.series[0].reps ? ' · ' + esc(ex.series[ex.series.length - 1].reps) + ' reps' : ''}${ex.rest ? ' · descanso ' + esc(ex.rest) : ''}${m && m.id !== 'normal' && m.id !== 'conjugado' ? ' · <em>' + esc(m.name) + '</em>' : ''}</span></li>`; }).join('')}</ol>`); });
+  slides.push(`<p class="eyebrow">Volume semanal</p><h2 class="serif">Séries por grupo muscular</h2>${vb ? `<p class="muted small">Comparado com ${esc(B.label)}</p>` : ''}${volTable(va.week, vb && vb.week, true)}`);
+  const ids = []; days.forEach(x => st.days[x.k].ex.forEach(ex => ex.items.forEach(i => { if (!ids.includes(i)) ids.push(i); })));
+  const ev = ids.map(i => ({i, r: loadFirstLast(st, i)})).filter(x => x.r && x.r.n > 1 && x.r.last.kg > x.r.first.kg).sort((a, b) => (b.r.last.kg - b.r.first.kg) - (a.r.last.kg - a.r.first.kg)).slice(0, 6);
+  if (ev.length) slides.push(`<p class="eyebrow">Sua evolução</p><h2 class="serif">Cargas que mais subiram</h2><div class="ps-ev">${ev.map(x => `<div><b>${esc(lib(x.i).name)}</b><span>${fmtKg(x.r.first.kg)} kg <i>→</i> <strong>${fmtKg(x.r.last.kg)} kg</strong></span><em>+${fmtKg(x.r.last.kg - x.r.first.kg)} kg desde ${esc(dueBR(x.r.first.d.slice(0, 10)))}</em></div>`).join('')}</div>`);
+  return slides;
+}
+function presHTML(){
+  if (!state.pres) return '';
+  const st = db.students.find(s => s.id === state.pres.sid); if (!st){ state.pres = null; return ''; }
+  const sl = presSlides(st), i = Math.min(state.pres.i, sl.length - 1); state.pres.i = i;
+  return `<div class="pshow" role="dialog" aria-modal="true" aria-label="Apresentação do protocolo"><div class="pres-top"><span class="muted small">${i + 1} de ${sl.length}</span><button type="button" class="icon" data-act="pres-close">Fechar</button></div>
+    <div class="pres-slide"><div class="ps-in">${sl[i]}</div></div>
+    <div class="pres-nav"><button type="button" class="btn quiet" data-act="pres-go" data-v="${i - 1}" ${i ? '' : 'disabled'}>← Anterior</button><div class="pres-dots">${sl.map((_, k) => `<button type="button" data-act="pres-go" data-v="${k}" aria-label="Slide ${k + 1}" aria-pressed="${k === i}"></button>`).join('')}</div><button type="button" class="btn" data-act="pres-go" data-v="${i + 1}" ${i < sl.length - 1 ? '' : 'disabled'}>Próximo →</button></div></div>`;
+}
+document.addEventListener('keydown', e => { if (!state.pres) return; if (e.key === 'Escape'){ state.pres = null; render(); } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ state.pres.i = Math.max(0, state.pres.i + (e.key === 'ArrowRight' ? 1 : -1)); render(); } });
+
+const PTABI = {
+  painel: '<svg class="pti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="9" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="15.5" width="7" height="5" rx="2" stroke="currentColor" stroke-width="2"/></svg>',
+  alunos: '<svg class="pti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c.9-3.4 3.4-5 6.5-5s5.6 1.6 6.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M18 15.4c1.8.7 3 2.2 3.5 4.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  feed: '<svg class="pti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h4l2.5-6 5 12 2.5-6h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  lib: '<svg class="pti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  metodos: '<svg class="pti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 13l9 5 9-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+};
 const measOf = (ex, k) => (ex && ex.meas && ex.meas[k]) || 'reps';
 
 const nkOf = (ex, k) => !!(ex && ex.nokg && ex.nokg[k]);
@@ -1387,9 +1565,9 @@ function tecSub(ex, si, s, np, conj){
 }
 const trainOpen = () => { const m = (db.draftMeta || {})[draftKey()]; return !!m && Date.now() - m < 6 * 3600e3; };
 function startHTML(d){
-  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).length > 0;
-  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d)}
-    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar treino' : 'Iniciar treino'}</b><small>${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') + ' · ' + ns + ' séries' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : ''].filter(Boolean).join(' · ')}</small></span></button>`;
+  const ns = d.ex.reduce((a, ex) => a + targets(ex).length, 0), has = Object.keys(db.drafts[draftKey()] || {}).some(x => x !== '__cardio');
+  return `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, 'start')}
+    <button type="button" class="btn block startbtn" data-act="train-start"><span class="st-ic">${ICON_PLAY}</span><span><b>${has ? 'Continuar de onde parei' : 'Começar treino'}</b><small>${[d.ex.length ? d.ex.length + (d.ex.length === 1 ? ' exercício' : ' exercícios') + ' · ' + ns + ' séries · cerca de ' + Math.max(15, Math.round(ns * 2.6 / 5) * 5) + ' min' : '', (d.mob || []).length ? d.mob.length + ' de mobilidade' : ''].filter(Boolean).join(' · ')}</small></span></button>`;
 }
 /* som no fim do descanso (o iPhone não deixa app web vibrar; o som toca com o app aberto) */
 let AC = null;
@@ -1604,7 +1782,7 @@ function attentionHTML(){
   if (!list.length) return `<section class="attn okk"><b>Todos os alunos em dia</b><span>Ninguém está há 4 dias ou mais sem treinar.</span></section>`;
   return `<section class="attn"><div class="attn-h"><b>Precisam de atenção</b><span class="cnt">${list.length}</span></div>
     ${list.map(({s, a}) => `<div class="attn-row ${a.lvl}"><i class="lv"></i><div class="who"><b>${esc(s.name)}</b><span>${esc(a.t)}</span></div>
-      <div class="acts"><button type="button" class="icon" data-act="nudge" data-v="${s.id}">Copiar mensagem</button><button type="button" class="icon" data-act="p-track" data-v="${s.id}">Ver</button></div></div>`).join('')}
+      <div class="acts"><button type="button" class="icon" data-act="nudge" data-v="${s.id}">Copiar mensagem</button><button type="button" class="icon" data-act="p-track" data-v="${s.id}">Ver aluno</button></div></div>`).join('')}
     <p class="hint">Alerta quando o aluno fica 4 dias ou mais sem treinar, ou faz menos da metade do planejado nas últimas 2 semanas.</p></section>`;
 }
 function nextProto(p){ p = String(p || 'Protocolo 0'); const m = p.match(/(\d+)\s*$/); return m ? p.replace(/(\d+)\s*$/, String(+m[1] + 1)) : p + ' 2'; }
@@ -1680,8 +1858,8 @@ function fitOneLine(ctx, text, max){
 }
 async function makeSticker(title, vol, sets, pr, align){
   const LEFT = align === 'left';
-  const serif = '"Cormorant Garamond", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
-  try { await Promise.all(['italic 700 120px "Cormorant Garamond"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
+  const serif = '"Playfair Display", Georgia, "Times New Roman", serif', sans = 'Montserrat, "Helvetica Neue", Arial, sans-serif';
+  try { await Promise.all(['italic 700 120px "Playfair Display"', '800 100px Montserrat', '700 60px Montserrat', '500 40px Montserrat'].map(f => document.fonts.load(f))); } catch(e){}
   const logo = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = LOGO_HI; });
   const W = 1080, PAD = 64, MAX = W - PAD * 2, c = document.createElement('canvas'), ctx = c.getContext('2d');
   const logoW = 400, logoH = Math.round(logoW * logo.height / logo.width);
@@ -1774,12 +1952,21 @@ const WHEN = {antes: 'Antes do treino', depois: 'Depois do treino', separado: 'E
 const CD_MODS = ['Esteira', 'Esteira inclinada', 'Caminhada', 'Corrida', 'Bicicleta', 'Bike de spinning', 'Elíptico', 'Escada', 'Remo', 'Natação', 'Pular corda', 'HIIT'];
 const cardioList = d => ((d && d.cardio) || []).filter(c => c.mod || c.dur || c.obs || c.int);
 const cardioTxt = c => [c.mod || 'Cardio', c.dur, c.when && c.when !== 'livre' ? (WHEN[c.when] || '').toLowerCase() : ''].filter(Boolean).join(' · ');
-function cardioCard(d, cm){
+function cardioCard(d, mode){
   const cs = cardioList(d); if (!cs.length) return '';
-  return `<section class="cardio" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b></div>
+  const k = draftKey(), solo = mode === 'solo', today = solo ? cardioToday(d) : null;
+  const val = today && state.cdEdit !== k ? (today.cardioCmt || '') : (((db.drafts[k] || {}).__cardio || {}).comment || '');
+  const open = state.cdOpen === k || !!val, tap = !open ? ' cdtap" data-act="cd-obs' : '';
+  return `<section class="cardio${tap}" aria-label="Cardio de hoje"><div class="cdh">${ICON_HEART}<b>Cardio de hoje</b>${today ? `<span class="cdok">${ICON_CHECK}Feito hoje</span>` : ''}</div>
     ${cs.map(c => `<div class="cdi"><p class="cdm"><b>${esc(c.mod || 'Cardio')}</b>${c.dur ? `<span class="cdd">${esc(c.dur)}</span>` : ''}${WHEN[c.when] ? `<span class="cdw">${WHEN[c.when]}</span>` : ''}</p>
       ${c.int ? `<p class="cdx"><span>Intensidade:</span> ${esc(c.int)}</p>` : ''}${c.obs ? `<p class="cdx">${esc(c.obs)}</p>` : ''}</div>`).join('')}
-    ${cm ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="1" data-cardiocm="1" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(((db.drafts[draftKey()] || {}).__cardio || {}).comment || '')}</textarea></div>` : ''}</section>`;
+    ${open ? `<div class="cmtbox"><label for="cm-cardio">Observação do cardio para o personal</label><textarea id="cm-cardio" rows="2" data-cardiocm="${today ? 'log' : '1'}" placeholder="Como foi, se mudou o aparelho, o tempo ou a intensidade...">${esc(val)}</textarea></div>`
+      : `<button type="button" class="cdobs" data-act="cd-obs">${ICON_CHAT}<span>${today ? 'Anotar como foi' : 'Anotar observação do cardio'}</span></button>`}
+    ${solo ? `<button type="button" class="btn block cddone" data-act="cardio-done">${today ? 'Salvar observação' : 'Concluir cardio'}</button>${today ? '' : '<p class="cdhint">Fica no seu histórico e chega para o personal.</p>'}` : ''}</section>`;
+}
+function cardioToday(d){
+  const st = stu(); if (!st) return null; const t = dayKeyOf(new Date());
+  return (st.logs || []).slice().reverse().find(l => l.cardioOnly && l.day === state.day && dayKeyOf(l.date) === t) || null;
 }
 function cardioSum(d){
   const cs = cardioList(d); if (!cs.length) return '';
@@ -1856,7 +2043,7 @@ function feedItem(st, l){
     <div class="fhead"><span class="fav" aria-hidden="true">${esc(st.name.trim().charAt(0).toUpperCase())}</span>
       <div class="fwho"><b>${esc(st.name)}</b><span>${esc(whenTxt(l.date))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</span></div>
       ${seen ? '' : '<span class="fdot" title="Não lido"></span>'}</div>
-    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''} · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}</p>
+    <p class="ftitle"><b>${esc(l.title || 'Treino')}</b>${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''}${l.cardioOnly ? ' · cardio' : ` · ${sx.sets} ${sx.sets === 1 ? 'série' : 'séries'}${sx.vol ? ' · ' + sx.vol.toLocaleString('pt-BR') + ' kg' : ''}`}</p>
     ${prs.length ? `<div class="fprs">${prs.map(p => `<span class="mpill gold">${ICON_TROPHY}${esc(lib(p.libId).name)}: ${esc(markTxt(p))}</span>`).join('')}</div>` : ''}
     ${l.effortMsg ? `<div class="cmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt"><b>Cardio</b>${esc(l.cardioCmt)}</div>` : ''}${cmts.map(e => `<div class="cmt"><b>${esc(e.items.map(i => lib(i).name).join(' + '))}</b>${esc(e.comment)}</div>`).join('')}
     <div class="row"><button type="button" class="btn sm quiet" data-act="feed-open" data-v="${st.id}" data-log="${l.id}">Ver treino completo</button><button type="button" class="linkbtn" data-act="feed-seen" data-v="${l.id}">${seen ? 'Marcar como não lido' : 'Marcar como lido'}</button></div>
@@ -2309,7 +2496,7 @@ function loadDetail(s, id, cur){
 const DAY_MS = 864e5;
 function weekStart(d){ const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
 function dayKeyOf(d){ const x = new Date(d); return x.getFullYear() + '-' + (x.getMonth() + 1) + '-' + x.getDate(); }
-function trainedDays(st){ const m = new Map(); st.logs.forEach(l => { const k = dayKeyOf(l.date); if (!m.has(k)) m.set(k, new Date(l.date)); }); return [...m.values()].sort((a, b) => a - b); }
+function trainedDays(st){ const m = new Map(); st.logs.forEach(l => { if (l.cardioOnly) return; const k = dayKeyOf(l.date); if (!m.has(k)) m.set(k, new Date(l.date)); }); return [...m.values()].sort((a, b) => a - b); }
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 const isSeq = st => !!st && st.schedule === 'seq';
 const slotIdx = k => DAYS.findIndex(x => x.k === k);
@@ -2346,7 +2533,7 @@ function freqMsg(f){
   if (!p) return {h: 'Sua ficha ainda está sendo montada.', s: 'Assim que o personal liberar, seus treinos aparecem aqui.'};
   if (n === 0) return {h: 'Nenhum treino ainda essa semana.', s: 'Hoje é um ótimo dia pra começar. Bora?'};
   if (n >= p) return {h: `Semana completa: ${n} ${t}!`, s: 'Você fez tudo o que estava planejado. Orgulho demais!'};
-  return {h: `Você fez ${n} ${t} essa semana. Continue assim!`, s: `Faltam ${p - n} para fechar os ${p} da semana.`};
+  return {h: `Você fez ${n} ${t} essa semana. Continue assim!`, s: `${p - n === 1 ? 'Falta 1 treino' : 'Faltam ' + (p - n) + ' treinos'} para fechar a meta de ${p} na semana.`};
 }
 function weekStrip(st){
   const f = freqStats(st), m = freqMsg(f);
@@ -2355,8 +2542,23 @@ function weekStrip(st){
     <span class="wmsg"><b>${esc(m.h)}</b><span>${esc(m.s)}</span></span></button>`;
 }
 function profile(st){
+  return `    <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
+      ${profWeek(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
+    ${(() => { const p = planState(st), d = st.planDue ? daysTo(st.planDue) : null;
+      const chip = !p ? '' : p === 'ok' ? '<span class="plchip ok">Em dia</span>' : p === 'breve' ? '<span class="plchip breve">Vence em ' + d + (d === 1 ? ' dia' : ' dias') + '</span>' : p === 'hoje' ? '<span class="plchip hoje">Vence hoje</span>' : '<span class="plchip vencido">Vencido há ' + (-d) + (d === -1 ? ' dia' : ' dias') + '</span>';
+      const urgent = p === 'hoje' || p === 'vencido' || p === 'breve', tipo = st.plan && typeof planLbl === 'function' ? planLbl(st) : '';
+      return `<section class="card plancard"><div class="sechd"><p class="eyebrow">Seu plano</p>${chip}</div>
+        <div class="plgrid"><div><span>Plano</span><b>${tipo ? esc(tipo) : 'Não informado'}</b></div><div><span>Renovação</span><b>${st.planDue ? esc(dateBR(st.planDue + 'T12:00', {day: '2-digit', month: '2-digit', year: 'numeric'})) : 'Sem data'}</b></div></div>
+        ${p === 'vencido' ? '<p class="small plnote">Seu plano venceu. Renove para continuar recebendo treinos atualizados.</p>' : p === 'hoje' ? '<p class="small plnote">Seu plano vence hoje. Renove para não ficar sem acompanhamento.</p>' : p === 'breve' ? '<p class="small plnote">Falta pouco para a renovação. Já pode garantir o próximo período.</p>' : ''}
+        ${waNum() ? `<a class="btn block" href="${esc(waLink('Oi! Quero renovar meu plano' + (tipo ? ' ' + tipo.toLowerCase() : '') + '.'))}" target="_blank" rel="noopener">${ICON_CHAT}Renovar pelo WhatsApp</a>` : ''}</section>`; })()}
+    ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Chamar o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
+    ${themeHTML()}
+    <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Rever o tutorial</button></div>
+`;
+}
+function progressAll(st){
   const f = freqStats(st), m = freqMsg(f), per = state.fperiod;
-  const PER = {semana:['Semana', f.week], mes:['Mês', f.month], m3:['3 meses', f.m3], tudo:['Tudo', f.all]};
+  const PER = {mes:['Mês', f.month], m3:['3 meses', f.m3], tudo:['Tudo', f.all]};
   const val = PER[per][1];
   let sub;
   if (per === 'semana') sub = `<div class="pbar" aria-hidden="true">${Array.from({length: Math.max(f.plan, val)}, (_, i) => `<i class="${i < val ? 'on' : ''}"></i>`).join('')}</div><p class="muted small">${val} de ${f.plan} treinos planejados nesta semana</p>`;
@@ -2380,7 +2582,6 @@ function profile(st){
       <div class="seg" role="group" aria-label="Período">${Object.entries(PER).map(([k, [l]]) => `<button type="button" data-act="fper" data-v="${k}" aria-pressed="${per === k}">${l}</button>`).join('')}</div>
       <div class="card fbig"><p class="eyebrow">Treinos</p><b class="bignum">${val}</b>${sub}</div>
     </section>
-    <section class="card fmsg"><span class="wdots">${f.weekDays.map(d => `<span class="wd ${d.on ? 'on' : ''} ${d.today ? 'today' : ''}"><i>${d.on ? ICON_CHECK : ''}</i>${d.l[0]}</span>`).join('')}</span><div><b>${esc(m.h)}</b><p class="muted small">${esc(m.s)}</p></div></section>
     <div class="stats">
       <div class="stat"><span>Sequência</span><b>${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</b></div>
       <div class="stat"><span>Por semana</span><b>${fmtKg(f.avg3)}</b></div>
@@ -2389,12 +2590,7 @@ function profile(st){
     <p class="small muted" style="margin-top:-12px">Sequência: semanas seguidas com ${f.target} ou mais treinos.</p>
     <section class="card"><p class="eyebrow" style="margin-bottom:10px">Últimas 12 semanas</p><div class="heat">${heat}</div>
       <div class="legend" style="margin-top:10px"><span><i></i>Treinou</span><span><i class="z"></i>Sem treino</span></div></section>
-    ${achSection(st)}${recordsSection(st)}${histSection(st)}
-    ${waNum() ? `<a class="btn block ghost" href="${esc(waLink('Oi! '))}" target="_blank" rel="noopener">${ICON_CHAT}Falar com o personal no WhatsApp</a><p class="small muted" style="text-align:center;margin-top:-12px">${esc(waPretty())}</p>` : ''}
-    ${themeHTML()}
-    <div class="row" style="justify-content:center"><button type="button" class="linkbtn" data-act="ob-reset">Ver o tutorial do app de novo</button></div>
-    <section class="card pinfo"><p class="eyebrow">Sua ficha</p><h3>${esc(st.protocol || '—')}</h3><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${st.cardio ? `<p class="small">Cardio: ${esc(st.cardio)}</p>` : ''}
-      ${splitChips(st)}${isSeq(st) ? `<p class="small muted">Sequência: faça os treinos na ordem, em qualquer dia. Meta: ${plannedPerWeek(st)} por semana.</p>` : ''}</section>
+    ${evolution(st)}${recordsSection(st)}${achSection(st)}${histSection(st)}
     ${st.logs.some(l => l.sample) ? '<p class="sample">A frequência inclui o histórico de exemplo das últimas 10 semanas.</p>' : ''}`;
 }
 
@@ -2556,14 +2752,15 @@ function evolution(st){
 
 /* ---------- header ---------- */
 const TABI = {
+  inicio: HOMEI,
   treino: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   evolucao: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19h16M6 15l4-4 3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   perfil: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
 };
 function header(){
   const tabs = state.mode === 'aluno'
-    ? [['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
-    : [['painel','Painel'], ['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${l}${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
+    ? [['inicio','Início'], ['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
+    : [['painel','Painel'], ['alunos','Alunos'], ['feed','Atividade'], ['lib','Biblioteca'], ['metodos','Métodos']].map(([k, l]) => `<button type="button" data-act="psec" data-v="${k}" aria-pressed="${state.psec === k}">${PTABI[k] || ''}<span>${l}</span>${k === 'feed' && unreadCount() ? `<span class="tbadge">${unreadCount()}</span>` : ''}</button>`).join('');
   return `<header class="band"><div class="wrap">
     <div class="band-top"><img class="logo" src="${LOGO}" alt="Jau Training, Online Strength Coaching" width="560" height="406">
     ${isP() ? `<div class="modes" role="group" aria-label="Visão">
@@ -2596,7 +2793,7 @@ function dueChip(s){
 }
 function planMsg(s){
   const p = planState(s); if (p !== 'hoje' && p !== 'vencido') return '';
-  return `<div class="planmsg ${p}" role="status"><b>${p === 'hoje' ? 'Seu plano vence hoje' : 'Seu plano venceu'}</b>${waNum() ? `<a href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Falar com o personal</a>` : ''}</div>`;
+  return `<div class="planmsg ${p}" role="status"><b>${p === 'hoje' ? 'Seu plano vence hoje' : 'Seu plano venceu'}</b>${waNum() ? `<a href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Renovar pelo WhatsApp</a>` : ''}</div>`;
 }
 
 /* ---------- vídeo dentro do app ---------- */
@@ -2640,8 +2837,11 @@ function studentView(){
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
   const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
-  if (state.stab === 'evolucao') return `<main class="wrap">${hello}${evolution(st)}</main>`;
-  if (state.stab === 'perfil') return `<main class="wrap">${hello}${profile(st)}${isP() ? '' : accountHTML()}</main>`;
+  const mini = preview + autoBanner(st) + planMsg(st);
+  const minip = preview + autoBanner(st);
+  if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
+  if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
+  if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
   if (seq && (!state.dayPicked || !seqSlots(st).includes(state.day))) state.day = nxt;
   const d = st.days[state.day] || {title:'', ex:[]};
@@ -2649,14 +2849,14 @@ function studentView(){
   let body;
   if (!d.ex.length && !(d.mob || []).length){
     const isCardio = /barquinho|remo|cardio|corrida|bike/i.test(d.title);
-    body = cardioList(d).length ? cardioCard(d) : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
+    body = cardioList(d).length ? cardioCard(d, 'solo') : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Resumo do treino pra foto</b><small>A ficha do dia num quadro só, pronta pra print</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
-      <div id="finish-area"><button class="btn block" type="button" data-act="finish">Finalizar treino</button></div>`;
+      <div id="finish-area"><button class="btn block" type="button" data-act="finish">Concluir e salvar treino</button></div>`;
   }
-  return `<main class="wrap">${hello}${weekStrip(st)}
+  return `<main class="wrap">${mini}
     ${seq ? `<nav class="week seqnav" aria-label="Treinos da sequência" style="grid-template-columns:repeat(${Math.max(seqSlots(st).length, 1)},minmax(0,1fr))">${seqSlots(st).map(k => {
       const t = st.days[k].title || '';
       return `<button type="button" data-act="day" data-v="${k}" aria-pressed="${k === state.day}" class="${k === nxt ? 'today' : ''}" title="${esc(t)}"><span class="d">${slotShort(st, k)}</span><span class="t">${esc(shortTitle(t))}</span></button>`;
@@ -2670,7 +2870,7 @@ function studentView(){
     </header>
     ${body}${guide()}
     <p class="foot">Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, CREF RJ-056749</p>
-  </main>${state.sumOpen && d.ex.length ? `<div class="sumov" role="dialog" aria-modal="true" aria-label="Resumo do treino"><div class="sumov-in"><div class="sumov-top"><span class="small muted">Tire um print desta tela</span><button type="button" class="icon" data-act="sum-close">Fechar</button></div>${summaryCard(st, d, df)}</div></div>` : ''}${onboardHTML(st)}`;
+  </main>${state.sumOpen && d.ex.length ? `<div class="sumov" role="dialog" aria-modal="true" aria-label="Resumo do treino"><div class="sumov-in"><div class="sumov-top"><span class="small muted">Mostre ao professor ou tire uma foto</span><button type="button" class="icon" data-act="sum-close">Fechar</button></div>${summaryCard(st, d, df)}</div></div>` : ''}${onboardHTML(st)}`;
 }
 function progText(d){
   const dr = draft(); let tot = 0, done = 0;
@@ -2780,7 +2980,7 @@ function trainerView(){
       ${splitChips(s)}
       <div class="row"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button>
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
-        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Abrir como aluno</button></div>
+        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
     ${bkHTML()}
@@ -2816,7 +3016,7 @@ function editView(){
       <label>Orientações gerais de cardio <span class="hint">Opcional. O cardio de cada dia é prescrito dentro do dia, logo abaixo.</span><input id="f-cardio" data-sf="cardio" value="${esc(s.cardio)}"></label>
     </div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê. O aluno não tem acesso.</span><textarea id="f-priv" data-sf="privNotes" rows="3" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="newproto"><button class="icon" type="button" data-act="new-proto">Iniciar próximo protocolo</button><span class="hint">Avança o número do protocolo (${esc(s.protocol || '—')} → ${esc(nextProto(s.protocol))}) e mantém todo o histórico de cargas. Quando um exercício antigo volta pra ficha, a última carga dele aparece como referência.</span></div>
+    <div class="newproto"><button class="icon" type="button" data-act="new-proto">Iniciar próximo protocolo</button><span class="hint">Avança o número do protocolo (${esc(s.protocol || '—')} → ${esc(nextProto(s.protocol))}) e guarda a ficha atual para comparar na aba Volume. O histórico de cargas continua: quando um exercício antigo volta para a ficha, a última carga dele aparece como referência.</span></div>
     </details>
     ${volumeCard(s)}
     ${d.ex.length ? muscleCard(d, 'Músculos deste treino', true) : ''}
@@ -2839,8 +3039,8 @@ function editEx(ex, i, n){
   return `<div class="edit-ex ${hasM ? 'hasm' : ''}">
     ${hasM ? `<div class="mband">${methPill(ex.method)}<p>${esc(meth(ex.method).desc)}</p></div>` : ''}
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
-      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
-      <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Pôr vídeo</button>`}
+      <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">Remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
+      <span class="iacts">${videoUrl(l) ? '<span class="vok">Vídeo ✓</span>' : `<button type="button" class="linkbtn small" data-act="go-lib" data-v="${id}">Adicionar vídeo</button>`}
       <button type="button" class="icon exl" data-act="exlib-edit" data-v="${ex.id}:${k}" aria-pressed="${state.exLib === ex.id + ':' + k}">Editar</button><button type="button" class="icon exl" data-act="exlib-copy" data-v="${ex.id}:${k}">Copiar</button><button type="button" class="icon swapit" data-act="pick-open" data-v="swap:${ex.id}:${k}" aria-label="Trocar ${esc(l.name)} por outro exercício">${ICON_SWAP}Trocar</button>
       ${ex.items.length > 1 ? `<button type="button" class="icon" data-act="p-unpart" data-ex="${ex.id}" data-i="${k}" aria-label="Tirar ${esc(l.name)} do conjugado">✕</button>` : ''}</span></div>`; }).join('')}</div>
     ${exLibEditor(ex)}
@@ -2912,10 +3112,10 @@ function trackView(){
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
-    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div></div>
+    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button></div>
-    ${state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button></div>
+    ${state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
   </main>`;
 }
 
@@ -2983,10 +3183,11 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ autoFinish();
+function render(){ render0(); polishAfter(); }
+function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
-  app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView());
+  app.innerHTML = header() + (state.mode === 'aluno' ? studentView() : trainerView()) + (state.mode === 'aluno' ? '' : presHTML());
   drawCharts();
   if (state.done && state.mode === 'aluno' && state.done.step !== 'eff') renderSticker();
 }
@@ -3036,10 +3237,15 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'cd-obs'){ state.cdOpen = draftKey(); render(); const ta = document.getElementById('cm-cardio'); if (ta){ ta.focus(); ta.scrollIntoView({block:'center', behavior:'smooth'}); } return; }
+  if (act === 'cardio-done'){ const st = stu(), d = st && st.days[state.day]; if (!d) return; const k = draftKey(), dr = db.drafts[k] || {}, cc = ((dr.__cardio || {}).comment || '').trim(), ex = cardioToday(d), now = new Date().toISOString();
+    if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
+    else { st.logs = st.logs || []; st.logs.push(Object.assign({id: uid(), date: now, day: state.day, title: d.title || 'Cardio', protocol: st.protocol, entries: [], cardioOnly: 1}, cc ? {cardioCmt: cc} : {})); st.last = now; toast(cc ? 'Cardio concluído. Sua observação foi para o personal.' : 'Cardio concluído'); if (navigator.vibrate) try { navigator.vibrate(18); } catch(_){} }
+    delete db.drafts[k]; if (db.draftMeta) delete db.draftMeta[k]; state.cdEdit = null; state.cdOpen = null; save(); render(); return; }
   if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
-  else if (act === 'stab'){ state.done = null; state.editLog = null; state.stab = v; render(); top(); }
-  else if (act === 'psec'){ state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
-  else if (act === 'day'){ state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
+  else if (act === 'stab'){ state.done = null; state.editLog = null; if (state.stab !== v) ANIM = 'tab'; state.stab = v; render(); top(); }
+  else if (act === 'psec'){ if (state.psec !== v) ANIM = 'tab'; state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }
+  else if (act === 'day'){ if (state.day !== v){ ANIM = 'day'; const ia = DAYS.findIndex(x => x.k === state.day), ib = DAYS.findIndex(x => x.k === v); ANIMDX = ib >= ia ? 14 : -14; } state.day = v; state.dayPicked = true; state.sumOpen = false; render(); }
   else if (act === 'meth'){ const box = document.getElementById('mx-' + v); if (box){ box.hidden = !box.hidden; b.setAttribute('aria-expanded', !box.hidden); } }
   else if (act === 'goevo'){ state.stab = 'evolucao'; state.evoLib = v; render(); top(); }
   else if (act === 'evo'){ state.evoLib = v; render(); }
@@ -3051,12 +3257,12 @@ document.addEventListener('click', e => {
     const before = f ? draftPRs(st, f.ex, rec) : new Set();
     rec.sets[si] = rec.sets[si] || {parts: []};
     const s = rec.sets[si]; s.done = !s.done; s.parts = s.parts || [];
-    if (f && s.done && targets(f.ex).every((_, k) => rec.sets[k] && rec.sets[k].done)){ delete state.openEx[exId]; setTimeout(() => { if (state.mode === 'aluno' && !state.done && !document.querySelector('.fconfirm')) render(); }, 900); }
+    if (f && s.done && targets(f.ex).every((_, k) => rec.sets[k] && rec.sets[k].done)){ delete state.openEx[exId]; JUSTDONE = exId; setTimeout(() => { if (state.mode === 'aluno' && !state.done && !document.querySelector('.fconfirm')) render(); }, 900); }
     if (s.done && f) f.ex.items.forEach((_, pi) => ['kg', 'reps'].forEach(k => {
       const inp = document.getElementById((k === 'kg' ? 'kg-' : 'rp-') + exId + '-' + si + '-' + pi); s.parts[pi] = s.parts[pi] || {};
       if (inp && !inp.value && inp.placeholder){ inp.value = inp.placeholder; s.parts[pi][k] = inp.placeholder; } }));
     document.getElementById('set-' + exId + '-' + si).classList.toggle('done', s.done);
-    b.setAttribute('aria-pressed', s.done);
+    b.setAttribute('aria-pressed', s.done); if (s.done){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); try { navigator.vibrate && navigator.vibrate(12); } catch(e){} }
     if (f){
       const after = draftPRs(st, f.ex, rec), used = usedItems(f.ex, rec);
       targets(f.ex).forEach((_, k) => { const row = document.getElementById('set-' + exId + '-' + k); if (row) row.classList.toggle('pr', f.ex.items.some((_, pi) => after.has(k + '-' + pi))); });
@@ -3118,6 +3324,18 @@ document.addEventListener('click', e => {
   else if (act === 'al-anam'){ const s = db.students.find(x => x.id === v); if (!s) return; s.anam = 'ok'; save(); render(); toast('Anamnese de ' + s.name.split(' ')[0] + ' marcada como respondida.'); }
   else if (act === 'al-renew'){ const s = db.students.find(x => x.id === v); if (!s) return; renewPlan(s); save(); render(); toast('Plano de ' + s.name.split(' ')[0] + ' renovado até ' + dueBR(s.planDue) + '.'); }
   else if (act === 'auto-ok'){ state.autoFin = (state.autoFin || []).filter(x => x.sid !== stu().id); render(); }
+  else if (act === 'pf-day'){ state.stab = 'treino'; state.day = v; state.dayPicked = true; render(); top(); }
+  else if (act === 'home-go'){ ANIM = 'tab'; state.stab = 'treino'; state.day = v; state.dayPicked = true; render(); top(); const bt = document.querySelector('[data-act=train-start]'); if (bt) bt.click(); }
+  else if (act === 'volr-def'){ const s = stu(); db.settings = Object.assign({}, db.settings, {volRange: volRange(s)}); delete s.volRange; save(); render(); toast('Faixa ' + db.settings.volRange.lo + ' a ' + db.settings.volRange.hi + ' agora é o padrão de todos.'); }
+  else if (act === 'volr-reset'){ const s = stu(); delete s.volRange; save(); render(); }
+  else if (act === 'volmode'){ state.volMode = v; render(); }
+  else if (act === 'volday'){ state.volDay = v; render(); }
+  else if (act === 'pres-open'){ state.pres = {sid: stu().id, i: 0}; render(); }
+  else if (act === 'pres-close'){ state.pres = null; render(); }
+  else if (act === 'pres-go'){ if (state.pres){ state.pres.i = Math.max(0, +v); render(); } }
+  else if (act === 'proto-new'){ const s = stu(); if (!arm(b, 'Toque de novo para confirmar', 'Começar novo protocolo')) return;
+    const old = s.protocol || 'Protocolo'; protoSave(s, old, s.days);
+    s.protocol = nextProtoName(old); state.editBase = {sid: s.id, name: s.protocol, days: JSON.parse(JSON.stringify(s.days))}; save(); render(); toast('"' + old + '" guardado. Agora a ficha se chama "' + s.protocol + '": edite à vontade.'); }
   else if (act === 'finish'){
     const st = stu(), d = st.days[state.day], dr = draft(), entries = [];
     if (!b.dataset.force){
@@ -3135,7 +3353,7 @@ document.addEventListener('click', e => {
     st.last = now; delete db.drafts[draftKey()]; if (db.draftMeta) delete db.draftMeta[draftKey()];
     const newAch = unlocked(st).filter(a => !achBefore.has(a.id)).map(a => a.id);
     save(); T.el.hidden = true; clearInterval(T.iv);
-    state.done = {logId: id, start, newAch, step: 'eff'}; state.dayPicked = false;
+    state.done = {logId: id, start, newAch, step: 'eff'}; ANIM = 'tab'; state.dayPicked = false;
     render(); top();
   }
   else if (act === 'stk-go'){ const car = document.getElementById('stk-car'); if (car) car.scrollTo({left: +v * car.clientWidth, behavior: 'smooth'}); }
@@ -3172,7 +3390,7 @@ document.addEventListener('click', e => {
   else if (act === 'imp-save'){ saveImport(); }
   else if (act === 'ex-open'){ state.openEx[v] = true; render(); const el = document.getElementById('set-' + v + '-0'); if (el) el.scrollIntoView({block:'center'}); }
   else if (act === 'ex-close'){ delete state.openEx[v]; render(); }
-  else if (act === 'finish-cancel'){ const fa = document.getElementById('finish-area'); if (fa) fa.innerHTML = '<button class="btn block" type="button" data-act="finish">Finalizar treino</button>'; }
+  else if (act === 'finish-cancel'){ const fa = document.getElementById('finish-area'); if (fa) fa.innerHTML = '<button class="btn block" type="button" data-act="finish">Concluir e salvar treino</button>'; }
   else if (act === 'log-edit'){ const l = stu().logs.find(x => x.id === v); if (!l) return; state.editLog = v; state.logDraft = JSON.parse(JSON.stringify(l)); render(); const el = document.getElementById('log-' + v); if (el) el.scrollIntoView({block:'start'}); }
   else if (act === 'log-cancel'){ state.editLog = null; state.logDraft = null; render(); }
   else if (act === 'log-save'){ const st = stu(), l = st.logs.find(x => x.id === state.editLog); if (l && state.logDraft){ state.logDraft.entries.forEach(e => e.sets.forEach(x => x.parts.forEach(p => { if (p.drops && !p.drops.some(d => d && (d.kg || d.reps))) delete p.drops; if (p.blocks && !p.blocks.some(Boolean)) delete p.blocks; }))); l.entries = state.logDraft.entries; dataVer++; save(); } state.editLog = null; state.logDraft = null; render(); toast('Treino corrigido. Gráficos e recordes atualizados.'); }
@@ -3192,13 +3410,13 @@ document.addEventListener('click', e => {
       ta.focus(); ta.select(); toast('Selecione e copie a mensagem abaixo'); };
     try { navigator.clipboard.writeText(msg).then(() => toast('Mensagem copiada. É só colar no WhatsApp.'), fallback); } catch(e){ fallback(); }
   }
-  else if (act === 'p-edit'){ state.sid = v; state.pview = 'edit'; state.editDay = 'seg'; state.picker = null; render(); top(); }
+  else if (act === 'p-edit'){ state.sid = v; state.pview = 'edit'; { const s0 = db.students.find(x => x.id === v); if (s0) state.editBase = {sid: v, name: s0.protocol || '', days: JSON.parse(JSON.stringify(s0.days || {}))}; } state.editDay = 'seg'; state.picker = null; render(); top(); }
   else if (act === 'p-track'){ state.sid = v; state.pview = 'track'; state.ptab = 'hist'; render(); top(); }
   else if (act === 'ptab'){ state.editLog = null; state.ptab = v; state.loadLib = null; render(); }
   else if (act === 'load-open'){ state.loadLib = v; render(); top(); }
   else if (act === 'load-back'){ state.loadLib = null; render(); }
   else if (act === 'load-chart'){ state.ptab = 'evo'; state.evoLib = v; state.loadLib = null; render(); top(); }
-  else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; st.protocol = nextProto(from); st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O histórico do ${from || 'protocolo anterior'} continua salvo.`); }
+  else if (act === 'new-proto'){ const st = stu(); const from = st.protocol; { const B = state.editBase; protoSave(st, from, B && B.sid === st.id ? B.days : st.days); } st.protocol = nextProto(from); state.editBase = {sid: st.id, name: st.protocol, days: JSON.parse(JSON.stringify(st.days))}; st.protocolStart = new Date().toISOString(); save(); render(); toast(`${st.protocol} iniciado. O ${from || 'protocolo anterior'} ficou guardado para comparar na aba Volume.`); }
   else if (act === 'p-open'){ state.sid = v; state.mode = 'aluno'; state.stab = 'treino'; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); top(); }
   else if (act === 'p-back'){ state.pview = 'list'; state.picker = null; render(); top(); }
   else if (act === 'p-day'){ state.exLib = null; state.editDay = v; state.picker = null; render(); }
@@ -3284,6 +3502,9 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.id === 'f-protocol'){ const s = stu(), B = state.editBase, nv = e.target.value.trim();
+    if (B && B.sid === s.id && B.name && nv && nv !== B.name){ protoSave(s, B.name, B.days); state.editBase = {sid: s.id, name: nv, days: JSON.parse(JSON.stringify(s.days))}; save(); toast('"' + B.name + '" guardado como versão anterior. Dá para comparar na aba Volume.'); }
+    return; }
   if (e.target.id === 'f-due' || e.target.id === 'f-plan' || e.target.id === 'f-anam'){ render(); return; }
   const t = e.target, c = t.dataset.change;
   if (c === 'cpst'){ if (state.copy){ state.copy.sid = t.value; render(); } return; }
@@ -3292,6 +3513,7 @@ document.addEventListener('change', e => {
   if (t.dataset.impobs){ state.imp.useObs = t.checked; return; }
   if (t.dataset.impmob){ const [k, mi] = t.dataset.impmob.split('|'); state.imp.data.dias[k].mob[+mi].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
   if (t.dataset.implib){ const [k, ei, ii] = t.dataset.implib.split('|'); state.imp.data.dias[k].exercicios[+ei].itens[+ii].choice = t.value; t.classList.toggle('isnew', t.value === '__new'); return; }
+  if (c === 'volb'){ state.volB = t.value; render(); return; }
   if (c === 'viewas'){ state.sid = t.value; state.evoLib = null; state.dayPicked = false; if (!isSeq(stu())) state.day = todayKey; render(); return; }
   if (t.dataset.sched !== undefined){ const st = stu(); st.schedule = t.value; if (st.schedule === 'seq' && !st.perWeek) st.perWeek = String(seqSlots(st).length || 3); save(); render(); return; }
   if (c === 'evo'){ state.evoLib = t.value; render(); return; }
@@ -3323,7 +3545,9 @@ document.addEventListener('input', e => {
     else p[t.dataset.le] = v; return; }
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
   if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
-  if (t.dataset.cardiocm){ touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
+  if (t.dataset.volr){ const s = stu(), n = parseInt(t.value); if (isNaN(n) || n < 0) return; const r = volRange(s); r[t.dataset.volr] = n; if (r.lo > r.hi) return; s.volRange = r; save(); clearTimeout(window.__vrT); window.__vrT = setTimeout(() => { const id = document.activeElement && document.activeElement.id; render(); const el = id && document.getElementById(id); if (el){ el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch(e){} } }, 500); return; }
+  if (t.dataset.cardiocm === 'log'){ state.cdEdit = draftKey(); draft().__cardio = {comment: t.value}; save(); return; }
+  if (t.dataset.cardiocm){ if (trainOpen()) touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
   if (t.id === 'pick-q'){ state.picker.q = t.value; document.getElementById('pick-res').innerHTML = pickResults(); return; }
   if (t.id === 'stu-q'){ const q = norm(t.value.trim()); let any = false; document.querySelectorAll('article.stu').forEach(r => { r.hidden = !!q && !r.dataset.name.includes(q); if (!r.hidden) any = true; }); const n = document.getElementById('stu-none'); if (n) n.hidden = any; return; }
