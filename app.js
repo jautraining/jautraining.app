@@ -1,4 +1,5 @@
 (function(){
+const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const LOGO = 'img/logo.webp';
 const LOGO_HI = 'img/logo-hi.webp';
 const CHEETAH = 'img/cheetah.webp';
@@ -463,6 +464,7 @@ function snap(){
     m['set:wa'] = JSON.stringify((db.settings && db.settings.wa) || '');
     if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
     if (db.settings && db.settings.volRange) m['set:volrange'] = JSON.stringify(db.settings.volRange);
+    if (db.settings && db.settings.feedOpened) m['set:feedopen'] = JSON.stringify(db.settings.feedOpened);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
@@ -660,8 +662,8 @@ async function pullFull(P){
   return true;
 }
 function applySettings(set){
-  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange');
-  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {});
+  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange'), fo = set.find(r => r.key === 'feedopen');
+  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {}, fo && typeof fo.value === 'string' ? {feedOpened: fo.value} : {});
 }
 /* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
 async function pullDelta(P){
@@ -2093,6 +2095,214 @@ function volumeCard(s){
     <p class="hint">Conta só os músculos principais (agonistas) de cada exercício, nas séries de trabalho da semana. Aquecimento e preparatória não contam. Só você vê este quadro.</p></details>`;
 }
 
+
+/* ---------- ficha em PDF (modelo da planilha) ---------- */
+let pdfLibP = null;
+function loadPdfLib(){
+  if (pdfLibP) return pdfLibP;
+  const add = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = () => rej(new Error('load ' + src)); document.head.appendChild(el); });
+  pdfLibP = add('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(() => add('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')).then(() => { if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jspdf'); return window.jspdf.jsPDF; })
+    .catch(e => { pdfLibP = null; throw e; });
+  return pdfLibP;
+}
+async function pdfFonts(){
+  const get = async (f) => { const r = await fetch('fonts/pdf/montserrat-' + f + '.ttf'); if (!r.ok) throw new Error('font ' + f); const b = new Uint8Array(await r.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+  return Promise.all([['400-normal','Montserrat','normal'],['400-italic','Montserrat','italic'],['700-normal','Montserrat','bold'],['800-normal','MontserratX','normal']].map(async ([f, fam, sty]) => ['m-' + f + '.ttf', fam, sty, await get(f)]));
+}
+function pdfImg(src){
+  return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); res({url: c.toDataURL('image/png'), w: c.width, h: c.height}); }; im.onerror = rej; im.src = src; });
+}
+const PDF_RED = [163, 0, 0], PDF_GRAY = [228, 228, 228], PDF_INK = [28, 22, 22];
+function pdfReps(ex, k){
+  const groups = [];
+  (ex.series || []).forEach(s => { const ps = String(s.reps || '').split(/\s*\+\s*/); const r = ps[k] || ps[0] || '';
+    const g = groups[groups.length - 1], mm = !!(s.m && tecOfMeth(ex.method)); if (g && g.type === s.type && g.r === r && g.m === mm) g.n++; else groups.push({type: s.type, n: 1, r, m: mm}); });
+  return groups.map(g => `${g.n}x ${tgtFmt(g.r, measOf(ex, k)) || '—'}${g.m ? (tecOfMeth(ex.method) === 'drop' ? ' + ' + tecN(ex) + (tecN(ex) > 1 ? ' drops' : ' drop') : ' em ' + tecN(ex) + ' blocos') : ''}${g.type === 'aq' ? ' (aquec.)' : g.type === 'prep' ? ' (prep.)' : ''}`).join('\n');
+}
+function pdfRows(d){
+  const L = k => String.fromCharCode(65 + k);
+  return d.ex.map(ex => {
+    const conj = ex.items.length > 1, pre = k => conj ? L(k) + ') ' : '';
+    const names = ex.items.map((id, k) => pre(k) + lib(id).name.toUpperCase() + (ex.alt && ex.alt[k] ? '\n(ou ' + lib(ex.alt[k]).name + ')' : '')).join('\n');
+    const work = (ex.series || []).filter(s => s.type !== 'aq').length, aq = countType(ex, 'aq');
+    const reps = ex.items.map((_, k) => (conj ? L(k) + ': ' : '') + pdfReps(ex, k)).join('\n');
+    const how = ex.items.map((id, k) => { const t = (lib(id).instructions || '').trim(); return t ? pre(k) + t : ''; }).filter(Boolean).join('\n');
+    return [names, ex.method && ex.method !== 'normal' ? meth(ex.method).name : '—', work + 'x' + (aq ? '\n+ ' + aq + ' aquec.' : ''), reps, ex.rest || '—', how || '—', (ex.notes || '').trim() || '—'];
+  });
+}
+function pdfSlots(st){ return isSeq(st) ? seqSlots(st) : DAYS.map(x => x.k); }
+function pdfFileName(st){ return ('Ficha - ' + st.name + (st.protocol ? ' - ' + st.protocol : '')).replace(/[\\/:*?"<>|]+/g, '').trim() + '.pdf'; }
+async function fichaPDF(st){
+  const [jsPDF] = await Promise.all([loadPdfLib()]);
+  const [fonts, logo, chee] = await Promise.all([pdfFonts(), pdfImg(typeof LOGO_HI !== 'undefined' ? LOGO_HI : LOGO), pdfImg(CHEETAH)]);
+  const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4', compress: true});
+  fonts.forEach(([file, fam, sty, b64]) => { doc.addFileToVFS(file, b64); doc.addFont(file, fam, sty); });
+  const W = 297, H = 210, M = 12, CREF = 'CREF RJ-056749';
+  const font = (sty, size, color) => { doc.setFont(sty === 'x' ? 'MontserratX' : 'Montserrat', sty === 'x' ? 'normal' : sty); doc.setFontSize(size); doc.setTextColor(...(color || PDF_INK)); };
+  const header = (big, small) => {
+    doc.setFillColor(...PDF_RED); doc.rect(0, 0, W, 38, 'F');
+    font('bold', 7, [255, 255, 255]); doc.text(CREF, M, 9);
+    const cw = 46, ch = cw * chee.h / chee.w; doc.addImage(chee.url, 'PNG', W - M - cw, 19 - ch / 2, cw, ch);
+    font('x', 18, [255, 255, 255]); doc.text(big, W / 2, 17, {align: 'center'});
+    if (small){ font('italic', 13, [255, 255, 255]); doc.text(small, W / 2, 27, {align: 'center', maxWidth: W - 2 * (M + 56)}); }
+  };
+  const foot = () => { doc.setFillColor(...PDF_RED); doc.rect(0, H - 3, W, 3, 'F'); };
+  // 1. capa
+  doc.setFillColor(...PDF_RED); doc.rect(0, 0, W, H, 'F');
+  const lw = 120, lh = lw * logo.h / logo.w; doc.addImage(logo.url, 'PNG', (W - lw) / 2, 30, lw, lh);
+  font('bold', 10, [255, 255, 255]); doc.setCharSpace(1.2); doc.text((st.protocol || 'Protocolo de treino').toUpperCase(), W / 2, 30 + lh + 16, {align: 'center'}); doc.setCharSpace(0);
+  font('italic', 20, [255, 255, 255]); doc.text(st.name, W / 2, 30 + lh + 27, {align: 'center'});
+  font('bold', 7, [255, 255, 255]); doc.text('Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, ' + CREF, W / 2, H - 14, {align: 'center'});
+  // 2. divisão semanal
+  const ks = pdfSlots(st), lab = k => slotFull(st, k);
+  doc.addPage(); header('SUA DIVISÃO DE TREINOS', st.name);
+  doc.autoTable({startY: 46, margin: {left: M, right: M}, theme: 'grid',
+    head: [ks.map(k => lab(k).toUpperCase())], body: [ks.map(k => { const d = st.days[k]; return d && d.ex.length ? (d.title || 'Treino') : d && cardioList(d).length ? (d.title || 'Cardio') : 'Descanso'; })],
+    styles: {font: 'Montserrat', fontStyle: 'italic', fontSize: 10, halign: 'center', valign: 'middle', textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.8, minCellHeight: 42, cellPadding: 3},
+    headStyles: {font: 'Montserrat', fontStyle: 'bold', fontSize: 9, fillColor: PDF_RED, textColor: [255, 255, 255], minCellHeight: 14},
+    columnStyles: Object.fromEntries(ks.map((_, i) => [i, {cellWidth: (W - 2 * M) / ks.length}]))});
+  let y = doc.lastAutoTable.finalY + 8;
+  const cds = ks.map(k => [k, cardioList(st.days[k] || {ex: []})]).filter(([, l]) => l.length);
+  if (cds.length){
+    doc.autoTable({startY: y, margin: {left: 40, right: 40}, theme: 'grid',
+      head: [['ORIENTAÇÕES DE CARDIO']], body: cds.map(([k, l]) => [lab(k) + ': ' + l.map(c => [c.mod || 'Cardio', c.dur, c.int ? 'intensidade ' + c.int : '', WHEN[c.when] ? WHEN[c.when].toLowerCase() : '', c.obs].filter(Boolean).join(' · ')).join(' | ')]),
+      styles: {font: 'Montserrat', fontStyle: 'italic', fontSize: 9, halign: 'center', textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.6, cellPadding: 3.2},
+      headStyles: {fontStyle: 'bold', fontSize: 10, fillColor: PDF_RED, textColor: [255, 255, 255]}});
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  if (st.focus){ font('bold', 12, PDF_RED); doc.text('Neste protocolo nosso foco será:', W / 2, y + 4, {align: 'center'}); font('normal', 10); doc.text(doc.splitTextToSize(st.focus, W - 2 * 50), W / 2, y + 11, {align: 'center'}); }
+  foot();
+  // 3. uma página por dia
+  ks.forEach(k => {
+    const d = st.days[k]; if (!d) return; const cs = cardioList(d), mob = (d.mob || []).filter(m => m && m.lib);
+    if (!d.ex.length && !cs.length) return;
+    doc.addPage(); const big = lab(k).toUpperCase(), sub = d.title || '';
+    header(big, sub); let yy = 44;
+    const tbl = (opt) => doc.autoTable(Object.assign({margin: {left: M, right: M, top: 44, bottom: 10}, theme: 'grid', rowPageBreak: 'avoid',
+      styles: {font: 'Montserrat', fontSize: 8.2, textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.6, cellPadding: 2.6, valign: 'middle', overflow: 'linebreak'},
+      headStyles: {fontStyle: 'bold', fontSize: 8.6, fillColor: PDF_RED, textColor: [255, 255, 255], halign: 'center', valign: 'middle', minCellHeight: 10},
+      didDrawPage: dd => { if (dd.pageNumber > 1 && doc.internal.getCurrentPageInfo().pageNumber !== pg){ header(big, sub + ' (continuação)'); foot(); } }}, opt));
+    const pg = doc.internal.getCurrentPageInfo().pageNumber;
+    if (d.ex.length){
+      tbl({startY: yy, head: [['EXERCÍCIO', 'MÉTODO', 'SÉRIES', 'REPETIÇÕES', 'INTERVALO', 'COMO FAZER', 'OBSERVAÇÕES']], body: pdfRows(d),
+        columnStyles: {0: {cellWidth: 46, fontStyle: 'bold'}, 1: {cellWidth: 25, halign: 'center'}, 2: {cellWidth: 17, halign: 'center'}, 3: {cellWidth: 31, halign: 'center'}, 4: {cellWidth: 24, halign: 'center'}, 5: {cellWidth: 72}, 6: {cellWidth: 58}}});
+      yy = doc.lastAutoTable.finalY + 6;
+    }
+    if (mob.length){
+      tbl({startY: yy, head: [['MOBILIDADE', 'SÉRIES', 'REPETIÇÕES', 'COMO FAZER']], body: mob.map(m => { const l = lib(m.lib); return [l.name.toUpperCase(), m.sets ? m.sets + 'x' : '—', m.reps ? m.reps + (m.meas === 'tempo' ? ' s' : '') : '—', (l.instructions || '').trim() || '—']; }),
+        columnStyles: {0: {cellWidth: 67, fontStyle: 'bold'}, 1: {cellWidth: 21, halign: 'center'}, 2: {cellWidth: 31, halign: 'center'}, 3: {cellWidth: 154}}});
+      yy = doc.lastAutoTable.finalY + 6;
+    }
+    if (cs.length){
+      tbl({startY: yy, head: [['CARDIO', 'TEMPO', 'INTENSIDADE', 'QUANDO', 'OBSERVAÇÕES']], body: cs.map(c => [(c.mod || 'Cardio').toUpperCase(), c.dur || '—', c.int || '—', WHEN[c.when] || '—', c.obs || '—']),
+        columnStyles: {0: {cellWidth: 67, fontStyle: 'bold'}, 1: {cellWidth: 31, halign: 'center'}, 2: {cellWidth: 46, halign: 'center'}, 3: {cellWidth: 42, halign: 'center'}, 4: {cellWidth: 87}}});
+    }
+    foot();
+  });
+  // rodapé com páginas
+  const n = doc.getNumberOfPages();
+  for (let i = 2; i <= n; i++){ doc.setPage(i); font('normal', 6.5, [120, 110, 110]); doc.text(`Jau Training · ${st.name}${st.protocol ? ' · ' + st.protocol : ''}`, M, H - 5.5); doc.text(`${i} de ${n}`, W - M, H - 5.5, {align: 'right'}); }
+  return doc;
+}
+async function fichaPDFGo(id, btn){
+  const st = db.students.find(x => x.id === id); if (!st) return;
+  const t0 = btn ? btn.textContent : ''; if (btn){ btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+  try {
+    const doc = await fichaPDF(st), name = pdfFileName(st), blob = doc.output('blob');
+    const file = typeof File === 'function' ? new File([blob], name, {type: 'application/pdf'}) : null;
+    const mobile = matchMedia('(pointer: coarse)').matches;
+    let cdl = null; try { cdl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch(_){ cdl = null; }
+    if (cdl){ try { await cdl.save({filename: name, data: blob}); toast('PDF da ficha pronto'); } catch (e){ if (!e || e.code !== 'declined') toast('Não deu para salvar o PDF por aqui.'); } return; }
+    if (mobile && file && navigator.canShare && navigator.canShare({files: [file]})){
+      try { await navigator.share({files: [file], title: name}); } catch (e){ if (e && e.name !== 'AbortError') doc.save(name); }
+    } else doc.save(name);
+    toast('PDF da ficha pronto');
+  } catch (e){ console.error(e); toast('Não consegui gerar o PDF. Verifique a internet e tente de novo.'); }
+  finally { if (btn && btn.isConnected){ btn.disabled = false; btn.textContent = t0; } }
+}
+
+
+/* ---------- notificações do personal (Web Push + número no ícone) ---------- */
+const NOTIF = {sub: null, checked: false, checking: false, key: null, busy: false, lastBadge: -1};
+const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+function notifState(){
+  if (!sb) return 'nosupport';
+  if (!pushOk()) return isIOS() && !standalone() ? 'ios-browser' : 'nosupport';
+  if (Notification.permission === 'denied') return 'denied';
+  if (!NOTIF.checked) return 'checking';
+  return NOTIF.sub && Notification.permission === 'granted' ? 'on' : 'off';
+}
+async function notifCheck(){
+  if (!pushOk() || !sb) { NOTIF.checked = true; return; }
+  try { const reg = await navigator.serviceWorker.ready; NOTIF.sub = await reg.pushManager.getSubscription(); } catch(e){ NOTIF.sub = null; }
+  NOTIF.checked = true;
+  if (!NOTIF.key && isP()) sb.functions.invoke('notificar-treino', {body: {action: 'key'}}).then(r => { if (r && r.data && r.data.key) NOTIF.key = r.data.key; }).catch(() => {});
+}
+function notifHTML(){
+  if (!isP()) return '';
+  const s = notifState();
+  if (s === 'nosupport') return '';
+  if (!NOTIF.checked && !NOTIF.checking){ NOTIF.checking = true; notifCheck().then(() => render()); }
+  const why = 'Avisa neste aparelho quando um aluno concluir um treino, com o nome e o treino. O ícone do app mostra quantas atividades chegaram desde a última vez que você abriu a aba Atividade.';
+  const body = s === 'ios-browser' ? `<p class="small muted">No iPhone, as notificações funcionam no app instalado: toque em Compartilhar → <b>Adicionar à Tela de Início</b> e abra o Jau Training por lá.</p>`
+    : s === 'denied' ? `<p class="small muted">As notificações estão bloqueadas para este app. Libere em <b>Ajustes → Notificações → Jau Training</b> (no computador, nas permissões do site) e volte aqui.</p>`
+    : s === 'on' ? `<p class="nfok">${ICON_CHECK}Ativadas neste aparelho</p><div class="row"><button type="button" class="btn sm ghost" data-act="push-test" ${NOTIF.busy ? 'disabled' : ''}>Enviar notificação de teste</button><button type="button" class="linkbtn" data-act="push-off" ${NOTIF.busy ? 'disabled' : ''}>Desativar neste aparelho</button></div>`
+    : `<button type="button" class="btn block" data-act="push-on" ${NOTIF.busy || s === 'checking' ? 'disabled' : ''}>${ICON_BELL}${NOTIF.busy ? 'Ativando...' : 'Ativar notificações'}</button>`;
+  return `<section class="card nfcard"><p class="eyebrow">Notificações de treino</p><p class="small">${why}</p>${body}</section>`;
+}
+function b64ToBytes(s){ const t = s.replace(/-/g, '+').replace(/_/g, '/'), p = t + '='.repeat((4 - t.length % 4) % 4), r = atob(p), o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+async function pushOn(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted'){ toast(perm === 'denied' ? 'Notificações bloqueadas. Dá para liberar nos ajustes do aparelho.' : 'Tudo bem, dá para ativar depois.'); return; }
+    if (!NOTIF.key){ const r = await sb.functions.invoke('notificar-treino', {body: {action: 'key'}}); if (!r || !r.data || !r.data.key) throw new Error('key'); NOTIF.key = r.data.key; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(NOTIF.key)});
+    const j = sub.toJSON();
+    const {error} = await sb.from('push_subs').upsert({endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 180)});
+    if (error) throw error;
+    NOTIF.sub = sub; NOTIF.lastBadge = -1; syncBadge();
+    toast('Notificações ativadas neste aparelho');
+  } catch(e){ console.error(e); toast('Não consegui ativar agora. Confira a internet e tente de novo.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+async function pushOff(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub){ await sb.from('push_subs').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe(); }
+    NOTIF.sub = null; if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); NOTIF.lastBadge = -1;
+    toast('Notificações desativadas neste aparelho');
+  } catch(e){ toast('Não consegui desativar agora. Tente de novo.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+async function pushTest(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try { const r = await sb.functions.invoke('notificar-treino', {body: {action: 'test'}}); const n = r && r.data ? r.data.sent : 0;
+    toast(n ? 'Enviada! Deve chegar em alguns segundos.' : 'Nenhum aparelho recebeu. Desative e ative de novo.'); }
+  catch(e){ toast('Não consegui enviar o teste agora.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+// Número no ícone = treinos que chegaram depois da última vez que você abriu a aba Atividade.
+function badgeCount(){ const fo = db.settings && db.settings.feedOpened; return fo ? allLogs().filter(x => x.l.date > fo).length : unreadCount(); }
+function syncBadge(){
+  if (!sb || !isP() || state.mode !== 'personal') return;
+  if (state.psec === 'feed' && document.visibilityState === 'visible' && badgeCount() > 0){ db.settings = Object.assign({}, db.settings, {feedOpened: new Date().toISOString()}); save(); }
+  if (!('setAppBadge' in navigator) || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = badgeCount(); if (n === NOTIF.lastBadge) return; NOTIF.lastBadge = n;
+  (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => {
+  const m = ev.data || {};
+  if (m.type === 'jau-go' && m.go === 'feed' && isP()){ state.mode = 'personal'; state.psec = 'feed'; render(); refresh(true); }
+  else if (m.type === 'jau-push' && isP()) refresh(true);
+});
+(() => { try { const q = new URLSearchParams(location.search); if (q.get('go') === 'feed'){ state.psec = 'feed'; history.replaceState(null, '', location.pathname); } } catch(e){} })();
+
 /* ---------- importar ficha em PDF ---------- */
 let impFile = null, impCtl = null, pdfjsP = null;
 function loadPdfJs(){
@@ -2980,10 +3190,11 @@ function trainerView(){
       ${splitChips(s)}
       <div class="row"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button>
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
-        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div>
+        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
     ${bkHTML()}
+    ${notifHTML()}
     ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
     ${accountHTML()}
@@ -2994,7 +3205,7 @@ function editView(){
   const pk = state.picker;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
-    <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><span class="muted small">Salvo automaticamente</span></div>
+    <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><div class="shacts"><span class="muted small">Salvo automaticamente</span><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div></div>
     <div class="edlay"><aside class="edside" aria-label="Dados e volume do aluno">
     <p class="eyebrow sidehd">Visão geral</p>
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
@@ -3112,7 +3323,7 @@ function trackView(){
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
-    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div>
+    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><div class="shacts"><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
     <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button></div>
     ${state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
@@ -3183,7 +3394,7 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ render0(); polishAfter(); }
+function render(){ render0(); polishAfter(); try { syncBadge(); } catch(e){} }
 function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
@@ -3237,6 +3448,10 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'push-on'){ pushOn(); return; }
+  if (act === 'push-off'){ pushOff(); return; }
+  if (act === 'push-test'){ pushTest(); return; }
+  if (act === 'pdf-ficha'){ fichaPDFGo(v, b); return; }
   if (act === 'cd-obs'){ state.cdOpen = draftKey(); render(); const ta = document.getElementById('cm-cardio'); if (ta){ ta.focus(); ta.scrollIntoView({block:'center', behavior:'smooth'}); } return; }
   if (act === 'cardio-done'){ const st = stu(), d = st && st.days[state.day]; if (!d) return; const k = draftKey(), dr = db.drafts[k] || {}, cc = ((dr.__cardio || {}).comment || '').trim(), ex = cardioToday(d), now = new Date().toISOString();
     if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }

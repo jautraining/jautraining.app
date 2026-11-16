@@ -1,7 +1,7 @@
 // Service worker: o app abre mesmo sem sinal na academia.
 // Arquivos do app: tenta a rede primeiro (pega atualizações) e usa a cópia guardada se estiver offline.
 // Fontes e imagens: usa a cópia guardada primeiro. O banco (Supabase) nunca passa pelo cache.
-const CACHE = 'jau-v4';
+const CACHE = 'jau-v5';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest',
   'img/logo.webp', 'img/logo-hi.webp', 'img/cheetah.webp', 'img/icon-192.png', 'img/apple-touch-icon.png', 'img/favicon-32.png',
   'fonts/montserrat-latin-400-normal.woff2', 'fonts/montserrat-latin-500-normal.woff2', 'fonts/montserrat-latin-600-normal.woff2', 'fonts/montserrat-latin-700-normal.woff2', 'fonts/montserrat-latin-800-normal.woff2', 'fonts/playfair-display-latin-600-italic.woff2', 'fonts/playfair-display-latin-700-italic.woff2'];
@@ -37,5 +37,22 @@ self.addEventListener('fetch', e => {
     let done = false; const finish = r => { if (!done && r) { done = true; resolve(r); } };
     const t = setTimeout(() => saved().then(finish), 2500);
     net.then(r => { clearTimeout(t); finish(r); }).catch(() => { clearTimeout(t); saved().then(r => r ? finish(r) : finish(Response.error())); });
+  }));
+});
+
+// Notificações do personal: treino concluído por um aluno.
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) { d = {title: 'Jau Training', body: e.data ? e.data.text() : ''}; }
+  const jobs = [self.registration.showNotification(d.title || 'Jau Training', {body: d.body || '', icon: 'img/icon-192.png', badge: 'img/icon-192.png', tag: d.tag || undefined, data: {go: 'feed'}})];
+  if (typeof d.badge === 'number' && self.navigator && 'setAppBadge' in self.navigator) jobs.push((d.badge ? self.navigator.setAppBadge(d.badge) : self.navigator.clearAppBadge()).catch(() => {}));
+  jobs.push(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(cs => cs.forEach(c => c.postMessage({type: 'jau-push'}))));
+  e.waitUntil(Promise.all(jobs));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(cs => {
+    const c = cs.find(x => 'focus' in x);
+    if (c) { c.postMessage({type: 'jau-go', go: 'feed'}); return c.focus(); }
+    return self.clients.openWindow('./?go=feed');
   }));
 });
