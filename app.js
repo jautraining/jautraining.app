@@ -2308,7 +2308,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
 
 
 /* ---------- avaliações: anamnese e fotos (só o personal lê) ---------- */
-const ASM = {list: [], loaded: false, loading: false, at: 0, mine: null, mineLoading: false, urls: {}, urlLoading: false};
+const ASM = {list: [], loaded: false, loading: false, at: 0, mine: null, mineLoading: false, urls: {}, urlLoading: false, tried: {}};
 const ANF = {open: false, kind: 'anamnese', step: 0, ans: {}, photos: {}, busy: false, prog: '', err: '', sent: null};
 const asmCloud = () => typeof sb !== 'undefined' && !!sb && typeof AUTH !== 'undefined';
 function asmSeed(){ if (!asmCloud() && !db.assessments){ db.assessments = [{id: 'asm-exemplo', user_id: null, email: 'paula.teixeira@exemplo.com', student_id: null, kind: 'anamnese', seen_at: null, created_at: new Date(Date.now() - 864e5).toISOString(), photos: [],
@@ -2363,11 +2363,15 @@ function asmMine(){
 }
 function needAnam(st){ if (st && st.anam === 'ok') return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'anamnese'); }
 function needPhotos(st){ if (!st || !st.askPhotos) return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'fotos' && a.created_at > st.askPhotos); }
+// busca as avaliações; se falhar (sem internet ou tabela ainda não criada), espera antes de tentar de novo
 async function asmLoad(){
-  if (!asmCloud() || ASM.loading) return; ASM.loading = true;
+  if (!asmCloud() || ASM.loading) return false; ASM.loading = true; let changed = false;
   try { const {data, error} = await sb.from('assessments').select('id,user_id,email,student_id,kind,data,photos,seen_at,created_at').order('created_at');
-    if (!error && data){ ASM.list = data; ASM.loaded = true; ASM.at = Date.now(); asmAutoLink(); } }
-  catch(e){} finally { ASM.loading = false; }
+    if (!error && data){ changed = !ASM.loaded || JSON.stringify(data) !== JSON.stringify(ASM.list); ASM.list = data; asmAutoLink(); }
+    else changed = !ASM.loaded; }
+  catch(e){ changed = !ASM.loaded; }
+  finally { ASM.loading = false; ASM.loaded = true; ASM.at = Date.now(); }
+  return changed;
 }
 async function asmMineLoad(){
   if (!asmCloud() || ASM.mineLoading) return; ASM.mineLoading = true;
@@ -2376,7 +2380,7 @@ async function asmMineLoad(){
 }
 function asmTick(){
   if (!asmCloud() || !AUTH.user) return;
-  if (isPx()){ if (AUTH.screen === 'app' && !ASM.loading && (!ASM.loaded || Date.now() - ASM.at > 120000)) asmLoad().then(() => render()); }
+  if (isPx()){ if (AUTH.screen === 'app' && !ASM.loading && (!ASM.loaded || Date.now() - ASM.at > 120000)) asmLoad().then(ch => { if (ch) render(); }); }
   else if (ASM.mine === null && !ASM.mineLoading) asmMineLoad().then(() => render());
 }
 // marca a anamnese no aluno e liga a avaliação à ficha (só o personal)
@@ -2392,10 +2396,10 @@ function asmSeen(list){
   if (asmCloud()) un.forEach(a => sb.from('assessments').update({seen_at: t}).eq('id', a.id).then(() => {})); else save();
 }
 async function asmUrls(paths){
-  if (!asmCloud()) return; const need = paths.filter(p => p && !ASM.urls[p]); if (!need.length || ASM.urlLoading) return;
-  ASM.urlLoading = true;
-  try { const {data} = await sb.storage.from('avaliacoes').createSignedUrls(need, 3600); (data || []).forEach(x => { if (x && x.signedUrl) ASM.urls[x.path] = x.signedUrl; }); }
-  catch(e){} finally { ASM.urlLoading = false; render(); }
+  if (!asmCloud()) return; const need = paths.filter(p => p && !ASM.urls[p] && !ASM.tried[p]); if (!need.length || ASM.urlLoading) return;
+  ASM.urlLoading = true; need.forEach(p => ASM.tried[p] = 1); let got = 0;
+  try { const {data} = await sb.storage.from('avaliacoes').createSignedUrls(need, 3600); (data || []).forEach(x => { if (x && x.signedUrl){ ASM.urls[x.path] = x.signedUrl; got++; } }); }
+  catch(e){} finally { ASM.urlLoading = false; if (got) render(); }
 }
 const phSrc = p => p.url || ASM.urls[p.path] || '';
 const ansTxt = (q, v) => q.type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.split('-').reverse().join('/') : v;
@@ -2537,7 +2541,7 @@ function asmPhotosHTML(list){
   return `<div class="asmph" role="region" aria-label="Fotos por data" tabindex="0"><div class="asmphg" style="grid-template-columns:auto repeat(${withPh.length},minmax(104px,150px))">
     <span></span>${withPh.map(a => `<b class="small">${esc(dateBR(a.created_at))}${a.data && a.data.answers && a.data.answers.peso ? `<small>${esc(a.data.answers.peso)}</small>` : ''}</b>`).join('')}
     ${POSES.map(([k, l]) => `<span class="phl">${l}</span>${withPh.map(a => { const p = (a.photos || []).find(x => x.pose === k), src = p && phSrc(p);
-      return p ? (src ? `<button type="button" class="phbtn" data-act="ph-zoom" data-src="${esc(src)}" aria-label="Ampliar ${l.toLowerCase()} de ${esc(dateBR(a.created_at))}"><img src="${esc(src)}" alt="" loading="lazy"></button>` : `<span class="phload">Carregando</span>`) : '<span class="phnone">—</span>'; }).join('')}`).join('')}
+      return p ? (src ? `<button type="button" class="phbtn" data-act="ph-zoom" data-src="${esc(src)}" aria-label="Ampliar ${l.toLowerCase()} de ${esc(dateBR(a.created_at))}"><img src="${esc(src)}" alt="" loading="lazy"></button>` : `<span class="phload">${ASM.tried[p.path] && !ASM.urlLoading ? 'Indisponível' : 'Carregando'}</span>`) : '<span class="phnone">—</span>'; }).join('')}`).join('')}
   </div></div>`;
 }
 function asmView(s, compact){
