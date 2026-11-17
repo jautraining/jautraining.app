@@ -1377,7 +1377,13 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
 .asmsent{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--ok,#2e9e5b) 12%,transparent);border:1px solid color-mix(in srgb,var(--ok,#2e9e5b) 40%,transparent);text-align:left;font-size:.92rem}
 .asmsent svg{width:18px;height:18px;flex:none;color:var(--ok,#2e9e5b);margin-top:2px}
 .asmview{display:grid;gap:16px}
+.asmhead{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start}
 .asmhead h3{margin:2px 0 8px}
+.anpaste{margin-top:6px}
+.anpaste summary{cursor:pointer;font-weight:700;color:var(--accent);padding:6px 0}
+.anpaste[open]{display:grid;gap:8px}
+.anpaste textarea{width:100%;border:1px solid var(--line);background:var(--fieldbg,var(--bg));color:var(--ink);border-radius:12px;padding:10px;font:inherit;font-size:.85rem}
+.anpaste .btn{justify-self:start}
 .asmchips{display:flex;flex-wrap:wrap;gap:6px}
 .asmobj{display:grid;gap:4px;margin-top:10px}
 .asmacts .btn svg{width:16px;height:16px}
@@ -1456,3 +1462,45 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
 .exinfo > summary{padding-block:12px;cursor:pointer}
 .linkbtn[data-act="goevo"]{display:inline-flex;align-items:center;min-height:40px}
 .walink{min-height:44px;padding:10px 0}
+
+/* ---------- perfil do aluno ---------- */
+article.stu[data-act="p-prof"]{cursor:pointer;transition:border-color .2s,box-shadow .2s}
+@media (hover:hover){article.stu[data-act="p-prof"]:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 10px 30px -18px rgba(0,0,0,.35)}}
+.stuname{all:unset;cursor:pointer}
+.stuname:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.pfhead{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end;margin:6px 0 18px}
+.pfid h2{margin:2px 0 8px;font-size:clamp(1.7rem,5vw,2.4rem)}
+.pfchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pfacts{display:flex;flex-wrap:wrap;gap:8px}
+.pfgrid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.pfgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.pfwide{grid-column:1 / -1}}
+@media (min-width:1200px){.pfgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pfcard{display:grid;gap:10px;align-content:start;min-width:0}
+.pfcardh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pfkvs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.pfkv{display:grid;gap:1px;min-width:0}
+.pfkv small{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pfkv b{font-size:.95rem;overflow-wrap:anywhere}
+.pfkv span{font-size:.74rem;color:var(--muted)}
+.pfbig{font-size:1.05rem;font-weight:700;line-height:1.4;margin:0}
+.pfwarn{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))!important}
+.pfh{display:grid;gap:2px;padding:8px 0;border-top:1px solid var(--line)}
+.pfh:first-of-type{border-top:0;padding-top:0}
+.pfh b{font-size:.84rem}
+.pfh p{margin:0;font-size:.9rem}
+.pfh .asmwarn{justify-self:start}
+.pfph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+/* ---------- painel do editor retrátil ---------- */
+.aprail,.apcolbtn{display:none}
+.apoio > summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.apoio > summary::after{content:"";flex:none;width:9px;height:9px;margin-right:4px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);transition:transform .2s}
+.apoio[open] > summary::after{transform:rotate(-135deg)}
+@media (min-width:1024px){
+  .edlay:not(.apcol) .apcolbtn{display:inline-flex;align-self:flex-end;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem inherit;font-family:inherit;cursor:pointer}
+  .edlay.apcol{grid-template-columns:minmax(0,1fr) 58px!important}
+  .edlay.apcol .edside > :not(.aprail){display:none!important}
+  .edlay.apcol .aprail{display:flex;flex-direction:column;align-items:center;gap:12px;width:58px;padding:16px 0;border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:800 .8rem inherit;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 10px 30px -20px rgba(0,0,0,.4)}
+  .edlay.apcol .aprail span{writing-mode:vertical-rl;transform:rotate(180deg)}
+  .aprail svg{width:20px;height:20px;color:var(--accent)}
+  .aprail:hover,.apcolbtn:hover{border-color:var(--accent)}
+}
