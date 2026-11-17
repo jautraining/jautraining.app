@@ -1,4 +1,8 @@
 (function(){
+const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+const ICON_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const ICON_SIDE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M10 9l-3 3 3 3"/></svg>';
 const LOGO = 'img/logo.webp';
 const LOGO_HI = 'img/logo-hi.webp';
 const CHEETAH = 'img/cheetah.webp';
@@ -463,6 +467,7 @@ function snap(){
     m['set:wa'] = JSON.stringify((db.settings && db.settings.wa) || '');
     if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
     if (db.settings && db.settings.volRange) m['set:volrange'] = JSON.stringify(db.settings.volRange);
+    if (db.settings && db.settings.feedOpened) m['set:feedopen'] = JSON.stringify(db.settings.feedOpened);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
@@ -660,8 +665,8 @@ async function pullFull(P){
   return true;
 }
 function applySettings(set){
-  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange');
-  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {});
+  const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange'), fo = set.find(r => r.key === 'feedopen');
+  db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {}, fo && typeof fo.value === 'string' ? {feedOpened: fo.value} : {});
 }
 /* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
 async function pullDelta(P){
@@ -830,10 +835,11 @@ function authView(){
   const wrap = inner => band + `<main class="wrap auth">${inner}</main>`;
   if (AUTH.screen === 'loading') return band + `<main class="wrap skel" aria-busy="true" aria-label="Carregando seus treinos"><div class="sk sk-t"></div><div class="sk sk-h"></div><div class="sk-row">${'<div class="sk"></div>'.repeat(7)}</div><div class="sk sk-c"></div><div class="sk sk-c tall"></div><div class="sk sk-c"></div></main>`;
   if (AUTH.screen === 'error') return wrap(`<section class="card authcard"><h2>Não deu pra abrir</h2><p>${esc(AUTH.err)}</p><button class="btn block" type="button" data-act="auth-retry">Tentar de novo</button>${out}</section>`);
+  if (AUTH.screen === 'waiting' && ANF.open) return wrap(anamForm());
   if (AUTH.screen === 'waiting') return wrap(`<section class="card authcard"><p class="eyebrow">Conta criada</p><h2>Falta só o seu personal liberar</h2>
     <p>Você entrou com <b>${esc(AUTH.user && AUTH.user.email)}</b>. Assim que o Jau cadastrar este e-mail na sua ficha, ela aparece aqui.</p>
     <p class="muted small">Se você passou outro e-mail pra ele, avise ou entre com o e-mail certo.</p>
-    <button class="btn block" type="button" data-act="auth-retry">Atualizar</button>${out}</section>`);
+    ${waitingAnam()}<button class="btn block ghost" type="button" data-act="auth-retry">Atualizar</button>${out}</section>`);
   if (AUTH.screen === 'consent') return wrap(`<section class="card authcard consent"><p class="eyebrow">Antes de começar</p><h2>Seus dados no Jau Training</h2>
     <p>Para montar e acompanhar o seu treino, o app guarda o seu nome e e-mail, a sua ficha, as cargas e repetições que você registra, as observações que você escreve nos exercícios e a frequência dos treinos.</p>
     <ul class="clist">
@@ -2093,6 +2099,647 @@ function volumeCard(s){
     <p class="hint">Conta só os músculos principais (agonistas) de cada exercício, nas séries de trabalho da semana. Aquecimento e preparatória não contam. Só você vê este quadro.</p></details>`;
 }
 
+
+/* ---------- ficha em PDF (modelo da planilha) ---------- */
+let pdfLibP = null;
+function loadPdfLib(){
+  if (pdfLibP) return pdfLibP;
+  const add = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = () => rej(new Error('load ' + src)); document.head.appendChild(el); });
+  pdfLibP = add('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(() => add('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')).then(() => { if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jspdf'); return window.jspdf.jsPDF; })
+    .catch(e => { pdfLibP = null; throw e; });
+  return pdfLibP;
+}
+async function pdfFonts(){
+  const get = async (f) => { const r = await fetch('fonts/pdf/montserrat-' + f + '.ttf'); if (!r.ok) throw new Error('font ' + f); const b = new Uint8Array(await r.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+  return Promise.all([['400-normal','Montserrat','normal'],['400-italic','Montserrat','italic'],['700-normal','Montserrat','bold'],['800-normal','MontserratX','normal']].map(async ([f, fam, sty]) => ['m-' + f + '.ttf', fam, sty, await get(f)]));
+}
+function pdfImg(src){
+  return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); res({url: c.toDataURL('image/png'), w: c.width, h: c.height}); }; im.onerror = rej; im.src = src; });
+}
+const PDF_RED = [163, 0, 0], PDF_GRAY = [228, 228, 228], PDF_INK = [28, 22, 22];
+function pdfReps(ex, k){
+  const groups = [];
+  (ex.series || []).forEach(s => { const ps = String(s.reps || '').split(/\s*\+\s*/); const r = ps[k] || ps[0] || '';
+    const g = groups[groups.length - 1], mm = !!(s.m && tecOfMeth(ex.method)); if (g && g.type === s.type && g.r === r && g.m === mm) g.n++; else groups.push({type: s.type, n: 1, r, m: mm}); });
+  return groups.map(g => `${g.n}x ${tgtFmt(g.r, measOf(ex, k)) || '—'}${g.m ? (tecOfMeth(ex.method) === 'drop' ? ' + ' + tecN(ex) + (tecN(ex) > 1 ? ' drops' : ' drop') : ' em ' + tecN(ex) + ' blocos') : ''}${g.type === 'aq' ? ' (aquec.)' : g.type === 'prep' ? ' (prep.)' : ''}`).join('\n');
+}
+function pdfRows(d){
+  const L = k => String.fromCharCode(65 + k);
+  return d.ex.map(ex => {
+    const conj = ex.items.length > 1, pre = k => conj ? L(k) + ') ' : '';
+    const names = ex.items.map((id, k) => pre(k) + lib(id).name.toUpperCase() + (ex.alt && ex.alt[k] ? '\n(ou ' + lib(ex.alt[k]).name + ')' : '')).join('\n');
+    const work = (ex.series || []).filter(s => s.type !== 'aq').length, aq = countType(ex, 'aq');
+    const reps = ex.items.map((_, k) => (conj ? L(k) + ': ' : '') + pdfReps(ex, k)).join('\n');
+    const how = ex.items.map((id, k) => { const t = (lib(id).instructions || '').trim(); return t ? pre(k) + t : ''; }).filter(Boolean).join('\n');
+    return [names, ex.method && ex.method !== 'normal' ? meth(ex.method).name : '—', work + 'x' + (aq ? '\n+ ' + aq + ' aquec.' : ''), reps, ex.rest || '—', how || '—', (ex.notes || '').trim() || '—'];
+  });
+}
+function pdfSlots(st){ return isSeq(st) ? seqSlots(st) : DAYS.map(x => x.k); }
+function pdfFileName(st){ return ('Ficha - ' + st.name + (st.protocol ? ' - ' + st.protocol : '')).replace(/[\\/:*?"<>|]+/g, '').trim() + '.pdf'; }
+async function fichaPDF(st){
+  const [jsPDF] = await Promise.all([loadPdfLib()]);
+  const [fonts, logo, chee] = await Promise.all([pdfFonts(), pdfImg(typeof LOGO_HI !== 'undefined' ? LOGO_HI : LOGO), pdfImg(CHEETAH)]);
+  const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4', compress: true});
+  fonts.forEach(([file, fam, sty, b64]) => { doc.addFileToVFS(file, b64); doc.addFont(file, fam, sty); });
+  const W = 297, H = 210, M = 12, CREF = 'CREF RJ-056749';
+  const font = (sty, size, color) => { doc.setFont(sty === 'x' ? 'MontserratX' : 'Montserrat', sty === 'x' ? 'normal' : sty); doc.setFontSize(size); doc.setTextColor(...(color || PDF_INK)); };
+  const header = (big, small) => {
+    doc.setFillColor(...PDF_RED); doc.rect(0, 0, W, 38, 'F');
+    font('bold', 7, [255, 255, 255]); doc.text(CREF, M, 9);
+    const cw = 46, ch = cw * chee.h / chee.w; doc.addImage(chee.url, 'PNG', W - M - cw, 19 - ch / 2, cw, ch);
+    font('x', 18, [255, 255, 255]); doc.text(big, W / 2, 17, {align: 'center'});
+    if (small){ font('italic', 13, [255, 255, 255]); doc.text(small, W / 2, 27, {align: 'center', maxWidth: W - 2 * (M + 56)}); }
+  };
+  const foot = () => { doc.setFillColor(...PDF_RED); doc.rect(0, H - 3, W, 3, 'F'); };
+  // 1. capa
+  doc.setFillColor(...PDF_RED); doc.rect(0, 0, W, H, 'F');
+  const lw = 120, lh = lw * logo.h / logo.w; doc.addImage(logo.url, 'PNG', (W - lw) / 2, 30, lw, lh);
+  font('bold', 10, [255, 255, 255]); doc.setCharSpace(1.2); doc.text((st.protocol || 'Protocolo de treino').toUpperCase(), W / 2, 30 + lh + 16, {align: 'center'}); doc.setCharSpace(0);
+  font('italic', 20, [255, 255, 255]); doc.text(st.name, W / 2, 30 + lh + 27, {align: 'center'});
+  font('bold', 7, [255, 255, 255]); doc.text('Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, ' + CREF, W / 2, H - 14, {align: 'center'});
+  // 2. divisão semanal
+  const ks = pdfSlots(st), lab = k => slotFull(st, k);
+  doc.addPage(); header('SUA DIVISÃO DE TREINOS', st.name);
+  doc.autoTable({startY: 46, margin: {left: M, right: M}, theme: 'grid',
+    head: [ks.map(k => lab(k).toUpperCase())], body: [ks.map(k => { const d = st.days[k]; return d && d.ex.length ? (d.title || 'Treino') : d && cardioList(d).length ? (d.title || 'Cardio') : 'Descanso'; })],
+    styles: {font: 'Montserrat', fontStyle: 'italic', fontSize: 10, halign: 'center', valign: 'middle', textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.8, minCellHeight: 42, cellPadding: 3},
+    headStyles: {font: 'Montserrat', fontStyle: 'bold', fontSize: 9, fillColor: PDF_RED, textColor: [255, 255, 255], minCellHeight: 14},
+    columnStyles: Object.fromEntries(ks.map((_, i) => [i, {cellWidth: (W - 2 * M) / ks.length}]))});
+  let y = doc.lastAutoTable.finalY + 8;
+  const cds = ks.map(k => [k, cardioList(st.days[k] || {ex: []})]).filter(([, l]) => l.length);
+  if (cds.length){
+    doc.autoTable({startY: y, margin: {left: 40, right: 40}, theme: 'grid',
+      head: [['ORIENTAÇÕES DE CARDIO']], body: cds.map(([k, l]) => [lab(k) + ': ' + l.map(c => [c.mod || 'Cardio', c.dur, c.int ? 'intensidade ' + c.int : '', WHEN[c.when] ? WHEN[c.when].toLowerCase() : '', c.obs].filter(Boolean).join(' · ')).join(' | ')]),
+      styles: {font: 'Montserrat', fontStyle: 'italic', fontSize: 9, halign: 'center', textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.6, cellPadding: 3.2},
+      headStyles: {fontStyle: 'bold', fontSize: 10, fillColor: PDF_RED, textColor: [255, 255, 255]}});
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  if (st.focus){ font('bold', 12, PDF_RED); doc.text('Neste protocolo nosso foco será:', W / 2, y + 4, {align: 'center'}); font('normal', 10); doc.text(doc.splitTextToSize(st.focus, W - 2 * 50), W / 2, y + 11, {align: 'center'}); }
+  foot();
+  // 3. uma página por dia
+  ks.forEach(k => {
+    const d = st.days[k]; if (!d) return; const cs = cardioList(d), mob = (d.mob || []).filter(m => m && m.lib);
+    if (!d.ex.length && !cs.length) return;
+    doc.addPage(); const big = lab(k).toUpperCase(), sub = d.title || '';
+    header(big, sub); let yy = 44;
+    const tbl = (opt) => doc.autoTable(Object.assign({margin: {left: M, right: M, top: 44, bottom: 10}, theme: 'grid', rowPageBreak: 'avoid',
+      styles: {font: 'Montserrat', fontSize: 8.2, textColor: PDF_INK, fillColor: PDF_GRAY, lineColor: [255, 255, 255], lineWidth: 0.6, cellPadding: 2.6, valign: 'middle', overflow: 'linebreak'},
+      headStyles: {fontStyle: 'bold', fontSize: 8.6, fillColor: PDF_RED, textColor: [255, 255, 255], halign: 'center', valign: 'middle', minCellHeight: 10},
+      didDrawPage: dd => { if (dd.pageNumber > 1 && doc.internal.getCurrentPageInfo().pageNumber !== pg){ header(big, sub + ' (continuação)'); foot(); } }}, opt));
+    const pg = doc.internal.getCurrentPageInfo().pageNumber;
+    if (d.ex.length){
+      tbl({startY: yy, head: [['EXERCÍCIO', 'MÉTODO', 'SÉRIES', 'REPETIÇÕES', 'INTERVALO', 'COMO FAZER', 'OBSERVAÇÕES']], body: pdfRows(d),
+        columnStyles: {0: {cellWidth: 46, fontStyle: 'bold'}, 1: {cellWidth: 25, halign: 'center'}, 2: {cellWidth: 17, halign: 'center'}, 3: {cellWidth: 31, halign: 'center'}, 4: {cellWidth: 24, halign: 'center'}, 5: {cellWidth: 72}, 6: {cellWidth: 58}}});
+      yy = doc.lastAutoTable.finalY + 6;
+    }
+    if (mob.length){
+      tbl({startY: yy, head: [['MOBILIDADE', 'SÉRIES', 'REPETIÇÕES', 'COMO FAZER']], body: mob.map(m => { const l = lib(m.lib); return [l.name.toUpperCase(), m.sets ? m.sets + 'x' : '—', m.reps ? m.reps + (m.meas === 'tempo' ? ' s' : '') : '—', (l.instructions || '').trim() || '—']; }),
+        columnStyles: {0: {cellWidth: 67, fontStyle: 'bold'}, 1: {cellWidth: 21, halign: 'center'}, 2: {cellWidth: 31, halign: 'center'}, 3: {cellWidth: 154}}});
+      yy = doc.lastAutoTable.finalY + 6;
+    }
+    if (cs.length){
+      tbl({startY: yy, head: [['CARDIO', 'TEMPO', 'INTENSIDADE', 'QUANDO', 'OBSERVAÇÕES']], body: cs.map(c => [(c.mod || 'Cardio').toUpperCase(), c.dur || '—', c.int || '—', WHEN[c.when] || '—', c.obs || '—']),
+        columnStyles: {0: {cellWidth: 67, fontStyle: 'bold'}, 1: {cellWidth: 31, halign: 'center'}, 2: {cellWidth: 46, halign: 'center'}, 3: {cellWidth: 42, halign: 'center'}, 4: {cellWidth: 87}}});
+    }
+    foot();
+  });
+  // rodapé com páginas
+  const n = doc.getNumberOfPages();
+  for (let i = 2; i <= n; i++){ doc.setPage(i); font('normal', 6.5, [120, 110, 110]); doc.text(`Jau Training · ${st.name}${st.protocol ? ' · ' + st.protocol : ''}`, M, H - 5.5); doc.text(`${i} de ${n}`, W - M, H - 5.5, {align: 'right'}); }
+  return doc;
+}
+async function fichaPDFGo(id, btn){
+  const st = db.students.find(x => x.id === id); if (!st) return;
+  const t0 = btn ? btn.textContent : ''; if (btn){ btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+  try {
+    const doc = await fichaPDF(st), name = pdfFileName(st), blob = doc.output('blob');
+    const file = typeof File === 'function' ? new File([blob], name, {type: 'application/pdf'}) : null;
+    const mobile = matchMedia('(pointer: coarse)').matches;
+    let cdl = null; try { cdl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch(_){ cdl = null; }
+    if (cdl){ try { await cdl.save({filename: name, data: blob}); toast('PDF da ficha pronto'); } catch (e){ if (!e || e.code !== 'declined') toast('Não deu para salvar o PDF por aqui.'); } return; }
+    if (mobile && file && navigator.canShare && navigator.canShare({files: [file]})){
+      try { await navigator.share({files: [file], title: name}); } catch (e){ if (e && e.name !== 'AbortError') doc.save(name); }
+    } else doc.save(name);
+    toast('PDF da ficha pronto');
+  } catch (e){ console.error(e); toast('Não consegui gerar o PDF. Verifique a internet e tente de novo.'); }
+  finally { if (btn && btn.isConnected){ btn.disabled = false; btn.textContent = t0; } }
+}
+
+
+/* ---------- notificações do personal (Web Push + número no ícone) ---------- */
+const NOTIF = {sub: null, checked: false, checking: false, key: null, busy: false, lastBadge: -1};
+const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+function notifState(){
+  if (!sb) return 'nosupport';
+  if (!pushOk()) return isIOS() && !standalone() ? 'ios-browser' : 'nosupport';
+  if (Notification.permission === 'denied') return 'denied';
+  if (!NOTIF.checked) return 'checking';
+  return NOTIF.sub && Notification.permission === 'granted' ? 'on' : 'off';
+}
+async function notifCheck(){
+  if (!pushOk() || !sb) { NOTIF.checked = true; return; }
+  try { const reg = await navigator.serviceWorker.ready; NOTIF.sub = await reg.pushManager.getSubscription(); } catch(e){ NOTIF.sub = null; }
+  NOTIF.checked = true;
+  if (!NOTIF.key && isP()) sb.functions.invoke('notificar-treino', {body: {action: 'key'}}).then(r => { if (r && r.data && r.data.key) NOTIF.key = r.data.key; }).catch(() => {});
+}
+function notifHTML(){
+  if (!isP()) return '';
+  const s = notifState();
+  if (s === 'nosupport') return '';
+  if (!NOTIF.checked && !NOTIF.checking){ NOTIF.checking = true; notifCheck().then(() => render()); }
+  const why = 'Avisa neste aparelho quando um aluno concluir um treino, com o nome e o treino. O ícone do app mostra quantas atividades chegaram desde a última vez que você abriu a aba Atividade.';
+  const body = s === 'ios-browser' ? `<p class="small muted">No iPhone, as notificações funcionam no app instalado: toque em Compartilhar → <b>Adicionar à Tela de Início</b> e abra o Jau Training por lá.</p>`
+    : s === 'denied' ? `<p class="small muted">As notificações estão bloqueadas para este app. Libere em <b>Ajustes → Notificações → Jau Training</b> (no computador, nas permissões do site) e volte aqui.</p>`
+    : s === 'on' ? `<p class="nfok">${ICON_CHECK}Ativadas neste aparelho</p><div class="row"><button type="button" class="btn sm ghost" data-act="push-test" ${NOTIF.busy ? 'disabled' : ''}>Enviar notificação de teste</button><button type="button" class="linkbtn" data-act="push-off" ${NOTIF.busy ? 'disabled' : ''}>Desativar neste aparelho</button></div>`
+    : `<button type="button" class="btn block" data-act="push-on" ${NOTIF.busy || s === 'checking' ? 'disabled' : ''}>${ICON_BELL}${NOTIF.busy ? 'Ativando...' : 'Ativar notificações'}</button>`;
+  return `<section class="card nfcard"><p class="eyebrow">Notificações de treino</p><p class="small">${why}</p>${body}</section>`;
+}
+function b64ToBytes(s){ const t = s.replace(/-/g, '+').replace(/_/g, '/'), p = t + '='.repeat((4 - t.length % 4) % 4), r = atob(p), o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+async function pushOn(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted'){ toast(perm === 'denied' ? 'Notificações bloqueadas. Dá para liberar nos ajustes do aparelho.' : 'Tudo bem, dá para ativar depois.'); return; }
+    if (!NOTIF.key){ const r = await sb.functions.invoke('notificar-treino', {body: {action: 'key'}}); if (!r || !r.data || !r.data.key) throw new Error('key'); NOTIF.key = r.data.key; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(NOTIF.key)});
+    const j = sub.toJSON();
+    const {error} = await sb.from('push_subs').upsert({endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 180)});
+    if (error) throw error;
+    NOTIF.sub = sub; NOTIF.lastBadge = -1; syncBadge();
+    toast('Notificações ativadas neste aparelho');
+  } catch(e){ console.error(e); toast('Não consegui ativar agora. Confira a internet e tente de novo.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+async function pushOff(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub){ await sb.from('push_subs').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe(); }
+    NOTIF.sub = null; if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); NOTIF.lastBadge = -1;
+    toast('Notificações desativadas neste aparelho');
+  } catch(e){ toast('Não consegui desativar agora. Tente de novo.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+async function pushTest(){
+  if (NOTIF.busy) return; NOTIF.busy = true; render();
+  try { const r = await sb.functions.invoke('notificar-treino', {body: {action: 'test'}}); const n = r && r.data ? r.data.sent : 0;
+    toast(n ? 'Enviada! Deve chegar em alguns segundos.' : 'Nenhum aparelho recebeu. Desative e ative de novo.'); }
+  catch(e){ toast('Não consegui enviar o teste agora.'); }
+  finally { NOTIF.busy = false; render(); }
+}
+// Número no ícone = treinos que chegaram depois da última vez que você abriu a aba Atividade.
+function badgeCount(){ const fo = db.settings && db.settings.feedOpened; return fo ? allLogs().filter(x => x.l.date > fo).length : unreadCount(); }
+function syncBadge(){
+  if (!sb || !isP() || state.mode !== 'personal') return;
+  if (state.psec === 'feed' && document.visibilityState === 'visible' && badgeCount() > 0){ db.settings = Object.assign({}, db.settings, {feedOpened: new Date().toISOString()}); save(); }
+  if (!('setAppBadge' in navigator) || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = badgeCount(); if (n === NOTIF.lastBadge) return; NOTIF.lastBadge = n;
+  (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => {
+  const m = ev.data || {};
+  if (m.type === 'jau-go' && m.go === 'feed' && isP()){ state.mode = 'personal'; state.psec = 'feed'; render(); refresh(true); }
+  else if (m.type === 'jau-push' && isP()) refresh(true);
+});
+(() => { try { const q = new URLSearchParams(location.search); if (q.get('go') === 'feed'){ state.psec = 'feed'; history.replaceState(null, '', location.pathname); } } catch(e){} })();
+
+
+/* ---------- avaliações: anamnese e fotos (só o personal lê) ---------- */
+const ASM = {list: [], loaded: false, loading: false, at: 0, mine: null, mineLoading: false, urls: {}, urlLoading: false, tried: {}};
+const ANF = {open: false, kind: 'anamnese', step: 0, ans: {}, photos: {}, busy: false, prog: '', err: '', sent: null, manual: null, edit: null, pasteMsg: ''};
+const asmCloud = () => typeof sb !== 'undefined' && !!sb && typeof AUTH !== 'undefined';
+function asmSeed(){ if (!asmCloud() && !db.assessments){ db.assessments = [{id: 'asm-exemplo', user_id: null, email: 'paula.teixeira@exemplo.com', student_id: null, kind: 'anamnese', seen_at: null, created_at: new Date(Date.now() - 864e5).toISOString(), photos: [],
+  data: {form: 'anamnese-v1', answers: {nome: 'Paula Teixeira', nasc: '1994-03-12', altura: '1,64 m', peso: '61 kg', trabalho: 'Analista administrativa, das 9h às 18h, de segunda a sexta.', dia: 'Sentado(a) o dia inteiro', esforco: 'Pouco esforço', ja: 'Sim', exp: 'Treinei por 1 ano na pandemia e parei há 8 meses. Evoluí bem de glúteos, mas sentia o joelho no agachamento.', obj: 'Hipertrofia de glúteos e pernas, perder um pouco da barriga.', enfase: 'Glúteos e postura. Tenho os ombros um pouco para frente.', tempo: '1 hora', dias: '4 dias: seg, ter, qui e sex', gosto: 'Gosto de elevação pélvica e stiff. Detesto afundo.', outra: 'Caminhada no fim de semana.', pato: 'Não', cir: 'Não', dor: 'Dor leve no joelho direito no agachamento profundo.', ergo: 'Não', med: 'Não', agua: 'Uns 1,5 litro', alcool: 'Sim, com pouca frequência', fuma: 'Não', dieta: 'Não sigo dieta. Faço 3 refeições e belisco à tarde.', academia: 'Academia do bairro'}}}]; } }
+const ANAM_V = 'anamnese-v1';
+const isPx = () => typeof isP === 'function' ? isP() : state.mode !== 'aluno';
+const NEG = /^\s*(n(ã|a)o|nenhum(a)?|nunca|nada|n)\s*\.?\s*$/i;
+const ANAM_STEPS = [
+  {t: 'Sobre você', q: [
+    {k: 'nome', l: 'Seu nome completo', type: 'text', req: 1, ac: 'name'},
+    {k: 'nasc', l: 'Sua data de nascimento', type: 'date', req: 1},
+    {k: 'altura', l: 'Qual a sua altura?', type: 'text', req: 1, ph: 'Ex.: 1,68 m', im: 'decimal'},
+    {k: 'peso', l: 'Qual o seu peso atual?', type: 'text', req: 1, ph: 'Ex.: 64 kg', im: 'decimal'}]},
+  {t: 'Sua rotina', q: [
+    {k: 'trabalho', l: 'Com o que você trabalha? Qual a carga horária e quantas vezes na semana?', type: 'area', req: 1},
+    {k: 'dia', l: 'Como você passa o seu dia?', type: 'choice', req: 1, o: ['Sentado(a) o dia inteiro', 'De pé o dia inteiro', 'Parte do dia sentado(a), parte do dia em pé']},
+    {k: 'esforco', l: 'Como considera o esforço físico do seu trabalho?', type: 'choice', req: 1, o: ['Pouco esforço', 'Esforço médio', 'Alto esforço', 'Esforço exaustivo']}]},
+  {t: 'Seu treino', q: [
+    {k: 'ja', l: 'Você já pratica ou praticou musculação antes?', type: 'choice', req: 1, o: ['Sim', 'Não']},
+    {k: 'exp', l: 'Me conte como foi a sua experiência', h: 'Quanto tempo, se está parado(a), como foi a sua evolução etc.', type: 'area', show: a => a.ja === 'Sim'},
+    {k: 'obj', l: 'Qual o seu objetivo com a consultoria?', type: 'area', req: 1},
+    {k: 'enfase', l: 'Existe algo que queira dar ênfase? Ou algum incômodo físico ou estético?', type: 'area', req: 1},
+    {k: 'tempo', l: 'Quanto tempo tem disponível para treinar?', type: 'choice', req: 1, o: ['Menos de 1 hora', '1 hora', '2 horas', 'Mais de 2 horas']},
+    {k: 'dias', l: 'Quantos e quais dias você tem disponíveis para treinar musculação?', type: 'text', req: 1, ph: 'Ex.: 4 dias, seg, ter, qui e sex'},
+    {k: 'gosto', l: 'Tem algum exercício que você gosta ou tem vontade de fazer? E algum que você detesta?', type: 'area', req: 1},
+    {k: 'outra', l: 'Pratica algum outro exercício ou atividade?', h: 'Se sim, qual e com que frequência.', type: 'area', req: 1, no: 1}]},
+  {t: 'Sua saúde', q: [
+    {k: 'pato', l: 'Tem alguma patologia diagnosticada em você ou na família?', h: 'Se sim, qual.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'cir', l: 'Já fez algum procedimento cirúrgico, recente ou antigo?', h: 'Se sim, qual.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'dor', l: 'Sente alguma dor, desconforto ou incômodo em qualquer região?', h: 'Por exemplo no peito, nas articulações, lesões, falta de ar ou coração acelerado. Conte quando acontece e em quais exercícios.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'ergo', l: 'Já utilizou ergogênicos?', h: 'Ex.: esteroides, estimulantes ou diuréticos. Se sim, quais e como foi ou está sendo.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'med', l: 'Faz uso de medicação controlada?', h: 'Se sim, quais.', type: 'area', req: 1, no: 1, health: 1}]},
+  {t: 'Seus hábitos', q: [
+    {k: 'agua', l: 'Sabe quanto de água você bebe por dia?', type: 'text', req: 1, ph: 'Ex.: uns 2 litros'},
+    {k: 'alcool', l: 'Consome álcool?', type: 'choice', req: 1, o: ['Sim, com frequência', 'Sim, com pouca frequência', 'Não']},
+    {k: 'fuma', l: 'É fumante?', type: 'choice', req: 1, o: ['Sim', 'Não']},
+    {k: 'dieta', l: 'Faz acompanhamento alimentar ou segue alguma dieta?', h: 'Se sim, conte como é: quantas refeições, calorias, restrições.', type: 'area', req: 1, no: 1},
+    {k: 'academia', l: 'Em qual academia pretende treinar?', h: 'Se puder, coloque o Instagram dela.', type: 'text', req: 1}]},
+  {t: 'Fotos', photos: 1},
+  {t: 'Revisar', review: 1}
+];
+const FOTO_STEPS = [{t: 'Fotos', photos: 1, q: [{k: 'peso', l: 'Seu peso hoje', type: 'text', ph: 'Ex.: 63,5 kg', im: 'decimal'}, {k: 'obs', l: 'Quer contar algo para o personal?', type: 'area', ph: 'Como estão os treinos, a alimentação, o sono...'}]}, {t: 'Revisar', review: 1}];
+const POSES = [['frente', 'Frente'], ['lado', 'Lado'], ['costas', 'Costas']];
+const anfSteps = () => ANF.kind === 'fotos' ? FOTO_STEPS : ANF.edit ? ANAM_STEPS.filter(x => !x.photos) : ANAM_STEPS;
+function asmAll(){ asmSeed(); return asmCloud() ? ASM.list : (db.assessments || []); }
+function asmMatch(a, s){ return a.student_id === s.id || (!a.student_id && a.email && s.email && a.email.toLowerCase() === String(s.email).toLowerCase()); }
+function asmFor(s){ return asmAll().filter(a => asmMatch(a, s)).sort((a, b) => a.created_at < b.created_at ? -1 : 1); }
+function asmOrphans(){ return asmAll().filter(a => a.kind === 'anamnese' && !db.students.some(s => asmMatch(a, s))).sort((a, b) => a.created_at < b.created_at ? 1 : -1); }
+function asmMine(){
+  if (asmCloud()) return ASM.mine || [];
+  asmSeed(); const st = stu(); return st ? (db.assessments || []).filter(a => a.student_id === st.id) : [];
+}
+function needAnam(st){ if (st && st.anam === 'ok') return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'anamnese'); }
+function needPhotos(st){ if (!st || !st.askPhotos) return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'fotos' && a.created_at > st.askPhotos); }
+// busca as avaliações; se falhar (sem internet ou tabela ainda não criada), espera antes de tentar de novo
+async function asmLoad(){
+  if (!asmCloud() || ASM.loading) return false; ASM.loading = true; let changed = false;
+  try { const {data, error} = await sb.from('assessments').select('id,user_id,email,student_id,kind,data,photos,seen_at,created_at').order('created_at');
+    if (!error && data){ changed = !ASM.loaded || JSON.stringify(data) !== JSON.stringify(ASM.list); ASM.list = data; asmAutoLink(); }
+    else changed = !ASM.loaded; }
+  catch(e){ changed = !ASM.loaded; }
+  finally { ASM.loading = false; ASM.loaded = true; ASM.at = Date.now(); }
+  return changed;
+}
+async function asmMineLoad(){
+  if (!asmCloud() || ASM.mineLoading) return; ASM.mineLoading = true;
+  try { const {data, error} = await sb.rpc('my_assessments'); ASM.mine = !error && Array.isArray(data) ? data : (ASM.mine || []); } catch(e){ ASM.mine = ASM.mine || []; }
+  finally { ASM.mineLoading = false; }
+}
+function asmTick(){
+  if (!asmCloud() || !AUTH.user) return;
+  if (isPx()){ if (AUTH.screen === 'app' && !ASM.loading && (!ASM.loaded || Date.now() - ASM.at > 120000)) asmLoad().then(ch => { if (ch) render(); }); }
+  else if (ASM.mine === null && !ASM.mineLoading) asmMineLoad().then(() => render());
+}
+// marca a anamnese no aluno e liga a avaliação à ficha (só o personal)
+function asmAutoLink(){
+  if (!isPx()) return; let ch = false;
+  db.students.forEach(s => { const as = asmFor(s); if (as.some(a => a.kind === 'anamnese') && s.anam !== 'ok'){ s.anam = 'ok'; ch = true; }
+    as.filter(a => !a.student_id).forEach(a => { a.student_id = s.id; if (asmCloud()) sb.from('assessments').update({student_id: s.id}).eq('id', a.id).then(() => {}); }); });
+  if (ch) save();
+}
+function asmSeen(list){
+  const un = list.filter(a => !a.seen_at); if (!un.length) return;
+  const t = new Date().toISOString(); un.forEach(a => a.seen_at = t);
+  if (asmCloud()) un.forEach(a => sb.from('assessments').update({seen_at: t}).eq('id', a.id).then(() => {})); else save();
+}
+async function asmUrls(paths){
+  if (!asmCloud()) return; const need = paths.filter(p => p && !ASM.urls[p] && !ASM.tried[p]); if (!need.length || ASM.urlLoading) return;
+  ASM.urlLoading = true; need.forEach(p => ASM.tried[p] = 1); let got = 0;
+  try { const {data} = await sb.storage.from('avaliacoes').createSignedUrls(need, 3600); (data || []).forEach(x => { if (x && x.signedUrl){ ASM.urls[x.path] = x.signedUrl; got++; } }); }
+  catch(e){} finally { ASM.urlLoading = false; if (got) render(); }
+}
+const phSrc = p => p.url || ASM.urls[p.path] || '';
+const ansTxt = (q, v) => q.type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.split('-').reverse().join('/') : v;
+// foto menor antes de enviar (celular manda 3 a 8 MB; aqui vira ~200 KB)
+async function shrink(file, max, q){
+  let bmp = null;
+  try { bmp = await createImageBitmap(file, {imageOrientation: 'from-image'}); } catch(e){
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); }); }
+  const w = bmp.width, h = bmp.height, r = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * r); c.height = Math.round(h * r);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', q));
+  return {blob, url: c.toDataURL('image/jpeg', q)};
+}
+function age(nasc){ const d = new Date(nasc + 'T12:00:00'); if (isNaN(d)) return null; const n = new Date(); let a = n.getFullYear() - d.getFullYear(); if (n.getMonth() < d.getMonth() || (n.getMonth() === d.getMonth() && n.getDate() < d.getDate())) a--; return a > 0 && a < 120 ? a : null; }
+const numOf = v => { const m = String(v || '').replace(',', '.').match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+function imc(alt, peso){ let a = numOf(alt), p = numOf(peso); if (!a || !p) return null; if (a > 3) a = a / 100; const v = p / (a * a); return v > 10 && v < 70 ? v.toFixed(1).replace('.', ',') : null; }
+const ANF_KEY = 'jau-anf';
+function anfSave(){ if (ANF.manual) return; try { localStorage.setItem(ANF_KEY, JSON.stringify({kind: ANF.kind, ans: ANF.ans, step: ANF.step})); } catch(e){} }
+function anfOpen(kind){
+  ANF.open = true; ANF.kind = kind; ANF.step = 0; ANF.ans = {}; ANF.photos = {}; ANF.err = ''; ANF.sent = null;
+  try { const o = JSON.parse(localStorage.getItem(ANF_KEY) || 'null'); if (o && o.kind === kind){ ANF.ans = o.ans || {}; ANF.step = Math.min(o.step || 0, anfSteps().length - 1); } } catch(e){}
+  const st = stu ? stu() : null;
+  if (kind === 'anamnese' && !ANF.ans.nome) ANF.ans.nome = (st && !isPx() && st.name) || (typeof AUTH !== 'undefined' && AUTH.profile && AUTH.profile.name) || (st && st.name) || '';
+  render(); window.scrollTo(0, 0);
+}
+function anfClose(){ ANF.open = false; ANF.manual = null; ANF.edit = null; ANF.pasteMsg = ''; render(); window.scrollTo(0, 0); }
+// personal preenche (ou corrige) a anamnese de um aluno, por exemplo para passar as respostas do Google Forms
+function anfManual(sid, editId){
+  const st = db.students.find(x => x.id === sid); if (!st) return;
+  const a = editId ? asmAll().find(x => x.id === editId) : null;
+  Object.assign(ANF, {open: true, kind: 'anamnese', step: 0, photos: {}, err: '', sent: null, busy: false, manual: sid, edit: a ? a.id : null, pasteMsg: ''});
+  ANF.ans = a ? Object.assign({}, a.data && a.data.answers || {}) : {nome: st.name};
+  render(); window.scrollTo(0, 0);
+}
+const nrm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// palavras que identificam cada coluna da planilha do Forms (na ordem de prioridade)
+const FORMS_KEYS = [['_ts', ['carimbo', 'timestamp']], ['_email', ['email']], ['nome', ['nomecompleto', 'seunome']], ['nasc', ['nascimento']], ['altura', ['altura']], ['peso', ['peso']],
+  ['esforco', ['esforcofisico']], ['trabalho', ['trabalha']], ['dia', ['passaoseudia', 'comovocepassa']], ['exp', ['sejapraticou', 'comofoisuaexperiencia', 'experiencia']], ['ja', ['japratica', 'praticouantes']],
+  ['obj', ['objetivo']], ['enfase', ['enfase']], ['tempo', ['quantotempo', 'tempotemdisponivel']], ['dias', ['dias']], ['gosto', ['detesta', 'gostaoutem']], ['outra', ['outroexercicio', 'outraatividade']],
+  ['pato', ['patologia']], ['cir', ['cirurgic']], ['dor', ['dor', 'desconforto']], ['ergo', ['ergogenic']], ['med', ['medicacao']], ['agua', ['agua']], ['alcool', ['alcool']], ['fuma', ['fumante']],
+  ['dieta', ['dieta', 'alimentar']], ['academia', ['academia']]];
+const FORMS_COLS = ['_ts', 'nome', '_email', 'nasc', 'altura', 'peso', 'trabalho', 'dia', 'esforco', 'ja', 'exp', 'obj', 'enfase', 'tempo', 'dias', 'gosto', 'outra', 'pato', 'cir', 'dor', 'ergo', 'med', 'agua', 'alcool', 'fuma', 'dieta', 'academia'];
+function tsvRows(txt){
+  const rows = [[]]; let cell = '', q = false; txt = String(txt || '').replace(/\r\n?/g, '\n');
+  for (let i = 0; i < txt.length; i++){ const c = txt[i];
+    if (q){ if (c === '"'){ if (txt[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; continue; }
+    if (c === '"' && cell === '') { q = true; continue; }
+    if (c === '\t'){ rows[rows.length - 1].push(cell); cell = ''; continue; }
+    if (c === '\n'){ rows[rows.length - 1].push(cell); cell = ''; rows.push([]); continue; }
+    cell += c; }
+  rows[rows.length - 1].push(cell);
+  return rows.filter(r => r.some(c => c.trim()));
+}
+function bestOpt(q, v){
+  const n = nrm(v); let best = null, sc = 0;
+  q.o.forEach(o => { const m = nrm(o); let k = 0; while (k < m.length && k < n.length && m[k] === n[k]) k++; if (m === n) k = 999; if (k > sc){ sc = k; best = o; } });
+  return sc >= 3 ? best : v;
+}
+function anfPaste(txt){
+  const rows = tsvRows(txt); if (!rows.length) return 0;
+  let head = null, row = rows[rows.length - 1];
+  if (rows.length >= 2 && rows[0].some(c => /carimbo|timestamp|nome completo/i.test(c))) head = rows[0], row = rows[1];
+  const Q = {}; ALLQ().forEach(q => Q[q.k] = q);
+  let keys;
+  if (head){ const used = new Set(); keys = head.map(h => { const n = nrm(h); const hit = FORMS_KEYS.find(([k, ws]) => !used.has(k) && ws.some(w => n.includes(w))); if (!hit) return null; used.add(hit[0]); return hit[0]; }); }
+  else keys = row.length >= FORMS_COLS.length || /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(row[0] || '') ? FORMS_COLS : FORMS_COLS.slice(1);
+  let n = 0;
+  row.forEach((v, i) => { const k = keys[i]; v = String(v || '').trim(); if (!k || !v) return;
+    if (k === '_email'){ ANF.pasteEmail = v.toLowerCase(); return; } if (k === '_ts' || !Q[k]) return;
+    if (Q[k].type === 'date'){ const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) v = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; }
+    if (Q[k].type === 'choice') v = bestOpt(Q[k], v);
+    ANF.ans[k] = v; n++; });
+  return n;
+}
+const anfVisible = q => !q.show || q.show(ANF.ans);
+function anfMissing(step){
+  if (ANF.manual) return [];
+  const s = anfSteps()[step]; if (!s.q) return [];
+  return s.q.filter(q => q.req && anfVisible(q) && !String(ANF.ans[q.k] || '').trim());
+}
+function anfField(q){
+  const v = ANF.ans[q.k] || '', id = 'anf-' + q.k, miss = ANF.err && q.req && anfVisible(q) && !String(v).trim();
+  const lab = `<span class="anq">${esc(q.l)}${q.req ? '' : ' <span class="opt">(opcional)</span>'}</span>${q.h ? `<span class="hint">${esc(q.h)}</span>` : ''}`;
+  if (q.type === 'choice') return `<fieldset class="anf ${miss ? 'miss' : ''}"><legend>${lab}</legend><div class="anopts">${q.o.map(o => `<button type="button" class="anopt" data-act="anf-pick" data-k="${q.k}" data-v="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join('')}</div></fieldset>`;
+  const ctl = q.type === 'area' ? `<textarea id="${id}" data-anf="${q.k}" rows="3" placeholder="${esc(q.ph || '')}">${esc(v)}</textarea>`
+    : `<input id="${id}" data-anf="${q.k}" type="${q.type === 'date' ? 'date' : 'text'}" ${q.im ? `inputmode="${q.im}"` : ''} ${q.ac ? `autocomplete="${q.ac}"` : 'autocomplete="off"'} placeholder="${esc(q.ph || '')}" value="${esc(v)}">`;
+  return `<label class="anf ${miss ? 'miss' : ''}" for="${id}">${lab}${ctl}${q.no ? `<button type="button" class="anno" data-act="anf-no" data-k="${q.k}" aria-pressed="${NEG.test(v)}">Não</button>` : ''}</label>`;
+}
+function anfPhotos(){
+  const tips = ANF.kind === 'fotos' ? '' : `<p class="small muted">Se preferir, pode enviar depois. O seu personal também pode pedir as fotos pelo app.</p>`;
+  return `<div class="antips"><b>Como tirar as fotos</b><ul><li>Corpo inteiro, da cabeça aos pés</li><li>Lugar bem iluminado, de preferência com luz de frente</li><li>Roupa de treino ou de banho, braços relaxados</li><li>Mesma distância e mesmo lugar nas próximas avaliações</li></ul></div>
+    <div class="anph">${POSES.map(([k, l]) => { const p = ANF.photos[k]; return `<label class="phslot ${p ? 'has' : ''}" for="anp-${k}">${p ? `<img src="${p.url}" alt="Foto de ${l.toLowerCase()}">` : `<span class="phic">${ICON_CAM}</span>`}<b>${l}</b><span class="small">${p ? 'Toque para trocar' : 'Toque para escolher'}</span><input id="anp-${k}" type="file" accept="image/*" data-anp="${k}"></label>`; }).join('')}</div>
+    <p class="small muted anpriv">${ICON_LOCK}As fotos ficam guardadas só para o seu personal. Nem outros alunos nem o próprio app mostram elas para mais ninguém.</p>${tips}`;
+}
+function anfReview(){
+  const steps = anfSteps().filter(s => s.q && !s.photos);
+  const ph = POSES.filter(([k]) => ANF.photos[k]);
+  const rows = (ANF.kind === 'fotos' ? FOTO_STEPS[0].q : []).concat(...steps.map(s => s.q)).filter(anfVisible);
+  return `${ANF.kind === 'fotos' ? '' : steps.map((s, i) => `<section class="anrev"><div class="anrevh"><b>${esc(s.t)}</b><button type="button" class="linkbtn" data-act="anf-go" data-v="${anfSteps().indexOf(s)}">Editar</button></div><dl>${s.q.filter(anfVisible).map(q => `<dt>${esc(q.l)}</dt><dd>${esc(ansTxt(q, ANF.ans[q.k] || '') || '—')}</dd>`).join('')}</dl></section>`).join('')}
+    ${ANF.kind === 'fotos' ? `<section class="anrev"><dl>${rows.map(q => `<dt>${esc(q.l)}</dt><dd>${esc(ANF.ans[q.k] || '—')}</dd>`).join('')}</dl></section>` : ''}
+    <section class="anrev"><div class="anrevh"><b>Fotos</b><button type="button" class="linkbtn" data-act="anf-go" data-v="${anfSteps().findIndex(s => s.photos)}">${ph.length ? 'Trocar' : 'Adicionar'}</button></div>${ph.length ? `<div class="anrevph">${ph.map(([k, l]) => `<figure><img src="${ANF.photos[k].url}" alt=""><figcaption>${l}</figcaption></figure>`).join('')}</div>` : '<p class="small muted">Nenhuma foto. Você pode enviar depois.</p>'}</section>
+    ${!ANF.manual && asmCloud() && AUTH.user ? `<p class="small muted">Enviando como <b>${esc(AUTH.user.email)}</b>.</p>` : ''}`;
+}
+function anamForm(){
+  const steps = anfSteps(), s = steps[ANF.step], last = ANF.step === steps.length - 1;
+  const mst = ANF.manual ? db.students.find(x => x.id === ANF.manual) : null;
+  if (ANF.sent && mst) return `<section class="card anfcard anfdone"><span class="anok">${ICON_CHECK}</span><p class="eyebrow">Anamnese salva</p><h2 class="serif">${esc(mst.name)}</h2><p>As respostas já aparecem no perfil, na aba Anamnese e no painel de apoio.</p><button class="btn block" type="button" data-act="anf-close">Voltar</button></section>`;
+  if (ANF.sent) return `<section class="card anfcard anfdone"><span class="anok">${ICON_CHECK}</span><p class="eyebrow">${ANF.kind === 'fotos' ? 'Fotos enviadas' : 'Anamnese enviada'}</p><h2 class="serif">Tudo certo!</h2>
+    <p>${ANF.kind === 'fotos' ? 'O seu personal já recebeu as fotos e vai usar na sua avaliação.' : 'O Marcelo já recebeu as suas respostas e vai usar para montar o seu treino.'}</p><button class="btn block" type="button" data-act="anf-close">Voltar ao app</button></section>`;
+  const pct = Math.round(100 * (ANF.step + 1) / steps.length);
+  const intro = mst ? (ANF.step === 0 ? `<div class="anintro"><p><b>${ANF.edit ? 'Corrigindo' : 'Preenchendo'} a anamnese de ${esc(mst.name)}.</b> Nenhuma pergunta é obrigatória aqui. O aluno não recebe nada.</p>${ANF.edit ? '' : `<details class="anpaste" ${ANF.pasteMsg ? 'open' : ''}><summary>Colar respostas do Google Forms</summary><p class="small muted">Na planilha de respostas do Forms, selecione a linha do aluno (de preferência junto com a linha de títulos), copie e cole aqui. Confira tudo na revisão antes de salvar.</p><textarea id="anf-paste" rows="3" placeholder="Cole aqui a linha copiada da planilha"></textarea><button type="button" class="btn sm" data-act="anf-paste">Preencher com o que colei</button>${ANF.pasteMsg ? `<p class="small">${esc(ANF.pasteMsg)}</p>` : ''}</details>`}</div>` : '') : ANF.step === 0 && ANF.kind === 'anamnese' ? `<div class="anintro"><p><b>Vamos dar o primeiro passo para esse novo movimento!</b> Saber da sua rotina e das suas particularidades me ajuda a montar o treino certo para você. Responda de forma bem completa e específica.</p><p class="small muted">Supervisionado por Marcelo Júnior · CREF RJ-056749. As respostas ficam guardadas só para o seu personal.</p></div>` : '';
+  const body = s.review ? anfReview() : (s.photos ? (s.q ? s.q.map(anfField).join('') : '') + anfPhotos() : s.q.filter(anfVisible).map(anfField).join(''));
+  return `<section class="card anfcard" aria-labelledby="anf-h">
+    <div class="anftop"><button type="button" class="linkbtn" data-act="${ANF.step ? 'anf-back' : 'anf-close'}">← ${ANF.step ? 'Voltar' : 'Sair'}</button><span class="small muted">Etapa ${ANF.step + 1} de ${steps.length}</span></div>
+    <div class="anbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso"><span style="width:${pct}%"></span></div>
+    <p class="eyebrow">${ANF.kind === 'fotos' ? 'Fotos de avaliação' : mst ? 'Anamnese de ' + esc(mst.name.split(' ')[0]) + ' · preenchida por você' : 'Anamnese'}</p><h2 class="serif" id="anf-h">${esc(s.t)}</h2>
+    ${intro}${body}
+    ${ANF.err ? `<p class="anerr" role="alert">${esc(ANF.err)}</p>` : ''}
+    <div class="anfnav">${last ? `<button class="btn block" type="button" data-act="anf-send" ${ANF.busy ? 'disabled' : ''}>${ANF.busy ? esc(ANF.prog || 'Enviando...') : (mst ? (ANF.edit ? 'Salvar alterações' : 'Salvar anamnese na ficha') : ANF.kind === 'fotos' ? 'Enviar fotos para o personal' : 'Enviar anamnese para o personal')}</button>`
+      : `<button class="btn block" type="button" data-act="anf-next">${s.photos && !POSES.some(([k]) => ANF.photos[k]) && ANF.kind !== 'fotos' ? 'Continuar sem fotos' : 'Continuar'}</button>`}</div>
+  </section>`;
+}
+// convite no app do aluno
+function asmPrompt(st){
+  if (ANF.open) return '';
+  if (needAnam(st)) return `<section class="card asmcta"><span class="asmic">${ICON_CLIP}</span><div><p class="eyebrow">Primeiro passo</p><h3>Preencha a sua anamnese</h3><p class="small muted">São perguntas sobre a sua rotina, saúde e objetivo. Leva uns 10 minutos e o personal monta o treino a partir delas.</p></div><button class="btn" type="button" data-act="anf-open" data-v="anamnese">Preencher agora</button></section>`;
+  if (needPhotos(st)) return `<section class="card asmcta"><span class="asmic">${ICON_CAM}</span><div><p class="eyebrow">Pedido do personal</p><h3>Envie novas fotos de avaliação</h3><p class="small muted">Frente, lado e costas, para comparar com as anteriores.</p></div><button class="btn" type="button" data-act="anf-open" data-v="fotos">Enviar fotos</button></section>`;
+  return '';
+}
+function waitingAnam(){
+  if (!asmCloud()) return '';
+  if (ASM.mine === null) return '';
+  const a = (ASM.mine || []).find(x => x.kind === 'anamnese');
+  if (a) return `<div class="asmsent">${ICON_CHECK}<span>Anamnese enviada em ${esc(dateBR(a.created_at))}. O seu personal já está com as respostas.</span></div>`;
+  return `<div class="asmwait"><p><b>Enquanto isso, preencha a sua anamnese.</b> Com ela o personal já começa a montar o seu treino.</p><button class="btn block" type="button" data-act="anf-open" data-v="anamnese">Preencher anamnese</button></div>`;
+}
+async function anfSend(){
+  if (ANF.busy) return;
+  const missAll = anfSteps().map((_, i) => anfMissing(i).length ? i : -1).filter(i => i > -1);
+  if (missAll.length){ ANF.step = missAll[0]; ANF.err = 'Faltou responder algumas perguntas desta etapa.'; render(); return; }
+  if (ANF.kind === 'fotos' && !POSES.some(([k]) => ANF.photos[k])){ ANF.step = 0; ANF.err = 'Escolha pelo menos uma foto.'; render(); return; }
+  ANF.busy = true; ANF.err = ''; render();
+  const id = uid(), data = {form: ANF.kind === 'fotos' ? 'fotos-v1' : ANAM_V, answers: Object.assign({}, ANF.ans)};
+  if (data.answers.ja !== 'Sim') delete data.answers.exp;
+  const ph = POSES.filter(([k]) => ANF.photos[k]);
+  try {
+    if (ANF.manual){
+      const st = db.students.find(x => x.id === ANF.manual); if (!st) throw new Error('aluno');
+      const now = new Date().toISOString();
+      if (ANF.edit){
+        const a = asmAll().find(x => x.id === ANF.edit); const nd = Object.assign({}, a.data || {}, {answers: data.answers, editedAt: now});
+        if (asmCloud()){ const {error} = await sb.from('assessments').update({data: nd}).eq('id', a.id); if (error) throw error; }
+        a.data = nd; if (!asmCloud()) save();
+      } else {
+        data.manual = true; const photos = [];
+        if (asmCloud()){
+          const u = AUTH.user;
+          for (let i = 0; i < ph.length; i++){ const [k] = ph[i]; ANF.prog = `Enviando foto ${i + 1} de ${ph.length}...`; render();
+            const path = `${u.id}/${id}/${k}.jpg`; const {error} = await sb.storage.from('avaliacoes').upload(path, ANF.photos[k].blob, {contentType: 'image/jpeg', upsert: false}); if (error) throw error; photos.push({pose: k, path}); }
+          const row = {id, user_id: u.id, email: String(st.email || ANF.pasteEmail || '').toLowerCase(), student_id: st.id, kind: 'anamnese', data, photos, seen_at: now};
+          const {error} = await sb.from('assessments').insert(row); if (error) throw error;
+          ASM.list.push(Object.assign({created_at: now}, row));
+        } else {
+          db.assessments = db.assessments || [];
+          db.assessments.push({id, user_id: null, email: st.email || '', student_id: st.id, kind: 'anamnese', data, photos: ph.map(([k]) => ({pose: k, url: ANF.photos[k].url})), seen_at: now, created_at: now});
+        }
+      }
+      if (st.anam !== 'ok'){ st.anam = 'ok'; } save();
+      ANF.sent = true; ANF.photos = {}; ANF.pasteEmail = '';
+    } else if (asmCloud()){
+      if (isPx()) throw new Error('personal');
+      const u = AUTH.user, photos = [];
+      for (let i = 0; i < ph.length; i++){
+        const [k] = ph[i]; ANF.prog = `Enviando foto ${i + 1} de ${ph.length}...`; render();
+        const path = `${u.id}/${id}/${k}.jpg`;
+        const {error} = await sb.storage.from('avaliacoes').upload(path, ANF.photos[k].blob, {contentType: 'image/jpeg', upsert: false});
+        if (error) throw error; photos.push({pose: k, path});
+      }
+      ANF.prog = 'Salvando respostas...'; render();
+      const {error} = await sb.from('assessments').insert({id, user_id: u.id, email: String(u.email || '').toLowerCase(), kind: ANF.kind, data, photos});
+      if (error) throw error;
+      ASM.mine = (ASM.mine || []).concat({id, kind: ANF.kind, created_at: new Date().toISOString()});
+    } else {
+      const st = stu();
+      db.assessments = db.assessments || [];
+      db.assessments.push({id, user_id: null, email: st && st.email || '', student_id: st ? st.id : null, kind: ANF.kind, data, photos: ph.map(([k]) => ({pose: k, url: ANF.photos[k].url})), seen_at: null, created_at: new Date().toISOString()});
+      if (st && ANF.kind === 'anamnese') st.anam = 'ok';
+      save();
+    }
+    if (!ANF.manual){ try { localStorage.removeItem(ANF_KEY); } catch(e){}
+    ANF.sent = true; ANF.photos = {}; }
+  } catch(e){
+    console.error(e);
+    ANF.err = e && e.message === 'personal' ? 'Esta tela é para o aluno preencher. Abra com a conta dele para testar o envio.' : 'Não consegui enviar agora. Confira a internet e toque em enviar de novo. Suas respostas continuam aqui.';
+  } finally { ANF.busy = false; ANF.prog = ''; render(); window.scrollTo(0, 0); }
+}
+// ---------- visão do personal ----------
+const ALLQ = () => ANAM_STEPS.filter(s => s.q).flatMap(s => s.q);
+function asmSummary(a){
+  const x = a.data && a.data.answers || {}, ag = age(x.nasc), bmi = imc(x.altura, x.peso);
+  return [ag ? ag + ' anos' : '', x.altura || '', x.peso || '', bmi ? 'IMC ' + bmi : ''].filter(Boolean);
+}
+function asmAnswersHTML(a){
+  const x = a.data && a.data.answers || {};
+  return ANAM_STEPS.filter(s => s.q).map(s => `<section class="asmsec"><p class="eyebrow">${esc(s.t)}</p><dl>${s.q.filter(q => x[q.k] !== undefined && x[q.k] !== '').map(q => { const v = String(x[q.k]); const warn = q.health && !NEG.test(v);
+    return `<div class="asmq ${warn ? 'warn' : ''}"><dt>${esc(q.l)}</dt><dd>${warn ? '<span class="asmwarn">Atenção</span>' : ''}${esc(ansTxt(q, v))}</dd></div>`; }).join('')}</dl></section>`).join('');
+}
+function asmPhotosHTML(list){
+  const withPh = list.filter(a => (a.photos || []).length);
+  if (!withPh.length) return `<p class="small muted">Nenhuma foto enviada ainda.</p>`;
+  asmUrls(withPh.flatMap(a => a.photos.map(p => p.path)).filter(Boolean));
+  return `<div class="asmph" role="region" aria-label="Fotos por data" tabindex="0"><div class="asmphg" style="grid-template-columns:auto repeat(${withPh.length},minmax(104px,150px))">
+    <span></span>${withPh.map(a => `<b class="small">${esc(dateBR(a.created_at))}${a.data && a.data.answers && a.data.answers.peso ? `<small>${esc(a.data.answers.peso)}</small>` : ''}</b>`).join('')}
+    ${POSES.map(([k, l]) => `<span class="phl">${l}</span>${withPh.map(a => { const p = (a.photos || []).find(x => x.pose === k), src = p && phSrc(p);
+      return p ? (src ? `<button type="button" class="phbtn" data-act="ph-zoom" data-src="${esc(src)}" aria-label="Ampliar ${l.toLowerCase()} de ${esc(dateBR(a.created_at))}"><img src="${esc(src)}" alt="" loading="lazy"></button>` : `<span class="phload">${ASM.tried[p.path] && !ASM.urlLoading ? 'Indisponível' : 'Carregando'}</span>`) : '<span class="phnone">—</span>'; }).join('')}`).join('')}
+  </div></div>`;
+}
+function asmView(s, compact){
+  const list = asmFor(s), an = list.filter(a => a.kind === 'anamnese'), last = an[an.length - 1];
+  if (!compact) asmSeen(list);
+  const pend = s.askPhotos && !list.some(a => a.kind === 'fotos' && a.created_at > s.askPhotos);
+  const ask = `<div class="row asmacts">${pend ? `<span class="chip">Fotos pedidas em ${esc(dateBR(s.askPhotos))}</span><button type="button" class="linkbtn" data-act="ask-photos-off" data-v="${s.id}">Cancelar pedido</button>` : `<button type="button" class="btn sm ghost" data-act="ask-photos" data-v="${s.id}">${ICON_CAM}Pedir novas fotos</button>`}</div>`;
+  if (asmCloud() && !ASM.loaded) return `<div class="empty">Carregando a anamnese...</div>`;
+  const head = last ? `<div class="asmhead"><div><p class="eyebrow">Anamnese de ${esc(dateBR(last.created_at))}</p><h3>${esc((last.data.answers || {}).nome || s.name)}</h3><div class="asmchips">${asmSummary(last).map(c => `<span class="chip">${esc(c)}</span>`).join('')}</div>
+      ${(last.data.answers || {}).obj ? `<p class="asmobj"><span class="eyebrow">Objetivo</span>${esc(last.data.answers.obj)}</p>` : ''}${last.data.manual ? '<p class="small muted">Preenchida por você.</p>' : ''}</div><button type="button" class="btn sm ghost" data-act="anf-edit" data-v="${last.id}" data-s="${s.id}">Editar respostas</button></div>` : `<div class="empty">${s.anam === 'ok' ? 'A anamnese deste aluno foi marcada como respondida fora do app (Google Forms).' : `${esc(s.name.split(' ')[0])} ainda não preencheu a anamnese. Ela aparece no app ${s.email ? 'dele(a)' : 'quando você cadastrar o e-mail de acesso'}.`}<button type="button" class="btn sm" data-act="anf-manual" data-v="${s.id}" style="margin-top:10px">Preencher anamnese manualmente</button></div>`;
+  return `<div class="asmview ${compact ? 'compact' : ''}">${head}${ask}
+    <section class="asmsec"><p class="eyebrow">Fotos de avaliação</p>${asmPhotosHTML(list)}</section>
+    ${last ? (compact ? `<details class="asmmore"><summary>Ver todas as respostas</summary>${asmAnswersHTML(last)}</details>` : asmAnswersHTML(last)) : ''}
+    ${an.length > 1 ? `<p class="small muted">${an.length} anamneses enviadas. Mostrando a mais recente.</p>` : ''}</div>`;
+}
+function asmNewHTML(){
+  const or = asmOrphans(); if (!or.length) return '';
+  return `<section class="card asmnew"><div class="asmnewh"><p class="eyebrow">Novas anamneses</p><span class="abadge new">${or.length}</span></div><p class="small muted">Pessoas que criaram a conta no app e responderam a anamnese, mas ainda não têm ficha.</p>
+    ${or.map(a => { const x = a.data.answers || {}; const open = state.asmOpen === a.id; return `<article class="asmlead"><div class="asmleadh"><div><b>${esc(x.nome || a.email || 'Sem nome')}</b><span class="small muted">${esc(a.email || '')} · ${esc(dateBR(a.created_at))}</span>${x.obj ? `<span class="small">Objetivo: ${esc(x.obj.length > 90 ? x.obj.slice(0, 90) + '…' : x.obj)}</span>` : ''}</div>
+      <div class="row"><button type="button" class="btn sm" data-act="asm-create" data-v="${a.id}">Criar ficha</button><button type="button" class="btn sm ghost" data-act="asm-toggle" data-v="${a.id}" aria-expanded="${open}">${open ? 'Fechar' : 'Ver respostas'}</button></div></div>
+      ${open ? `<div class="asmview">${(a.photos || []).length ? `<section class="asmsec"><p class="eyebrow">Fotos</p>${asmPhotosHTML([a])}</section>` : ''}${asmAnswersHTML(a)}</div>` : ''}</article>`; }).join('')}</section>`;
+}
+function asmChip(s){ const un = asmFor(s).filter(a => !a.seen_at); if (!un.length) return ''; return `<span class="abadge new">${un.some(a => a.kind === 'anamnese') ? 'Anamnese nova' : 'Fotos novas'}</span>`; }
+function phZoom(src){ const o = document.createElement('div'); o.className = 'phov'; o.innerHTML = `<img src="${esc(src)}" alt="Foto ampliada"><button type="button" class="phx" aria-label="Fechar">✕</button>`; o.addEventListener('click', () => o.remove()); document.body.appendChild(o); }
+
+
+/* ---------- painel de apoio (editor da ficha) ---------- */
+function apSources(s){
+  const out = [];
+  (s.protos || []).slice().reverse().forEach((p, i) => out.push({key: 'p:' + s.id + ':' + ((s.protos.length - 1) - i), grp: 'Deste aluno', label: `${p.name} (guardado ${ddmm(p.to)})`, days: p.days, st: s}));
+  db.students.filter(x => x.id !== s.id).sort((a, b) => a.name.localeCompare(b.name, 'pt')).forEach(x => {
+    out.push({key: 's:' + x.id, grp: 'Outros alunos', label: `${x.name} · ${x.protocol || 'ficha atual'}`, days: x.days, st: x});
+    (x.protos || []).slice().reverse().forEach((p, i) => out.push({key: 'p:' + x.id + ':' + ((x.protos.length - 1) - i), grp: 'Outros alunos', label: `${x.name} · ${p.name} (antigo)`, days: p.days, st: x}));
+  });
+  return out;
+}
+function apSrc(s){
+  const all = apSources(s); if (!all.length) return {all, cur: null};
+  let cur = all.find(o => o.key === state.apoioSrc);
+  if (!cur){ cur = all[0]; state.apoioSrc = cur.key; }
+  return {all, cur};
+}
+function apSum(ex){
+  const ser = ex.series || [], work = ser.filter(x => x.type !== 'aq'), aq = ser.length - work.length;
+  const t = work.find(x => x.type === 'trab') || work[0] || {};
+  return [work.length ? `${work.length}x ${String(t.reps || '').split(/\s*\+\s*/)[0] || '—'}` : '', aq ? `+${aq} aquec.` : '', ex.method && ex.method !== 'normal' ? meth(ex.method).name : '', ex.rest || ''].filter(Boolean).join(' · ');
+}
+function apTreinos(s){
+  const {all, cur} = apSrc(s), tgt = s.days[state.editDay], tl = slotShort(s, state.editDay);
+  if (!cur) return `<p class="small muted">Ainda não há outros alunos nem protocolos antigos guardados. Quando você iniciar o próximo protocolo, a ficha atual fica guardada aqui.</p>`;
+  const grps = [...new Set(all.map(o => o.grp))];
+  const has = new Set(tgt.ex.map(e => e.items.join('+')));
+  const days = DAYS.map(x => x.k).filter(k => cur.days[k] && (cur.days[k].ex || []).length);
+  return `<label class="aplab">Ver<select id="ap-src" data-apsrc="1">${grps.map(g => `<optgroup label="${esc(g)}">${all.filter(o => o.grp === g).map(o => `<option value="${esc(o.key)}" ${o.key === cur.key ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+    <p class="aptgt">Os exercícios vão para <b>${esc(slotFull(s, state.editDay))}${tgt.title ? ' · ' + esc(tgt.title) : ''}</b>. Para mandar para outro dia, troque o dia na semana da ficha.</p>
+    ${days.length ? days.map(k => { const d = cur.days[k];
+      return `<section class="apday"><div class="apdayh"><div><span class="apd">${esc(slotShort(cur.st, k))}</span><b>${esc(d.title || 'Treino')}</b></div><button type="button" class="btn sm ghost" data-act="ap-day" data-v="${k}">Copiar dia → ${esc(tl)}</button></div>
+        <ul class="apex">${d.ex.map((ex, i) => { const nm = ex.items.map((id, j) => (ex.items.length > 1 ? String.fromCharCode(65 + j) + ') ' : '') + lib(id).name).join(' + '), dup = has.has(ex.items.join('+'));
+          return `<li><div class="apexi"><b>${esc(nm)}</b><span class="small muted">${esc(apSum(ex))}</span>${ex.notes ? `<span class="small apnote">${esc(ex.notes.length > 110 ? ex.notes.slice(0, 110) + '…' : ex.notes)}</span>` : ''}</div>
+            ${dup ? `<span class="chip apin">Já está em ${esc(tl)}</span>` : `<button type="button" class="btn sm aptraz" data-act="ap-ex" data-v="${k}:${i}">Trazer → ${esc(tl)}</button>`}</li>`; }).join('')}</ul></section>`; }).join('')
+      : `<p class="small muted">Esta ficha ainda não tem exercícios.</p>`}`;
+}
+function apCargas(s){
+  const d = s.days[state.editDay], ids = [...new Set(d.ex.flatMap(e => e.items))];
+  if (!ids.length) return `<p class="small muted">Adicione exercícios ao dia para ver as últimas cargas de ${esc(s.name.split(' ')[0])} em cada um.</p>`;
+  const best = prHistory(s).best;
+  const last = id => { for (let i = s.logs.length - 1; i >= 0; i--){ const l = s.logs[i]; for (const e of l.entries){ const pi = e.items.indexOf(id); if (pi > -1){ const w = workKg({entry: e, pi}); if (w.length) return {l, w}; } } } return null; };
+  return `<ul class="apload">${ids.map(id => { const r = last(id), b = best[id];
+    return `<li><b>${esc(lib(id).name)}</b>${r ? `<span>Último (${esc(ddmm(r.l.date))}): <b>${r.w.map(fmtKg).join(' · ')} kg</b></span>` : '<span class="muted">Ainda sem registro de carga</span>'}${b ? `<span class="small muted">Recorde: ${fmtKg(b.kg)} kg${b.reps ? ' × ' + b.reps : ''}</span>` : ''}</li>`; }).join('')}</ul>
+    <button type="button" class="linkbtn" data-act="p-track" data-v="${s.id}">Ver todas as cargas</button>`;
+}
+function apoioHTML(s){
+  const tab = state.apoioTab || 'treinos';
+  const open = state.apoioOpen !== undefined ? state.apoioOpen : matchMedia('(min-width:1100px)').matches;
+  const un = typeof asmFor === 'function' ? asmFor(s).filter(a => !a.seen_at).length : 0;
+  const tabs = [['treinos', 'Treinos'], ['cargas', 'Cargas'], ['anam', 'Anamnese'], ['fb', 'Feedback']];
+  return `<details class="card apoio" ${open ? 'open' : ''}><summary data-act="apoio-tog"><span class="vsum"><b>Painel de apoio</b><small>Treinos antigos, outros alunos, cargas, anamnese e feedbacks</small></span></summary>
+    <div class="aptabs" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-act="ap-tab" data-v="${k}" aria-selected="${tab === k}">${l}${k === 'anam' && un ? ' <span class="apdot" aria-label="novo"></span>' : ''}</button>`).join('')}</div>
+    <div class="apbody">${tab === 'cargas' ? apCargas(s) : tab === 'anam' ? (typeof asmView === 'function' ? asmView(s, true) : '') : tab === 'fb' ? fbTab(s) : apTreinos(s)}</div></details>`;
+}
+
+
+/* ---------- perfil do aluno (resumo para o personal) ---------- */
+function profPeso(s, x){
+  const f = asmFor(s).filter(a => a.kind === 'fotos' && a.data && a.data.answers && a.data.answers.peso), l = f[f.length - 1];
+  return l ? {v: l.data.answers.peso, d: l.created_at} : (x.peso ? {v: x.peso, d: null} : null);
+}
+function profView(){
+  const s = stu(); if (!s) return '';
+  const all = asmFor(s), an = all.filter(a => a.kind === 'anamnese'), last = an[an.length - 1], x = last ? (last.data.answers || {}) : {};
+  asmSeen(all);
+  const ag = age(x.nasc), peso = profPeso(s, x), bmi = imc(x.altura, peso ? peso.v : x.peso);
+  const f = freqStats(s), lastLog = s.logs[s.logs.length - 1];
+  const kv = (l, v, sub) => v ? `<div class="pfkv"><small>${l}</small><b>${esc(v)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</div>` : '';
+  const Q = k => ALLQ().find(q => q.k === k);
+  const health = ['pato', 'cir', 'dor', 'ergo', 'med'].map(Q).filter(q => x[q.k] && !NEG.test(String(x[q.k])));
+  const ph = all.filter(a => (a.photos || []).length), lp = ph[ph.length - 1];
+  if (lp) asmUrls(lp.photos.map(p => p.path).filter(Boolean));
+  const nasc = x.nasc ? ansTxt({type: 'date'}, x.nasc) : '';
+  const fb = (s.fbLog || [])[ (s.fbLog || []).length - 1 ];
+  const noAnam = !last ? `<section class="card pfcard pfwide"><p class="eyebrow">Anamnese</p><p>${s.anam === 'ok' ? 'Marcada como respondida no Google Forms, mas as respostas ainda não estão no app.' : 'Ainda não há anamnese de ' + esc(s.name.split(' ')[0]) + '.'} Você pode passar as respostas para cá: dá para colar a linha da planilha do Forms.</p><button type="button" class="btn sm" data-act="anf-manual" data-v="${s.id}">Preencher anamnese manualmente</button></section>` : '';
+  return `<main class="wrap pfv">
+    <button class="back" type="button" data-act="p-back">← Alunos</button>
+    <section class="pfhead"><div class="pfid"><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><h2 class="serif">${esc(s.name)}</h2>
+      <div class="pfchips">${dueChip(s)}${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}${ag ? `<span class="chip">${ag} anos</span>` : ''}</div></div>
+      <div class="pfacts"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button><button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button><button class="btn sm ghost" type="button" data-act="p-anam" data-v="${s.id}">Anamnese completa</button><button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div></section>
+    <div class="pfgrid">
+      ${noAnam}
+      ${last ? `<section class="card pfcard"><p class="eyebrow">Dados</p><div class="pfkvs">${kv('Nascimento', nasc, ag ? ag + ' anos' : '')}${kv('Altura', x.altura)}${kv('Peso', peso && peso.v, peso && peso.d ? 'em ' + ddmm(peso.d) : (last ? 'na anamnese' : ''))}${kv('IMC', bmi)}${kv('Treina', x.dias)}${kv('Tempo por treino', x.tempo)}${kv('Academia', x.academia)}</div></section>
+      <section class="card pfcard"><p class="eyebrow">Objetivo</p><p class="pfbig">${esc(x.obj || s.focus || '—')}</p>${x.enfase ? `<p class="small"><b>Ênfase:</b> ${esc(x.enfase)}</p>` : ''}${x.gosto ? `<p class="small muted"><b>Gosta / não gosta:</b> ${esc(x.gosto)}</p>` : ''}</section>
+      <section class="card pfcard ${health.length ? 'pfwarn' : ''}"><p class="eyebrow">Saúde</p>${health.length ? health.map(q => `<div class="pfh"><span class="asmwarn">Atenção</span><b>${esc(q.l)}</b><p>${esc(x[q.k])}</p></div>`).join('') : '<p class="small muted">Nada relatado na anamnese (patologias, cirurgias, dores, ergogênicos e medicação).</p>'}</section>
+      <section class="card pfcard"><p class="eyebrow">Rotina e hábitos</p><div class="pfkvs">${kv('Trabalho', x.trabalho)}${kv('No dia a dia', x.dia)}${kv('Esforço no trabalho', x.esforco)}${kv('Outras atividades', x.outra)}${kv('Água', x.agua)}${kv('Álcool', x.alcool)}${kv('Fumante', x.fuma)}${kv('Alimentação', x.dieta)}</div></section>` : ''}
+      <section class="card pfcard"><p class="eyebrow">Treinos</p><div class="pfkvs">${kv('Nesta semana', f.week + ' de ' + f.plan)}${kv('No mês', String(f.month))}${kv('Sequência', f.streak + (f.streak === 1 ? ' semana' : ' semanas'))}${kv('Último treino', lastLog ? dateBR(lastLog.date) : 'Nenhum ainda')}${kv('Total registrado', s.logs.length + (s.logs.length === 1 ? ' treino' : ' treinos'))}${fb ? kv('Último feedback', ddmm(fb.d)) : ''}</div></section>
+      <section class="card pfcard"><div class="pfcardh"><p class="eyebrow">Fotos de avaliação</p>${lp ? `<span class="small muted">${esc(dateBR(lp.created_at))}</span>` : ''}</div>
+        ${lp ? `<div class="pfph">${POSES.map(([k, l]) => { const p = lp.photos.find(z => z.pose === k), src = p && phSrc(p); return p ? (src ? `<button type="button" class="phbtn" data-act="ph-zoom" data-src="${esc(src)}" aria-label="Ampliar ${l.toLowerCase()}"><img src="${esc(src)}" alt=""></button>` : '<span class="phload">Carregando</span>') : '<span class="phnone">—</span>'; }).join('')}</div>` : '<p class="small muted">Nenhuma foto ainda.</p>'}
+        <button type="button" class="linkbtn" data-act="${lp ? 'p-anam' : 'ask-photos'}" data-v="${s.id}">${lp ? 'Ver e comparar todas' : 'Pedir fotos ao aluno'}</button></section>
+      <section class="card pfcard pfwide"><label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="p-priv" data-sf="privNotes" rows="3" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label></section>
+    </div>
+  </main>`;
+}
+// painel lateral do editor: recolher e abrir (lembra a escolha)
+function apCol(){ if (state.apCol === undefined){ try { state.apCol = localStorage.getItem('jau-apcol') === '1'; } catch(e){ state.apCol = false; } } return state.apCol; }
+
 /* ---------- importar ficha em PDF ---------- */
 let impFile = null, impCtl = null, pdfjsP = null;
 function loadPdfJs(){
@@ -2833,12 +3480,13 @@ function studentView(){
   if (!st) return `<main class="wrap"><div class="empty">Nenhum aluno cadastrado ainda. Vá em Personal para adicionar.</div></main>`;
   const preview = isP() ? `<p class="previewbar">Você está vendo o app como ${esc(st.name.split(' ')[0])}. Treinos registrados aqui entram no histórico do aluno.</p>` : '';
   if (state.done) return state.done.step === 'eff' ? effortView(st) : doneView(st);
+  if (ANF.open) return `<main class="wrap">${anamForm()}</main>`;
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + asmPrompt(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
-  const minip = preview + autoBanner(st);
+  const minip = preview + autoBanner(st) + asmPrompt(st);
   if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
@@ -2952,27 +3600,29 @@ function guide(){
 
 /* ---------- personal: alunos ---------- */
 function trainerView(){
+  if (ANF.open && ANF.manual) return `<main class="wrap">${anamForm()}</main>`;
   if (state.psec === 'painel' && state.pview === 'list') return panelView();
   if (state.psec === 'lib') return libraryView();
   if (state.psec === 'feed') return feedView();
   if (state.psec === 'metodos') return methodsView();
   if (state.pview === 'import' && state.imp) return importView();
   if (state.pview === 'edit') return editView();
+  if (state.pview === 'prof') return profView();
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    <div class="alay"><div class="amain">${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
+    <div class="alay"><div class="amain">${asmNewHTML()}${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
     <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
-    ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
-      <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
+    ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off" value="${esc((state.newPre || {}).name || '')}">
+      <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off" value="${esc((state.newPre || {}).email || '')}">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
       <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
     ${alFilLine()}<div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
-      return `<article class="stu" data-name="${esc(norm(s.name))}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div>${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      return `<article class="stu" data-name="${esc(norm(s.name))}" data-act="p-prof" data-v="${s.id}">
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3><button type="button" class="stuname" data-act="p-prof" data-v="${s.id}">${esc(s.name)}</button></h3>${dueChip(s)}</div>${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -2980,10 +3630,11 @@ function trainerView(){
       ${splitChips(s)}
       <div class="row"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button>
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
-        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div>
+        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
     ${bkHTML()}
+    ${notifHTML()}
     ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
     ${accountHTML()}
@@ -2994,8 +3645,10 @@ function editView(){
   const pk = state.picker;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
-    <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><span class="muted small">Salvo automaticamente</span></div>
-    <div class="edlay"><aside class="edside" aria-label="Dados e volume do aluno">
+    <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><div class="shacts"><span class="muted small">Salvo automaticamente</span><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div></div>
+    <div class="edlay ${apCol() ? 'apcol' : ''}"><aside class="edside" aria-label="Dados e volume do aluno">
+    <button type="button" class="aprail" data-act="ap-col" aria-label="Abrir o painel lateral">${ICON_SIDE}<span>Abrir painel</span></button><button type="button" class="apcolbtn" data-act="ap-col">Recolher painel <span aria-hidden="true">›</span></button>
+    ${apoioHTML(s)}
     <p class="eyebrow sidehd">Visão geral</p>
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
     <div class="form">
@@ -3112,10 +3765,10 @@ function trackView(){
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
-    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div>
+    <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><div class="shacts"><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button></div>
-    ${state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button><button type="button" data-act="ptab" data-v="anam" aria-pressed="${state.ptab === 'anam'}">Anamnese</button></div>
+    ${state.ptab === 'anam' ? asmView(s) : state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
   </main>`;
 }
 
@@ -3183,7 +3836,7 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ render0(); polishAfter(); }
+function render(){ render0(); polishAfter(); try { asmTick(); } catch(e){} try { syncBadge(); } catch(e){} }
 function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
@@ -3237,6 +3890,35 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'p-prof'){ const t = e.target.closest('a,button,input,select,textarea,label,summary,details'); if (t && t !== b) return; state.sid = v; state.pview = 'prof'; render(); top(); return; }
+  if (act === 'p-anam'){ state.sid = v; state.pview = 'track'; state.ptab = 'anam'; render(); top(); return; }
+  if (act === 'ap-col'){ state.apCol = !apCol(); try { localStorage.setItem('jau-apcol', state.apCol ? '1' : '0'); } catch(e){} render(); return; }
+  if (act === 'apoio-tog'){ e.preventDefault(); const d = b.closest('details'); state.apoioOpen = !(d && d.open); render(); return; }
+  if (act === 'ap-tab'){ state.apoioTab = v; render(); return; }
+  if (act === 'ap-ex' || act === 'ap-day'){ const s = stu(), {cur} = apSrc(s); if (!cur) return; const tgt = s.days[state.editDay], tl = slotShort(s, state.editDay);
+    if (act === 'ap-ex'){ const [k, i] = v.split(':'), ex = cur.days[k] && cur.days[k].ex[+i]; if (!ex) return; tgt.ex.push(Object.assign(JSON.parse(JSON.stringify(ex)), {id: uid()})); save(); render(); toast(ex.items.map(id => lib(id).name).join(' + ') + ' foi para ' + tl); return; }
+    const src = cur.days[v]; if (!src) return; if (tgt.ex.length && !arm(b, 'Toque de novo para substituir ' + tl, 'Copiar dia → ' + tl)) return;
+    s.days[state.editDay] = cloneDay(src); save(); render(); toast('Treino copiado para ' + tl + '. Ajuste o que precisar.'); return; }
+  if (act === 'anf-open'){ if (asmCloud() && isPx()){ toast('Essa tela é para o aluno preencher, com a conta dele.'); return; } anfOpen(v); return; }
+  if (act === 'anf-close'){ anfClose(); return; }
+  if (act === 'anf-pick'){ ANF.ans[b.dataset.k] = b.dataset.v; anfSave(); render(); return; }
+  if (act === 'anf-no'){ ANF.ans[b.dataset.k] = 'Não'; anfSave(); render(); return; }
+  if (act === 'anf-back'){ ANF.err = ''; ANF.step = Math.max(0, ANF.step - 1); anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-go'){ ANF.err = ''; ANF.step = +v; anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-next'){ const m = anfMissing(ANF.step); if (m.length){ ANF.err = m.length === 1 ? 'Falta responder: ' + m[0].l : 'Faltam ' + m.length + ' respostas nesta etapa.'; render(); const el = document.querySelector('.anf.miss'); if (el) el.scrollIntoView({block: 'center', behavior: 'smooth'}); return; } ANF.err = ''; ANF.step++; anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-send'){ anfSend(); return; }
+  if (act === 'anf-manual'){ anfManual(v); return; }
+  if (act === 'anf-edit'){ anfManual(b.dataset.s, v); return; }
+  if (act === 'anf-paste'){ const t = document.getElementById('anf-paste'); const n = anfPaste(t ? t.value : ''); ANF.pasteMsg = n ? n + ' respostas preenchidas. Confira etapa por etapa e salve na revisão.' : 'Não reconheci as respostas. Copie a linha inteira da planilha, de preferência junto com a linha de títulos.'; render(); return; }
+  if (act === 'ph-zoom'){ phZoom(b.dataset.src); return; }
+  if (act === 'asm-toggle'){ state.asmOpen = state.asmOpen === v ? null : v; render(); return; }
+  if (act === 'asm-create'){ const a = asmAll().find(x => x.id === v); if (!a) return; const x = a.data.answers || {}; state.newPre = {name: x.nome || '', email: a.email || '', focus: x.obj || '', asm: a.id}; state.newOpen = true; render(); const f = document.getElementById('newst'); if (f) f.scrollIntoView({block: 'center', behavior: 'smooth'}); return; }
+  if (act === 'ask-photos'){ const s = db.students.find(x => x.id === v); if (!s) return; s.askPhotos = new Date().toISOString(); save(); render(); toast('Pedido enviado. Aparece no app de ' + s.name.split(' ')[0] + '.'); return; }
+  if (act === 'ask-photos-off'){ const s = db.students.find(x => x.id === v); if (!s) return; delete s.askPhotos; save(); render(); return; }
+  if (act === 'push-on'){ pushOn(); return; }
+  if (act === 'push-off'){ pushOff(); return; }
+  if (act === 'push-test'){ pushTest(); return; }
+  if (act === 'pdf-ficha'){ fichaPDFGo(v, b); return; }
   if (act === 'cd-obs'){ state.cdOpen = draftKey(); render(); const ta = document.getElementById('cm-cardio'); if (ta){ ta.focus(); ta.scrollIntoView({block:'center', behavior:'smooth'}); } return; }
   if (act === 'cardio-done'){ const st = stu(), d = st && st.days[state.day]; if (!d) return; const k = draftKey(), dr = db.drafts[k] || {}, cc = ((dr.__cardio || {}).comment || '').trim(), ex = cardioToday(d), now = new Date().toISOString();
     if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
@@ -3502,6 +4184,8 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.apsrc){ state.apoioSrc = e.target.value; render(); return; }
+  if (e.target.dataset && e.target.dataset.anp && e.target.files && e.target.files[0]){ const k = e.target.dataset.anp, f = e.target.files[0]; const big = asmCloud(); shrink(f, big ? 1440 : 560, big ? .82 : .7).then(p => { ANF.photos[k] = p; ANF.err = ''; render(); }).catch(() => toast('Não consegui abrir essa foto. Tente outra.')); return; }
   if (e.target.id === 'f-protocol'){ const s = stu(), B = state.editBase, nv = e.target.value.trim();
     if (B && B.sid === s.id && B.name && nv && nv !== B.name){ protoSave(s, B.name, B.days); state.editBase = {sid: s.id, name: nv, days: JSON.parse(JSON.stringify(s.days))}; save(); toast('"' + B.name + '" guardado como versão anterior. Dá para comparar na aba Volume.'); }
     return; }
@@ -3546,6 +4230,7 @@ document.addEventListener('input', e => {
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
   if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
   if (t.dataset.volr){ const s = stu(), n = parseInt(t.value); if (isNaN(n) || n < 0) return; const r = volRange(s); r[t.dataset.volr] = n; if (r.lo > r.hi) return; s.volRange = r; save(); clearTimeout(window.__vrT); window.__vrT = setTimeout(() => { const id = document.activeElement && document.activeElement.id; render(); const el = id && document.getElementById(id); if (el){ el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch(e){} } }, 500); return; }
+  if (t.dataset.anf){ ANF.ans[t.dataset.anf] = t.value; anfSave(); if (ANF.err && t.value.trim()){ const l = t.closest('.anf'); if (l) l.classList.remove('miss'); } return; }
   if (t.dataset.cardiocm === 'log'){ state.cdEdit = draftKey(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cardiocm){ if (trainOpen()) touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
@@ -3590,6 +4275,7 @@ document.addEventListener('submit', e => {
   const fromId = (document.getElementById('new-from') || {}).value, src = fromId && db.students.find(x => x.id === fromId);
   const em = ((document.getElementById('new-email') || {}).value || '').trim().toLowerCase();
   const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), plan: ((document.getElementById('new-plan') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
+  if (state.newPre){ if (state.newPre.focus) s.focus = state.newPre.focus; s.anam = 'ok'; const a = asmAll().find(x => x.id === state.newPre.asm); if (a){ a.student_id = s.id; if (asmCloud()) sb.from('assessments').update({student_id: s.id}).eq('id', a.id).then(() => {}); } state.newPre = null; }
   db.students.push(s); save();
   state.sid = s.id; state.pview = 'edit'; state.editDay = 'seg'; state.newOpen = false; render(); top();
   toast(name.split(' ')[0] + ' adicionado. Monte a ficha.');
