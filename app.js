@@ -2238,11 +2238,34 @@ function notifState(){
   if (!NOTIF.checked) return 'checking';
   return NOTIF.sub && Notification.permission === 'granted' ? 'on' : 'off';
 }
+
+// chamada direta à função (a ação 'key' não precisa do login; 'test' usa o login do personal)
+async function fnCall(body, asUser){
+  const cfg = window.JAU_CONFIG || {};
+  try {
+    let tok = cfg.supabaseKey;
+    if (asUser){ const s = await sb.auth.getSession(); tok = s && s.data && s.data.session ? s.data.session.access_token : tok; }
+    const r = await fetch(String(cfg.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/notificar-treino', {method: 'POST', headers: {'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + tok}, body: JSON.stringify(body)});
+    let data = null; try { data = await r.json(); } catch(_){}
+    return {status: r.status, data};
+  } catch(e){
+    if (sb && sb.functions){ const r = await sb.functions.invoke('notificar-treino', {body}); return {status: r && r.error ? 500 : 200, data: r && r.data}; }
+    throw e;
+  }
+}
+async function pushKey(){
+  if (NOTIF.key) return NOTIF.key;
+  const r = await fnCall({action: 'key'}, false);
+  if (r.status === 404) throw new Error('a função notificar-treino não foi encontrada no Supabase');
+  if (r.status === 401) throw new Error('a função recusou o acesso (401). Desligue "Verify JWT" nas configurações da função');
+  if (!r.data || !r.data.key) throw new Error('a função respondeu ' + r.status + (r.data && r.data.error ? ' (' + r.data.error + ')' : ''));
+  NOTIF.key = r.data.key; return NOTIF.key;
+}
 async function notifCheck(){
   if (!pushOk() || !sb) { NOTIF.checked = true; return; }
   try { const reg = await navigator.serviceWorker.ready; NOTIF.sub = await reg.pushManager.getSubscription(); } catch(e){ NOTIF.sub = null; }
   NOTIF.checked = true;
-  if (!NOTIF.key && isP()) sb.functions.invoke('notificar-treino', {body: {action: 'key'}}).then(r => { if (r && r.data && r.data.key) NOTIF.key = r.data.key; }).catch(() => {});
+  if (!NOTIF.key && isP()) pushKey().catch(() => {});
 }
 function notifHTML(){
   if (!isP()) return '';
@@ -2254,24 +2277,25 @@ function notifHTML(){
     : s === 'denied' ? `<p class="small muted">As notificações estão bloqueadas para este app. Libere em <b>Ajustes → Notificações → Jau Training</b> (no computador, nas permissões do site) e volte aqui.</p>`
     : s === 'on' ? `<p class="nfok">${ICON_CHECK}Ativadas neste aparelho</p><div class="row"><button type="button" class="btn sm ghost" data-act="push-test" ${NOTIF.busy ? 'disabled' : ''}>Enviar notificação de teste</button><button type="button" class="linkbtn" data-act="push-off" ${NOTIF.busy ? 'disabled' : ''}>Desativar neste aparelho</button></div>`
     : `<button type="button" class="btn block" data-act="push-on" ${NOTIF.busy || s === 'checking' ? 'disabled' : ''}>${ICON_BELL}${NOTIF.busy ? 'Ativando...' : 'Ativar notificações'}</button>`;
-  return `<section class="card nfcard"><p class="eyebrow">Notificações de treino</p><p class="small">${why}</p>${body}</section>`;
+  return `<section class="card nfcard"><p class="eyebrow">Notificações de treino</p><p class="small">${why}</p>${body}${NOTIF.err ? `<p class="small nferr" role="alert">${esc(NOTIF.err)}</p>` : ''}</section>`;
 }
 function b64ToBytes(s){ const t = s.replace(/-/g, '+').replace(/_/g, '/'), p = t + '='.repeat((4 - t.length % 4) % 4), r = atob(p), o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
 async function pushOn(){
   if (NOTIF.busy) return; NOTIF.busy = true; render();
+  let stage = 'permissão'; NOTIF.err = '';
   try {
     const perm = await Notification.requestPermission();
     if (perm !== 'granted'){ toast(perm === 'denied' ? 'Notificações bloqueadas. Dá para liberar nos ajustes do aparelho.' : 'Tudo bem, dá para ativar depois.'); return; }
-    if (!NOTIF.key){ const r = await sb.functions.invoke('notificar-treino', {body: {action: 'key'}}); if (!r || !r.data || !r.data.key) throw new Error('key'); NOTIF.key = r.data.key; }
-    const reg = await navigator.serviceWorker.ready;
+    stage = 'chave do servidor'; const key = await pushKey();
+    stage = 'inscrição no aparelho'; const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(NOTIF.key)});
-    const j = sub.toJSON();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(key)});
+    stage = 'salvar no banco'; const j = sub.toJSON();
     const {error} = await sb.from('push_subs').upsert({endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 180)});
     if (error) throw error;
     NOTIF.sub = sub; NOTIF.lastBadge = -1; syncBadge();
     toast('Notificações ativadas neste aparelho');
-  } catch(e){ console.error(e); toast('Não consegui ativar agora. Confira a internet e tente de novo.'); }
+  } catch(e){ console.error(e); NOTIF.err = `Não ativou na etapa "${stage}": ${(e && (e.message || e.name)) || e}`; toast('Não consegui ativar. O motivo aparece no card.'); }
   finally { NOTIF.busy = false; render(); }
 }
 async function pushOff(){
@@ -2286,9 +2310,13 @@ async function pushOff(){
 }
 async function pushTest(){
   if (NOTIF.busy) return; NOTIF.busy = true; render();
-  try { const r = await sb.functions.invoke('notificar-treino', {body: {action: 'test'}}); const n = r && r.data ? r.data.sent : 0;
-    toast(n ? 'Enviada! Deve chegar em alguns segundos.' : 'Nenhum aparelho recebeu. Desative e ative de novo.'); }
-  catch(e){ toast('Não consegui enviar o teste agora.'); }
+  NOTIF.err = '';
+  try { const r = await fnCall({action: 'test'}, true); const n = r.data ? r.data.sent : 0;
+    if (r.status === 401) NOTIF.err = 'A função recusou o acesso (401). Desligue "Verify JWT" nas configurações da função notificar-treino.';
+    else if (r.status === 403) NOTIF.err = 'A função não reconheceu esta conta como personal.';
+    else if (r.status >= 300) NOTIF.err = 'A função respondeu ' + r.status + (r.data && r.data.error ? ' (' + r.data.error + ')' : '') + '.';
+    toast(n ? 'Enviada! Deve chegar em alguns segundos.' : NOTIF.err ? 'O teste não saiu. O motivo aparece no card.' : 'Nenhum aparelho recebeu. Desative e ative de novo.'); }
+  catch(e){ NOTIF.err = 'Teste não enviado: ' + ((e && e.message) || e); toast('Não consegui enviar o teste agora.'); }
   finally { NOTIF.busy = false; render(); }
 }
 // Número no ícone = treinos que chegaram depois da última vez que você abriu a aba Atividade.

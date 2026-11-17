@@ -1504,3 +1504,6 @@ article.stu[data-act="p-prof"]{cursor:pointer;transition:border-color .2s,box-sh
   .aprail svg{width:20px;height:20px;color:var(--accent)}
   .aprail:hover,.apcolbtn:hover{border-color:var(--accent)}
 }
+
+/* --- notificações: motivo do erro --- */
+.nferr{margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));color:var(--ink);overflow-wrap:anywhere}
