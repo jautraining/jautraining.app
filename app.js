@@ -1,5 +1,7 @@
 (function(){
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+const ICON_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const LOGO = 'img/logo.webp';
 const LOGO_HI = 'img/logo-hi.webp';
 const CHEETAH = 'img/cheetah.webp';
@@ -832,10 +834,11 @@ function authView(){
   const wrap = inner => band + `<main class="wrap auth">${inner}</main>`;
   if (AUTH.screen === 'loading') return band + `<main class="wrap skel" aria-busy="true" aria-label="Carregando seus treinos"><div class="sk sk-t"></div><div class="sk sk-h"></div><div class="sk-row">${'<div class="sk"></div>'.repeat(7)}</div><div class="sk sk-c"></div><div class="sk sk-c tall"></div><div class="sk sk-c"></div></main>`;
   if (AUTH.screen === 'error') return wrap(`<section class="card authcard"><h2>Não deu pra abrir</h2><p>${esc(AUTH.err)}</p><button class="btn block" type="button" data-act="auth-retry">Tentar de novo</button>${out}</section>`);
+  if (AUTH.screen === 'waiting' && ANF.open) return wrap(anamForm());
   if (AUTH.screen === 'waiting') return wrap(`<section class="card authcard"><p class="eyebrow">Conta criada</p><h2>Falta só o seu personal liberar</h2>
     <p>Você entrou com <b>${esc(AUTH.user && AUTH.user.email)}</b>. Assim que o Jau cadastrar este e-mail na sua ficha, ela aparece aqui.</p>
     <p class="muted small">Se você passou outro e-mail pra ele, avise ou entre com o e-mail certo.</p>
-    <button class="btn block" type="button" data-act="auth-retry">Atualizar</button>${out}</section>`);
+    ${waitingAnam()}<button class="btn block ghost" type="button" data-act="auth-retry">Atualizar</button>${out}</section>`);
   if (AUTH.screen === 'consent') return wrap(`<section class="card authcard consent"><p class="eyebrow">Antes de começar</p><h2>Seus dados no Jau Training</h2>
     <p>Para montar e acompanhar o seu treino, o app guarda o seu nome e e-mail, a sua ficha, as cargas e repetições que você registra, as observações que você escreve nos exercícios e a frequência dos treinos.</p>
     <ul class="clist">
@@ -2303,6 +2306,319 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
 });
 (() => { try { const q = new URLSearchParams(location.search); if (q.get('go') === 'feed'){ state.psec = 'feed'; history.replaceState(null, '', location.pathname); } } catch(e){} })();
 
+
+/* ---------- avaliações: anamnese e fotos (só o personal lê) ---------- */
+const ASM = {list: [], loaded: false, loading: false, at: 0, mine: null, mineLoading: false, urls: {}, urlLoading: false};
+const ANF = {open: false, kind: 'anamnese', step: 0, ans: {}, photos: {}, busy: false, prog: '', err: '', sent: null};
+const asmCloud = () => typeof sb !== 'undefined' && !!sb && typeof AUTH !== 'undefined';
+function asmSeed(){ if (!asmCloud() && !db.assessments){ db.assessments = [{id: 'asm-exemplo', user_id: null, email: 'paula.teixeira@exemplo.com', student_id: null, kind: 'anamnese', seen_at: null, created_at: new Date(Date.now() - 864e5).toISOString(), photos: [],
+  data: {form: 'anamnese-v1', answers: {nome: 'Paula Teixeira', nasc: '1994-03-12', altura: '1,64 m', peso: '61 kg', trabalho: 'Analista administrativa, das 9h às 18h, de segunda a sexta.', dia: 'Sentado(a) o dia inteiro', esforco: 'Pouco esforço', ja: 'Sim', exp: 'Treinei por 1 ano na pandemia e parei há 8 meses. Evoluí bem de glúteos, mas sentia o joelho no agachamento.', obj: 'Hipertrofia de glúteos e pernas, perder um pouco da barriga.', enfase: 'Glúteos e postura. Tenho os ombros um pouco para frente.', tempo: '1 hora', dias: '4 dias: seg, ter, qui e sex', gosto: 'Gosto de elevação pélvica e stiff. Detesto afundo.', outra: 'Caminhada no fim de semana.', pato: 'Não', cir: 'Não', dor: 'Dor leve no joelho direito no agachamento profundo.', ergo: 'Não', med: 'Não', agua: 'Uns 1,5 litro', alcool: 'Sim, com pouca frequência', fuma: 'Não', dieta: 'Não sigo dieta. Faço 3 refeições e belisco à tarde.', academia: 'Academia do bairro'}}}]; } }
+const ANAM_V = 'anamnese-v1';
+const isPx = () => typeof isP === 'function' ? isP() : state.mode !== 'aluno';
+const NEG = /^\s*(n(ã|a)o|nenhum(a)?|nunca|nada|n)\s*\.?\s*$/i;
+const ANAM_STEPS = [
+  {t: 'Sobre você', q: [
+    {k: 'nome', l: 'Seu nome completo', type: 'text', req: 1, ac: 'name'},
+    {k: 'nasc', l: 'Sua data de nascimento', type: 'date', req: 1},
+    {k: 'altura', l: 'Qual a sua altura?', type: 'text', req: 1, ph: 'Ex.: 1,68 m', im: 'decimal'},
+    {k: 'peso', l: 'Qual o seu peso atual?', type: 'text', req: 1, ph: 'Ex.: 64 kg', im: 'decimal'}]},
+  {t: 'Sua rotina', q: [
+    {k: 'trabalho', l: 'Com o que você trabalha? Qual a carga horária e quantas vezes na semana?', type: 'area', req: 1},
+    {k: 'dia', l: 'Como você passa o seu dia?', type: 'choice', req: 1, o: ['Sentado(a) o dia inteiro', 'De pé o dia inteiro', 'Parte do dia sentado(a), parte do dia em pé']},
+    {k: 'esforco', l: 'Como considera o esforço físico do seu trabalho?', type: 'choice', req: 1, o: ['Pouco esforço', 'Esforço médio', 'Alto esforço', 'Esforço exaustivo']}]},
+  {t: 'Seu treino', q: [
+    {k: 'ja', l: 'Você já pratica ou praticou musculação antes?', type: 'choice', req: 1, o: ['Sim', 'Não']},
+    {k: 'exp', l: 'Me conte como foi a sua experiência', h: 'Quanto tempo, se está parado(a), como foi a sua evolução etc.', type: 'area', show: a => a.ja === 'Sim'},
+    {k: 'obj', l: 'Qual o seu objetivo com a consultoria?', type: 'area', req: 1},
+    {k: 'enfase', l: 'Existe algo que queira dar ênfase? Ou algum incômodo físico ou estético?', type: 'area', req: 1},
+    {k: 'tempo', l: 'Quanto tempo tem disponível para treinar?', type: 'choice', req: 1, o: ['Menos de 1 hora', '1 hora', '2 horas', 'Mais de 2 horas']},
+    {k: 'dias', l: 'Quantos e quais dias você tem disponíveis para treinar musculação?', type: 'text', req: 1, ph: 'Ex.: 4 dias, seg, ter, qui e sex'},
+    {k: 'gosto', l: 'Tem algum exercício que você gosta ou tem vontade de fazer? E algum que você detesta?', type: 'area', req: 1},
+    {k: 'outra', l: 'Pratica algum outro exercício ou atividade?', h: 'Se sim, qual e com que frequência.', type: 'area', req: 1, no: 1}]},
+  {t: 'Sua saúde', q: [
+    {k: 'pato', l: 'Tem alguma patologia diagnosticada em você ou na família?', h: 'Se sim, qual.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'cir', l: 'Já fez algum procedimento cirúrgico, recente ou antigo?', h: 'Se sim, qual.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'dor', l: 'Sente alguma dor, desconforto ou incômodo em qualquer região?', h: 'Por exemplo no peito, nas articulações, lesões, falta de ar ou coração acelerado. Conte quando acontece e em quais exercícios.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'ergo', l: 'Já utilizou ergogênicos?', h: 'Ex.: esteroides, estimulantes ou diuréticos. Se sim, quais e como foi ou está sendo.', type: 'area', req: 1, no: 1, health: 1},
+    {k: 'med', l: 'Faz uso de medicação controlada?', h: 'Se sim, quais.', type: 'area', req: 1, no: 1, health: 1}]},
+  {t: 'Seus hábitos', q: [
+    {k: 'agua', l: 'Sabe quanto de água você bebe por dia?', type: 'text', req: 1, ph: 'Ex.: uns 2 litros'},
+    {k: 'alcool', l: 'Consome álcool?', type: 'choice', req: 1, o: ['Sim, com frequência', 'Sim, com pouca frequência', 'Não']},
+    {k: 'fuma', l: 'É fumante?', type: 'choice', req: 1, o: ['Sim', 'Não']},
+    {k: 'dieta', l: 'Faz acompanhamento alimentar ou segue alguma dieta?', h: 'Se sim, conte como é: quantas refeições, calorias, restrições.', type: 'area', req: 1, no: 1},
+    {k: 'academia', l: 'Em qual academia pretende treinar?', h: 'Se puder, coloque o Instagram dela.', type: 'text', req: 1}]},
+  {t: 'Fotos', photos: 1},
+  {t: 'Revisar', review: 1}
+];
+const FOTO_STEPS = [{t: 'Fotos', photos: 1, q: [{k: 'peso', l: 'Seu peso hoje', type: 'text', ph: 'Ex.: 63,5 kg', im: 'decimal'}, {k: 'obs', l: 'Quer contar algo para o personal?', type: 'area', ph: 'Como estão os treinos, a alimentação, o sono...'}]}, {t: 'Revisar', review: 1}];
+const POSES = [['frente', 'Frente'], ['lado', 'Lado'], ['costas', 'Costas']];
+const anfSteps = () => ANF.kind === 'fotos' ? FOTO_STEPS : ANAM_STEPS;
+function asmAll(){ asmSeed(); return asmCloud() ? ASM.list : (db.assessments || []); }
+function asmMatch(a, s){ return a.student_id === s.id || (!a.student_id && a.email && s.email && a.email.toLowerCase() === String(s.email).toLowerCase()); }
+function asmFor(s){ return asmAll().filter(a => asmMatch(a, s)).sort((a, b) => a.created_at < b.created_at ? -1 : 1); }
+function asmOrphans(){ return asmAll().filter(a => a.kind === 'anamnese' && !db.students.some(s => asmMatch(a, s))).sort((a, b) => a.created_at < b.created_at ? 1 : -1); }
+function asmMine(){
+  if (asmCloud()) return ASM.mine || [];
+  asmSeed(); const st = stu(); return st ? (db.assessments || []).filter(a => a.student_id === st.id) : [];
+}
+function needAnam(st){ if (st && st.anam === 'ok') return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'anamnese'); }
+function needPhotos(st){ if (!st || !st.askPhotos) return false; if (asmCloud() && ASM.mine === null) return false; return !asmMine().some(a => a.kind === 'fotos' && a.created_at > st.askPhotos); }
+async function asmLoad(){
+  if (!asmCloud() || ASM.loading) return; ASM.loading = true;
+  try { const {data, error} = await sb.from('assessments').select('id,user_id,email,student_id,kind,data,photos,seen_at,created_at').order('created_at');
+    if (!error && data){ ASM.list = data; ASM.loaded = true; ASM.at = Date.now(); asmAutoLink(); } }
+  catch(e){} finally { ASM.loading = false; }
+}
+async function asmMineLoad(){
+  if (!asmCloud() || ASM.mineLoading) return; ASM.mineLoading = true;
+  try { const {data, error} = await sb.rpc('my_assessments'); ASM.mine = !error && Array.isArray(data) ? data : (ASM.mine || []); } catch(e){ ASM.mine = ASM.mine || []; }
+  finally { ASM.mineLoading = false; }
+}
+function asmTick(){
+  if (!asmCloud() || !AUTH.user) return;
+  if (isPx()){ if (AUTH.screen === 'app' && !ASM.loading && (!ASM.loaded || Date.now() - ASM.at > 120000)) asmLoad().then(() => render()); }
+  else if (ASM.mine === null && !ASM.mineLoading) asmMineLoad().then(() => render());
+}
+// marca a anamnese no aluno e liga a avaliação à ficha (só o personal)
+function asmAutoLink(){
+  if (!isPx()) return; let ch = false;
+  db.students.forEach(s => { const as = asmFor(s); if (as.some(a => a.kind === 'anamnese') && s.anam !== 'ok'){ s.anam = 'ok'; ch = true; }
+    as.filter(a => !a.student_id).forEach(a => { a.student_id = s.id; if (asmCloud()) sb.from('assessments').update({student_id: s.id}).eq('id', a.id).then(() => {}); }); });
+  if (ch) save();
+}
+function asmSeen(list){
+  const un = list.filter(a => !a.seen_at); if (!un.length) return;
+  const t = new Date().toISOString(); un.forEach(a => a.seen_at = t);
+  if (asmCloud()) un.forEach(a => sb.from('assessments').update({seen_at: t}).eq('id', a.id).then(() => {})); else save();
+}
+async function asmUrls(paths){
+  if (!asmCloud()) return; const need = paths.filter(p => p && !ASM.urls[p]); if (!need.length || ASM.urlLoading) return;
+  ASM.urlLoading = true;
+  try { const {data} = await sb.storage.from('avaliacoes').createSignedUrls(need, 3600); (data || []).forEach(x => { if (x && x.signedUrl) ASM.urls[x.path] = x.signedUrl; }); }
+  catch(e){} finally { ASM.urlLoading = false; render(); }
+}
+const phSrc = p => p.url || ASM.urls[p.path] || '';
+const ansTxt = (q, v) => q.type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.split('-').reverse().join('/') : v;
+// foto menor antes de enviar (celular manda 3 a 8 MB; aqui vira ~200 KB)
+async function shrink(file, max, q){
+  let bmp = null;
+  try { bmp = await createImageBitmap(file, {imageOrientation: 'from-image'}); } catch(e){
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); }); }
+  const w = bmp.width, h = bmp.height, r = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * r); c.height = Math.round(h * r);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', q));
+  return {blob, url: c.toDataURL('image/jpeg', q)};
+}
+function age(nasc){ const d = new Date(nasc + 'T12:00:00'); if (isNaN(d)) return null; const n = new Date(); let a = n.getFullYear() - d.getFullYear(); if (n.getMonth() < d.getMonth() || (n.getMonth() === d.getMonth() && n.getDate() < d.getDate())) a--; return a > 0 && a < 120 ? a : null; }
+const numOf = v => { const m = String(v || '').replace(',', '.').match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+function imc(alt, peso){ let a = numOf(alt), p = numOf(peso); if (!a || !p) return null; if (a > 3) a = a / 100; const v = p / (a * a); return v > 10 && v < 70 ? v.toFixed(1).replace('.', ',') : null; }
+const ANF_KEY = 'jau-anf';
+function anfSave(){ try { localStorage.setItem(ANF_KEY, JSON.stringify({kind: ANF.kind, ans: ANF.ans, step: ANF.step})); } catch(e){} }
+function anfOpen(kind){
+  ANF.open = true; ANF.kind = kind; ANF.step = 0; ANF.ans = {}; ANF.photos = {}; ANF.err = ''; ANF.sent = null;
+  try { const o = JSON.parse(localStorage.getItem(ANF_KEY) || 'null'); if (o && o.kind === kind){ ANF.ans = o.ans || {}; ANF.step = Math.min(o.step || 0, anfSteps().length - 1); } } catch(e){}
+  const st = stu ? stu() : null;
+  if (kind === 'anamnese' && !ANF.ans.nome) ANF.ans.nome = (st && !isPx() && st.name) || (typeof AUTH !== 'undefined' && AUTH.profile && AUTH.profile.name) || (st && st.name) || '';
+  render(); window.scrollTo(0, 0);
+}
+function anfClose(){ ANF.open = false; render(); window.scrollTo(0, 0); }
+const anfVisible = q => !q.show || q.show(ANF.ans);
+function anfMissing(step){
+  const s = anfSteps()[step]; if (!s.q) return [];
+  return s.q.filter(q => q.req && anfVisible(q) && !String(ANF.ans[q.k] || '').trim());
+}
+function anfField(q){
+  const v = ANF.ans[q.k] || '', id = 'anf-' + q.k, miss = ANF.err && q.req && anfVisible(q) && !String(v).trim();
+  const lab = `<span class="anq">${esc(q.l)}${q.req ? '' : ' <span class="opt">(opcional)</span>'}</span>${q.h ? `<span class="hint">${esc(q.h)}</span>` : ''}`;
+  if (q.type === 'choice') return `<fieldset class="anf ${miss ? 'miss' : ''}"><legend>${lab}</legend><div class="anopts">${q.o.map(o => `<button type="button" class="anopt" data-act="anf-pick" data-k="${q.k}" data-v="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join('')}</div></fieldset>`;
+  const ctl = q.type === 'area' ? `<textarea id="${id}" data-anf="${q.k}" rows="3" placeholder="${esc(q.ph || '')}">${esc(v)}</textarea>`
+    : `<input id="${id}" data-anf="${q.k}" type="${q.type === 'date' ? 'date' : 'text'}" ${q.im ? `inputmode="${q.im}"` : ''} ${q.ac ? `autocomplete="${q.ac}"` : 'autocomplete="off"'} placeholder="${esc(q.ph || '')}" value="${esc(v)}">`;
+  return `<label class="anf ${miss ? 'miss' : ''}" for="${id}">${lab}${ctl}${q.no ? `<button type="button" class="anno" data-act="anf-no" data-k="${q.k}" aria-pressed="${NEG.test(v)}">Não</button>` : ''}</label>`;
+}
+function anfPhotos(){
+  const tips = ANF.kind === 'fotos' ? '' : `<p class="small muted">Se preferir, pode enviar depois. O seu personal também pode pedir as fotos pelo app.</p>`;
+  return `<div class="antips"><b>Como tirar as fotos</b><ul><li>Corpo inteiro, da cabeça aos pés</li><li>Lugar bem iluminado, de preferência com luz de frente</li><li>Roupa de treino ou de banho, braços relaxados</li><li>Mesma distância e mesmo lugar nas próximas avaliações</li></ul></div>
+    <div class="anph">${POSES.map(([k, l]) => { const p = ANF.photos[k]; return `<label class="phslot ${p ? 'has' : ''}" for="anp-${k}">${p ? `<img src="${p.url}" alt="Foto de ${l.toLowerCase()}">` : `<span class="phic">${ICON_CAM}</span>`}<b>${l}</b><span class="small">${p ? 'Toque para trocar' : 'Toque para escolher'}</span><input id="anp-${k}" type="file" accept="image/*" data-anp="${k}"></label>`; }).join('')}</div>
+    <p class="small muted anpriv">${ICON_LOCK}As fotos ficam guardadas só para o seu personal. Nem outros alunos nem o próprio app mostram elas para mais ninguém.</p>${tips}`;
+}
+function anfReview(){
+  const steps = anfSteps().filter(s => s.q && !s.photos);
+  const ph = POSES.filter(([k]) => ANF.photos[k]);
+  const rows = (ANF.kind === 'fotos' ? FOTO_STEPS[0].q : []).concat(...steps.map(s => s.q)).filter(anfVisible);
+  return `${ANF.kind === 'fotos' ? '' : steps.map((s, i) => `<section class="anrev"><div class="anrevh"><b>${esc(s.t)}</b><button type="button" class="linkbtn" data-act="anf-go" data-v="${anfSteps().indexOf(s)}">Editar</button></div><dl>${s.q.filter(anfVisible).map(q => `<dt>${esc(q.l)}</dt><dd>${esc(ansTxt(q, ANF.ans[q.k] || '') || '—')}</dd>`).join('')}</dl></section>`).join('')}
+    ${ANF.kind === 'fotos' ? `<section class="anrev"><dl>${rows.map(q => `<dt>${esc(q.l)}</dt><dd>${esc(ANF.ans[q.k] || '—')}</dd>`).join('')}</dl></section>` : ''}
+    <section class="anrev"><div class="anrevh"><b>Fotos</b><button type="button" class="linkbtn" data-act="anf-go" data-v="${anfSteps().findIndex(s => s.photos)}">${ph.length ? 'Trocar' : 'Adicionar'}</button></div>${ph.length ? `<div class="anrevph">${ph.map(([k, l]) => `<figure><img src="${ANF.photos[k].url}" alt=""><figcaption>${l}</figcaption></figure>`).join('')}</div>` : '<p class="small muted">Nenhuma foto. Você pode enviar depois.</p>'}</section>
+    ${asmCloud() && AUTH.user ? `<p class="small muted">Enviando como <b>${esc(AUTH.user.email)}</b>.</p>` : ''}`;
+}
+function anamForm(){
+  const steps = anfSteps(), s = steps[ANF.step], last = ANF.step === steps.length - 1;
+  if (ANF.sent) return `<section class="card anfcard anfdone"><span class="anok">${ICON_CHECK}</span><p class="eyebrow">${ANF.kind === 'fotos' ? 'Fotos enviadas' : 'Anamnese enviada'}</p><h2 class="serif">Tudo certo!</h2>
+    <p>${ANF.kind === 'fotos' ? 'O seu personal já recebeu as fotos e vai usar na sua avaliação.' : 'O Marcelo já recebeu as suas respostas e vai usar para montar o seu treino.'}</p><button class="btn block" type="button" data-act="anf-close">Voltar ao app</button></section>`;
+  const pct = Math.round(100 * (ANF.step + 1) / steps.length);
+  const intro = ANF.step === 0 && ANF.kind === 'anamnese' ? `<div class="anintro"><p><b>Vamos dar o primeiro passo para esse novo movimento!</b> Saber da sua rotina e das suas particularidades me ajuda a montar o treino certo para você. Responda de forma bem completa e específica.</p><p class="small muted">Supervisionado por Marcelo Júnior · CREF RJ-056749. As respostas ficam guardadas só para o seu personal.</p></div>` : '';
+  const body = s.review ? anfReview() : (s.photos ? (s.q ? s.q.map(anfField).join('') : '') + anfPhotos() : s.q.filter(anfVisible).map(anfField).join(''));
+  return `<section class="card anfcard" aria-labelledby="anf-h">
+    <div class="anftop"><button type="button" class="linkbtn" data-act="${ANF.step ? 'anf-back' : 'anf-close'}">← ${ANF.step ? 'Voltar' : 'Sair'}</button><span class="small muted">Etapa ${ANF.step + 1} de ${steps.length}</span></div>
+    <div class="anbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso"><span style="width:${pct}%"></span></div>
+    <p class="eyebrow">${ANF.kind === 'fotos' ? 'Fotos de avaliação' : 'Anamnese'}</p><h2 class="serif" id="anf-h">${esc(s.t)}</h2>
+    ${intro}${body}
+    ${ANF.err ? `<p class="anerr" role="alert">${esc(ANF.err)}</p>` : ''}
+    <div class="anfnav">${last ? `<button class="btn block" type="button" data-act="anf-send" ${ANF.busy ? 'disabled' : ''}>${ANF.busy ? esc(ANF.prog || 'Enviando...') : (ANF.kind === 'fotos' ? 'Enviar fotos para o personal' : 'Enviar anamnese para o personal')}</button>`
+      : `<button class="btn block" type="button" data-act="anf-next">${s.photos && !POSES.some(([k]) => ANF.photos[k]) && ANF.kind !== 'fotos' ? 'Continuar sem fotos' : 'Continuar'}</button>`}</div>
+  </section>`;
+}
+// convite no app do aluno
+function asmPrompt(st){
+  if (ANF.open) return '';
+  if (needAnam(st)) return `<section class="card asmcta"><span class="asmic">${ICON_CLIP}</span><div><p class="eyebrow">Primeiro passo</p><h3>Preencha a sua anamnese</h3><p class="small muted">São perguntas sobre a sua rotina, saúde e objetivo. Leva uns 10 minutos e o personal monta o treino a partir delas.</p></div><button class="btn" type="button" data-act="anf-open" data-v="anamnese">Preencher agora</button></section>`;
+  if (needPhotos(st)) return `<section class="card asmcta"><span class="asmic">${ICON_CAM}</span><div><p class="eyebrow">Pedido do personal</p><h3>Envie novas fotos de avaliação</h3><p class="small muted">Frente, lado e costas, para comparar com as anteriores.</p></div><button class="btn" type="button" data-act="anf-open" data-v="fotos">Enviar fotos</button></section>`;
+  return '';
+}
+function waitingAnam(){
+  if (!asmCloud()) return '';
+  if (ASM.mine === null) return '';
+  const a = (ASM.mine || []).find(x => x.kind === 'anamnese');
+  if (a) return `<div class="asmsent">${ICON_CHECK}<span>Anamnese enviada em ${esc(dateBR(a.created_at))}. O seu personal já está com as respostas.</span></div>`;
+  return `<div class="asmwait"><p><b>Enquanto isso, preencha a sua anamnese.</b> Com ela o personal já começa a montar o seu treino.</p><button class="btn block" type="button" data-act="anf-open" data-v="anamnese">Preencher anamnese</button></div>`;
+}
+async function anfSend(){
+  if (ANF.busy) return;
+  const missAll = anfSteps().map((_, i) => anfMissing(i).length ? i : -1).filter(i => i > -1);
+  if (missAll.length){ ANF.step = missAll[0]; ANF.err = 'Faltou responder algumas perguntas desta etapa.'; render(); return; }
+  if (ANF.kind === 'fotos' && !POSES.some(([k]) => ANF.photos[k])){ ANF.step = 0; ANF.err = 'Escolha pelo menos uma foto.'; render(); return; }
+  ANF.busy = true; ANF.err = ''; render();
+  const id = uid(), data = {form: ANF.kind === 'fotos' ? 'fotos-v1' : ANAM_V, answers: Object.assign({}, ANF.ans)};
+  if (data.answers.ja !== 'Sim') delete data.answers.exp;
+  const ph = POSES.filter(([k]) => ANF.photos[k]);
+  try {
+    if (asmCloud()){
+      if (isPx()) throw new Error('personal');
+      const u = AUTH.user, photos = [];
+      for (let i = 0; i < ph.length; i++){
+        const [k] = ph[i]; ANF.prog = `Enviando foto ${i + 1} de ${ph.length}...`; render();
+        const path = `${u.id}/${id}/${k}.jpg`;
+        const {error} = await sb.storage.from('avaliacoes').upload(path, ANF.photos[k].blob, {contentType: 'image/jpeg', upsert: false});
+        if (error) throw error; photos.push({pose: k, path});
+      }
+      ANF.prog = 'Salvando respostas...'; render();
+      const {error} = await sb.from('assessments').insert({id, user_id: u.id, email: String(u.email || '').toLowerCase(), kind: ANF.kind, data, photos});
+      if (error) throw error;
+      ASM.mine = (ASM.mine || []).concat({id, kind: ANF.kind, created_at: new Date().toISOString()});
+    } else {
+      const st = stu();
+      db.assessments = db.assessments || [];
+      db.assessments.push({id, user_id: null, email: st && st.email || '', student_id: st ? st.id : null, kind: ANF.kind, data, photos: ph.map(([k]) => ({pose: k, url: ANF.photos[k].url})), seen_at: null, created_at: new Date().toISOString()});
+      if (st && ANF.kind === 'anamnese') st.anam = 'ok';
+      save();
+    }
+    try { localStorage.removeItem(ANF_KEY); } catch(e){}
+    ANF.sent = true; ANF.photos = {};
+  } catch(e){
+    console.error(e);
+    ANF.err = e && e.message === 'personal' ? 'Esta tela é para o aluno preencher. Abra com a conta dele para testar o envio.' : 'Não consegui enviar agora. Confira a internet e toque em enviar de novo. Suas respostas continuam aqui.';
+  } finally { ANF.busy = false; ANF.prog = ''; render(); window.scrollTo(0, 0); }
+}
+// ---------- visão do personal ----------
+const ALLQ = () => ANAM_STEPS.filter(s => s.q).flatMap(s => s.q);
+function asmSummary(a){
+  const x = a.data && a.data.answers || {}, ag = age(x.nasc), bmi = imc(x.altura, x.peso);
+  return [ag ? ag + ' anos' : '', x.altura || '', x.peso || '', bmi ? 'IMC ' + bmi : ''].filter(Boolean);
+}
+function asmAnswersHTML(a){
+  const x = a.data && a.data.answers || {};
+  return ANAM_STEPS.filter(s => s.q).map(s => `<section class="asmsec"><p class="eyebrow">${esc(s.t)}</p><dl>${s.q.filter(q => x[q.k] !== undefined && x[q.k] !== '').map(q => { const v = String(x[q.k]); const warn = q.health && !NEG.test(v);
+    return `<div class="asmq ${warn ? 'warn' : ''}"><dt>${esc(q.l)}</dt><dd>${warn ? '<span class="asmwarn">Atenção</span>' : ''}${esc(ansTxt(q, v))}</dd></div>`; }).join('')}</dl></section>`).join('');
+}
+function asmPhotosHTML(list){
+  const withPh = list.filter(a => (a.photos || []).length);
+  if (!withPh.length) return `<p class="small muted">Nenhuma foto enviada ainda.</p>`;
+  asmUrls(withPh.flatMap(a => a.photos.map(p => p.path)).filter(Boolean));
+  return `<div class="asmph" role="region" aria-label="Fotos por data" tabindex="0"><div class="asmphg" style="grid-template-columns:auto repeat(${withPh.length},minmax(104px,150px))">
+    <span></span>${withPh.map(a => `<b class="small">${esc(dateBR(a.created_at))}${a.data && a.data.answers && a.data.answers.peso ? `<small>${esc(a.data.answers.peso)}</small>` : ''}</b>`).join('')}
+    ${POSES.map(([k, l]) => `<span class="phl">${l}</span>${withPh.map(a => { const p = (a.photos || []).find(x => x.pose === k), src = p && phSrc(p);
+      return p ? (src ? `<button type="button" class="phbtn" data-act="ph-zoom" data-src="${esc(src)}" aria-label="Ampliar ${l.toLowerCase()} de ${esc(dateBR(a.created_at))}"><img src="${esc(src)}" alt="" loading="lazy"></button>` : `<span class="phload">Carregando</span>`) : '<span class="phnone">—</span>'; }).join('')}`).join('')}
+  </div></div>`;
+}
+function asmView(s, compact){
+  const list = asmFor(s), an = list.filter(a => a.kind === 'anamnese'), last = an[an.length - 1];
+  if (!compact) asmSeen(list);
+  const pend = s.askPhotos && !list.some(a => a.kind === 'fotos' && a.created_at > s.askPhotos);
+  const ask = `<div class="row asmacts">${pend ? `<span class="chip">Fotos pedidas em ${esc(dateBR(s.askPhotos))}</span><button type="button" class="linkbtn" data-act="ask-photos-off" data-v="${s.id}">Cancelar pedido</button>` : `<button type="button" class="btn sm ghost" data-act="ask-photos" data-v="${s.id}">${ICON_CAM}Pedir novas fotos</button>`}</div>`;
+  if (asmCloud() && !ASM.loaded) return `<div class="empty">Carregando a anamnese...</div>`;
+  const head = last ? `<div class="asmhead"><div><p class="eyebrow">Anamnese de ${esc(dateBR(last.created_at))}</p><h3>${esc((last.data.answers || {}).nome || s.name)}</h3><div class="asmchips">${asmSummary(last).map(c => `<span class="chip">${esc(c)}</span>`).join('')}</div>
+      ${(last.data.answers || {}).obj ? `<p class="asmobj"><span class="eyebrow">Objetivo</span>${esc(last.data.answers.obj)}</p>` : ''}</div></div>` : `<div class="empty">${s.anam === 'ok' ? 'A anamnese deste aluno foi marcada como respondida fora do app (Google Forms).' : `${esc(s.name.split(' ')[0])} ainda não preencheu a anamnese. Ela aparece no app ${s.email ? 'dele(a)' : 'quando você cadastrar o e-mail de acesso'}.`}</div>`;
+  return `<div class="asmview ${compact ? 'compact' : ''}">${head}${ask}
+    <section class="asmsec"><p class="eyebrow">Fotos de avaliação</p>${asmPhotosHTML(list)}</section>
+    ${last ? (compact ? `<details class="asmmore"><summary>Ver todas as respostas</summary>${asmAnswersHTML(last)}</details>` : asmAnswersHTML(last)) : ''}
+    ${an.length > 1 ? `<p class="small muted">${an.length} anamneses enviadas. Mostrando a mais recente.</p>` : ''}</div>`;
+}
+function asmNewHTML(){
+  const or = asmOrphans(); if (!or.length) return '';
+  return `<section class="card asmnew"><div class="asmnewh"><p class="eyebrow">Novas anamneses</p><span class="abadge new">${or.length}</span></div><p class="small muted">Pessoas que criaram a conta no app e responderam a anamnese, mas ainda não têm ficha.</p>
+    ${or.map(a => { const x = a.data.answers || {}; const open = state.asmOpen === a.id; return `<article class="asmlead"><div class="asmleadh"><div><b>${esc(x.nome || a.email || 'Sem nome')}</b><span class="small muted">${esc(a.email || '')} · ${esc(dateBR(a.created_at))}</span>${x.obj ? `<span class="small">Objetivo: ${esc(x.obj.length > 90 ? x.obj.slice(0, 90) + '…' : x.obj)}</span>` : ''}</div>
+      <div class="row"><button type="button" class="btn sm" data-act="asm-create" data-v="${a.id}">Criar ficha</button><button type="button" class="btn sm ghost" data-act="asm-toggle" data-v="${a.id}" aria-expanded="${open}">${open ? 'Fechar' : 'Ver respostas'}</button></div></div>
+      ${open ? `<div class="asmview">${(a.photos || []).length ? `<section class="asmsec"><p class="eyebrow">Fotos</p>${asmPhotosHTML([a])}</section>` : ''}${asmAnswersHTML(a)}</div>` : ''}</article>`; }).join('')}</section>`;
+}
+function asmChip(s){ const un = asmFor(s).filter(a => !a.seen_at); if (!un.length) return ''; return `<span class="abadge new">${un.some(a => a.kind === 'anamnese') ? 'Anamnese nova' : 'Fotos novas'}</span>`; }
+function phZoom(src){ const o = document.createElement('div'); o.className = 'phov'; o.innerHTML = `<img src="${esc(src)}" alt="Foto ampliada"><button type="button" class="phx" aria-label="Fechar">✕</button>`; o.addEventListener('click', () => o.remove()); document.body.appendChild(o); }
+
+
+/* ---------- painel de apoio (editor da ficha) ---------- */
+function apSources(s){
+  const out = [];
+  (s.protos || []).slice().reverse().forEach((p, i) => out.push({key: 'p:' + s.id + ':' + ((s.protos.length - 1) - i), grp: 'Deste aluno', label: `${p.name} (guardado ${ddmm(p.to)})`, days: p.days, st: s}));
+  db.students.filter(x => x.id !== s.id).sort((a, b) => a.name.localeCompare(b.name, 'pt')).forEach(x => {
+    out.push({key: 's:' + x.id, grp: 'Outros alunos', label: `${x.name} · ${x.protocol || 'ficha atual'}`, days: x.days, st: x});
+    (x.protos || []).slice().reverse().forEach((p, i) => out.push({key: 'p:' + x.id + ':' + ((x.protos.length - 1) - i), grp: 'Outros alunos', label: `${x.name} · ${p.name} (antigo)`, days: p.days, st: x}));
+  });
+  return out;
+}
+function apSrc(s){
+  const all = apSources(s); if (!all.length) return {all, cur: null};
+  let cur = all.find(o => o.key === state.apoioSrc);
+  if (!cur){ cur = all[0]; state.apoioSrc = cur.key; }
+  return {all, cur};
+}
+function apSum(ex){
+  const ser = ex.series || [], work = ser.filter(x => x.type !== 'aq'), aq = ser.length - work.length;
+  const t = work.find(x => x.type === 'trab') || work[0] || {};
+  return [work.length ? `${work.length}x ${String(t.reps || '').split(/\s*\+\s*/)[0] || '—'}` : '', aq ? `+${aq} aquec.` : '', ex.method && ex.method !== 'normal' ? meth(ex.method).name : '', ex.rest || ''].filter(Boolean).join(' · ');
+}
+function apTreinos(s){
+  const {all, cur} = apSrc(s), tgt = s.days[state.editDay], tl = slotShort(s, state.editDay);
+  if (!cur) return `<p class="small muted">Ainda não há outros alunos nem protocolos antigos guardados. Quando você iniciar o próximo protocolo, a ficha atual fica guardada aqui.</p>`;
+  const grps = [...new Set(all.map(o => o.grp))];
+  const has = new Set(tgt.ex.map(e => e.items.join('+')));
+  const days = DAYS.map(x => x.k).filter(k => cur.days[k] && (cur.days[k].ex || []).length);
+  return `<label class="aplab">Ver<select id="ap-src" data-apsrc="1">${grps.map(g => `<optgroup label="${esc(g)}">${all.filter(o => o.grp === g).map(o => `<option value="${esc(o.key)}" ${o.key === cur.key ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+    <p class="aptgt">Os exercícios vão para <b>${esc(slotFull(s, state.editDay))}${tgt.title ? ' · ' + esc(tgt.title) : ''}</b>. Para mandar para outro dia, troque o dia na semana da ficha.</p>
+    ${days.length ? days.map(k => { const d = cur.days[k];
+      return `<section class="apday"><div class="apdayh"><div><span class="apd">${esc(slotShort(cur.st, k))}</span><b>${esc(d.title || 'Treino')}</b></div><button type="button" class="btn sm ghost" data-act="ap-day" data-v="${k}">Copiar dia → ${esc(tl)}</button></div>
+        <ul class="apex">${d.ex.map((ex, i) => { const nm = ex.items.map((id, j) => (ex.items.length > 1 ? String.fromCharCode(65 + j) + ') ' : '') + lib(id).name).join(' + '), dup = has.has(ex.items.join('+'));
+          return `<li><div class="apexi"><b>${esc(nm)}</b><span class="small muted">${esc(apSum(ex))}</span>${ex.notes ? `<span class="small apnote">${esc(ex.notes.length > 110 ? ex.notes.slice(0, 110) + '…' : ex.notes)}</span>` : ''}</div>
+            ${dup ? `<span class="chip apin">Já está em ${esc(tl)}</span>` : `<button type="button" class="btn sm aptraz" data-act="ap-ex" data-v="${k}:${i}">Trazer → ${esc(tl)}</button>`}</li>`; }).join('')}</ul></section>`; }).join('')
+      : `<p class="small muted">Esta ficha ainda não tem exercícios.</p>`}`;
+}
+function apCargas(s){
+  const d = s.days[state.editDay], ids = [...new Set(d.ex.flatMap(e => e.items))];
+  if (!ids.length) return `<p class="small muted">Adicione exercícios ao dia para ver as últimas cargas de ${esc(s.name.split(' ')[0])} em cada um.</p>`;
+  const best = prHistory(s).best;
+  const last = id => { for (let i = s.logs.length - 1; i >= 0; i--){ const l = s.logs[i]; for (const e of l.entries){ const pi = e.items.indexOf(id); if (pi > -1){ const w = workKg({entry: e, pi}); if (w.length) return {l, w}; } } } return null; };
+  return `<ul class="apload">${ids.map(id => { const r = last(id), b = best[id];
+    return `<li><b>${esc(lib(id).name)}</b>${r ? `<span>Último (${esc(ddmm(r.l.date))}): <b>${r.w.map(fmtKg).join(' · ')} kg</b></span>` : '<span class="muted">Ainda sem registro de carga</span>'}${b ? `<span class="small muted">Recorde: ${fmtKg(b.kg)} kg${b.reps ? ' × ' + b.reps : ''}</span>` : ''}</li>`; }).join('')}</ul>
+    <button type="button" class="linkbtn" data-act="p-track" data-v="${s.id}">Ver todas as cargas</button>`;
+}
+function apoioHTML(s){
+  const tab = state.apoioTab || 'treinos';
+  const open = state.apoioOpen !== undefined ? state.apoioOpen : matchMedia('(min-width:1100px)').matches;
+  const un = typeof asmFor === 'function' ? asmFor(s).filter(a => !a.seen_at).length : 0;
+  const tabs = [['treinos', 'Treinos'], ['cargas', 'Cargas'], ['anam', 'Anamnese'], ['fb', 'Feedback']];
+  return `<details class="card apoio" ${open ? 'open' : ''}><summary data-act="apoio-tog"><span class="vsum"><b>Painel de apoio</b><small>Treinos antigos, outros alunos, cargas, anamnese e feedbacks</small></span></summary>
+    <div class="aptabs" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-act="ap-tab" data-v="${k}" aria-selected="${tab === k}">${l}${k === 'anam' && un ? ' <span class="apdot" aria-label="novo"></span>' : ''}</button>`).join('')}</div>
+    <div class="apbody">${tab === 'cargas' ? apCargas(s) : tab === 'anam' ? (typeof asmView === 'function' ? asmView(s, true) : '') : tab === 'fb' ? fbTab(s) : apTreinos(s)}</div></details>`;
+}
+
 /* ---------- importar ficha em PDF ---------- */
 let impFile = null, impCtl = null, pdfjsP = null;
 function loadPdfJs(){
@@ -3043,12 +3359,13 @@ function studentView(){
   if (!st) return `<main class="wrap"><div class="empty">Nenhum aluno cadastrado ainda. Vá em Personal para adicionar.</div></main>`;
   const preview = isP() ? `<p class="previewbar">Você está vendo o app como ${esc(st.name.split(' ')[0])}. Treinos registrados aqui entram no histórico do aluno.</p>` : '';
   if (state.done) return state.done.step === 'eff' ? effortView(st) : doneView(st);
+  if (ANF.open) return `<main class="wrap">${anamForm()}</main>`;
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + asmPrompt(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
-  const minip = preview + autoBanner(st);
+  const minip = preview + autoBanner(st) + asmPrompt(st);
   if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
@@ -3171,10 +3488,10 @@ function trainerView(){
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    <div class="alay"><div class="amain">${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
+    <div class="alay"><div class="amain">${asmNewHTML()}${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
     <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
-    ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off">
-      <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off">
+    ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off" value="${esc((state.newPre || {}).name || '')}">
+      <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off" value="${esc((state.newPre || {}).email || '')}">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
       <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
@@ -3182,7 +3499,7 @@ function trainerView(){
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div>${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3>${esc(s.name)}</h3>${dueChip(s)}</div>${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -3207,6 +3524,7 @@ function editView(){
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><div class="shacts"><span class="muted small">Salvo automaticamente</span><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div></div>
     <div class="edlay"><aside class="edside" aria-label="Dados e volume do aluno">
+    ${apoioHTML(s)}
     <p class="eyebrow sidehd">Visão geral</p>
     <details class="card sdata" id="sdata" ${state.sdataOpen ? 'open' : ''}><summary><span class="vsum"><b>Dados do aluno e anotações</b><small>${esc([s.protocol, s.focus].filter(Boolean).join(' · ') || 'Toque para preencher')}${s.privNotes ? ' · com anotação privada' : ''}</small></span></summary>
     <div class="form">
@@ -3325,8 +3643,8 @@ function trackView(){
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><div class="shacts"><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div></div>
     <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button></div>
-    ${state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button><button type="button" data-act="ptab" data-v="anam" aria-pressed="${state.ptab === 'anam'}">Anamnese</button></div>
+    ${state.ptab === 'anam' ? asmView(s) : state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
   </main>`;
 }
 
@@ -3394,7 +3712,7 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ render0(); polishAfter(); try { syncBadge(); } catch(e){} }
+function render(){ render0(); polishAfter(); try { asmTick(); } catch(e){} try { syncBadge(); } catch(e){} }
 function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
@@ -3448,6 +3766,25 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'apoio-tog'){ e.preventDefault(); const d = b.closest('details'); state.apoioOpen = !(d && d.open); render(); return; }
+  if (act === 'ap-tab'){ state.apoioTab = v; render(); return; }
+  if (act === 'ap-ex' || act === 'ap-day'){ const s = stu(), {cur} = apSrc(s); if (!cur) return; const tgt = s.days[state.editDay], tl = slotShort(s, state.editDay);
+    if (act === 'ap-ex'){ const [k, i] = v.split(':'), ex = cur.days[k] && cur.days[k].ex[+i]; if (!ex) return; tgt.ex.push(Object.assign(JSON.parse(JSON.stringify(ex)), {id: uid()})); save(); render(); toast(ex.items.map(id => lib(id).name).join(' + ') + ' foi para ' + tl); return; }
+    const src = cur.days[v]; if (!src) return; if (tgt.ex.length && !arm(b, 'Toque de novo para substituir ' + tl, 'Copiar dia → ' + tl)) return;
+    s.days[state.editDay] = cloneDay(src); save(); render(); toast('Treino copiado para ' + tl + '. Ajuste o que precisar.'); return; }
+  if (act === 'anf-open'){ if (asmCloud() && isPx()){ toast('Essa tela é para o aluno preencher, com a conta dele.'); return; } anfOpen(v); return; }
+  if (act === 'anf-close'){ anfClose(); return; }
+  if (act === 'anf-pick'){ ANF.ans[b.dataset.k] = b.dataset.v; anfSave(); render(); return; }
+  if (act === 'anf-no'){ ANF.ans[b.dataset.k] = 'Não'; anfSave(); render(); return; }
+  if (act === 'anf-back'){ ANF.err = ''; ANF.step = Math.max(0, ANF.step - 1); anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-go'){ ANF.err = ''; ANF.step = +v; anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-next'){ const m = anfMissing(ANF.step); if (m.length){ ANF.err = m.length === 1 ? 'Falta responder: ' + m[0].l : 'Faltam ' + m.length + ' respostas nesta etapa.'; render(); const el = document.querySelector('.anf.miss'); if (el) el.scrollIntoView({block: 'center', behavior: 'smooth'}); return; } ANF.err = ''; ANF.step++; anfSave(); render(); window.scrollTo(0, 0); return; }
+  if (act === 'anf-send'){ anfSend(); return; }
+  if (act === 'ph-zoom'){ phZoom(b.dataset.src); return; }
+  if (act === 'asm-toggle'){ state.asmOpen = state.asmOpen === v ? null : v; render(); return; }
+  if (act === 'asm-create'){ const a = asmAll().find(x => x.id === v); if (!a) return; const x = a.data.answers || {}; state.newPre = {name: x.nome || '', email: a.email || '', focus: x.obj || '', asm: a.id}; state.newOpen = true; render(); const f = document.getElementById('newst'); if (f) f.scrollIntoView({block: 'center', behavior: 'smooth'}); return; }
+  if (act === 'ask-photos'){ const s = db.students.find(x => x.id === v); if (!s) return; s.askPhotos = new Date().toISOString(); save(); render(); toast('Pedido enviado. Aparece no app de ' + s.name.split(' ')[0] + '.'); return; }
+  if (act === 'ask-photos-off'){ const s = db.students.find(x => x.id === v); if (!s) return; delete s.askPhotos; save(); render(); return; }
   if (act === 'push-on'){ pushOn(); return; }
   if (act === 'push-off'){ pushOff(); return; }
   if (act === 'push-test'){ pushTest(); return; }
@@ -3717,6 +4054,8 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.apsrc){ state.apoioSrc = e.target.value; render(); return; }
+  if (e.target.dataset && e.target.dataset.anp && e.target.files && e.target.files[0]){ const k = e.target.dataset.anp, f = e.target.files[0]; const big = asmCloud(); shrink(f, big ? 1440 : 560, big ? .82 : .7).then(p => { ANF.photos[k] = p; ANF.err = ''; render(); }).catch(() => toast('Não consegui abrir essa foto. Tente outra.')); return; }
   if (e.target.id === 'f-protocol'){ const s = stu(), B = state.editBase, nv = e.target.value.trim();
     if (B && B.sid === s.id && B.name && nv && nv !== B.name){ protoSave(s, B.name, B.days); state.editBase = {sid: s.id, name: nv, days: JSON.parse(JSON.stringify(s.days))}; save(); toast('"' + B.name + '" guardado como versão anterior. Dá para comparar na aba Volume.'); }
     return; }
@@ -3761,6 +4100,7 @@ document.addEventListener('input', e => {
   if (t.dataset.lec !== undefined && state.logDraft){ state.logDraft.entries[+t.dataset.lec].comment = t.value; return; }
   if (t.dataset.effmsg){ if (state.done) state.done.msg = t.value; return; }
   if (t.dataset.volr){ const s = stu(), n = parseInt(t.value); if (isNaN(n) || n < 0) return; const r = volRange(s); r[t.dataset.volr] = n; if (r.lo > r.hi) return; s.volRange = r; save(); clearTimeout(window.__vrT); window.__vrT = setTimeout(() => { const id = document.activeElement && document.activeElement.id; render(); const el = id && document.getElementById(id); if (el){ el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch(e){} } }, 500); return; }
+  if (t.dataset.anf){ ANF.ans[t.dataset.anf] = t.value; anfSave(); if (ANF.err && t.value.trim()){ const l = t.closest('.anf'); if (l) l.classList.remove('miss'); } return; }
   if (t.dataset.cardiocm === 'log'){ state.cdEdit = draftKey(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cardiocm){ if (trainOpen()) touchStart(); draft().__cardio = {comment: t.value}; save(); return; }
   if (t.dataset.cm){ drEx(t.dataset.cm).comment = t.value; save(); return; }
@@ -3805,6 +4145,7 @@ document.addEventListener('submit', e => {
   const fromId = (document.getElementById('new-from') || {}).value, src = fromId && db.students.find(x => x.id === fromId);
   const em = ((document.getElementById('new-email') || {}).value || '').trim().toLowerCase();
   const s = {id: uid(), name, email: em, planDue: ((document.getElementById('new-due') || {}).value || ''), plan: ((document.getElementById('new-plan') || {}).value || ''), protocol: 'Protocolo 1', focus: src ? src.focus : '', cardio: '', privNotes: '', schedule: src ? src.schedule : 'fixo', perWeek: src ? src.perWeek : '', days: src ? cloneDays(src.days) : days, logs: [], last: null};
+  if (state.newPre){ if (state.newPre.focus) s.focus = state.newPre.focus; s.anam = 'ok'; const a = asmAll().find(x => x.id === state.newPre.asm); if (a){ a.student_id = s.id; if (asmCloud()) sb.from('assessments').update({student_id: s.id}).eq('id', a.id).then(() => {}); } state.newPre = null; }
   db.students.push(s); save();
   state.sid = s.id; state.pview = 'edit'; state.editDay = 'seg'; state.newOpen = false; render(); top();
   toast(name.split(' ')[0] + ' adicionado. Monte a ficha.');
