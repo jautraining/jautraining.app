@@ -1438,3 +1438,21 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
 .apload{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .apload li{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:.86rem}
 .apoio .asmview.compact .asmhead h3{font-size:1.05rem}
+
+/* ---------- auditoria: contraste ---------- */
+.due.ok{color:#17744A}
+.stat b.up,.hdl.up,.vdif.up{color:#17744A}
+.abadge.anam{color:#8A5A00;border-color:#B37700}
+.mpill.gold{color:#241600}
+.ptag.red,.abadge.high{background:#C8141B;border-color:#C8141B;color:#fff}
+.libgrp span,.libgrp small{color:#6B6060}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .due.ok,:root:not([data-theme="light"]) .stat b.up,:root:not([data-theme="light"]) .hdl.up,:root:not([data-theme="light"]) .vdif.up{color:#56C892}:root:not([data-theme="light"]) .libgrp span,:root:not([data-theme="light"]) .libgrp small{color:#B3A6A6}}
+:root[data-theme="dark"] .due.ok,:root[data-theme="dark"] .stat b.up,:root[data-theme="dark"] .hdl.up,:root[data-theme="dark"] .vdif.up{color:#56C892}
+:root[data-theme="dark"] .libgrp span,:root[data-theme="dark"] .libgrp small{color:#B3A6A6}
+/* abas do personal no celular, tema claro: barra própria, legível sobre qualquer parte do degradê */
+@media (max-width:1099px) and (prefers-color-scheme:light){:root:not([data-theme="dark"]) body.pm .band .tabs{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:999px;padding:4px;box-shadow:0 8px 24px rgba(126,10,14,.14)}:root:not([data-theme="dark"]) body.pm .band .tabs button{color:#7E0A0E!important;opacity:1!important;border-radius:999px!important;border-bottom-color:transparent!important}:root:not([data-theme="dark"]) body.pm .band .tabs button[aria-pressed="true"]{background:#C8141B!important;color:#fff!important}}
+@media (max-width:1099px){:root[data-theme="light"] body.pm .band .tabs{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:999px;padding:4px;box-shadow:0 8px 24px rgba(126,10,14,.14)}:root[data-theme="light"] body.pm .band .tabs button{color:#7E0A0E!important;opacity:1!important;border-radius:999px!important;border-bottom-color:transparent!important}:root[data-theme="light"] body.pm .band .tabs button[aria-pressed="true"]{background:#C8141B!important;color:#fff!important}}
+/* ---------- auditoria: área de toque no treino (mínimo ~44px) ---------- */
+.exinfo > summary{padding-block:12px;cursor:pointer}
+.linkbtn[data-act="goevo"]{display:inline-flex;align-items:center;min-height:40px}
+.walink{min-height:44px;padding:10px 0}
