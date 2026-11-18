@@ -1531,5 +1531,3 @@ article.stu[data-act="p-prof"]{cursor:pointer;transition:border-color .2s,box-sh
 .nxchip svg{width:14px;height:14px}
 .npmsg{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;border-color:color-mix(in srgb,var(--accent) 45%,var(--line))!important}
 .npmsg h3{margin:2px 0 4px}
-.npmsg .linkbtn{grid-column:1 / -1;justify-self:end}
-@media (min-width:700px){.npmsg{grid-template-columns:auto 1fr auto}.npmsg .linkbtn{grid-column:auto}}

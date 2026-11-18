@@ -2816,11 +2816,16 @@ function nextBar(s){
     <p class="small muted">No dia ${esc(brISO(r.next.start))}, “${esc(r.protocol || 'a ficha atual')}” fica guardada nos protocolos anteriores (dá para comparar na aba Volume) e esta entra no lugar.</p>
     <div class="row nxacts"><button type="button" class="btn sm ghost" data-act="nx-now">Ativar agora</button><button type="button" class="linkbtn" data-act="nx-del">Cancelar agendamento</button></div></section>`;
 }
-function newProtoMsg(st){
-  if (!st || !st.protoStart) return ''; const d0 = new Date(st.protoStart + 'T12:00:00'), dd = Math.floor((Date.now() - d0) / 864e5);
-  if (dd < 0 || dd > 3) return ''; let off = false; try { off = localStorage.getItem('jau-np-' + st.protoStart) === '1'; } catch(e){}
-  if (off) return '';
-  return `<section class="card npmsg"><span class="asmic">${ICON_CAL}</span><div><p class="eyebrow">Ficha nova</p><h3>${esc(st.protocol || 'Treino novo')}</h3><p class="small muted">Seu personal preparou um treino novo, que começou em ${esc(brISO(st.protoStart))}. A ficha anterior fica guardada no histórico.</p></div><button type="button" class="linkbtn" data-act="np-ok" data-v="${esc(st.protoStart)}" aria-label="Fechar aviso">Entendi</button></section>`;
+// ficha nova: avisa na primeira vez de cada dia de treino, até o aluno fazer todos os dias da ficha nova
+function isNewDay(st, k){
+  if (!st || !st.protoStart || !k || !st.days || !st.days[k] || !(st.days[k].ex || []).length) return false;
+  const dd = Math.floor((Date.now() - new Date(st.protoStart + 'T12:00:00')) / 864e5); if (dd < 0 || dd > 35) return false;
+  return !(st.logs || []).some(l => l.day === k && !l.cardioOnly && localISO(new Date(l.date)) >= st.protoStart);
+}
+function newProtoMsg(st, k){
+  if (!isNewDay(st, k)) return '';
+  const d = st.days[k], home = state.stab === 'inicio';
+  return `<section class="card npmsg"><span class="asmic">${ICON_CAL}</span><div><p class="eyebrow">${home ? 'Hoje tem treino novo' : 'Treino novo'}</p><h3>${esc(d.title || 'Treino')}</h3><p class="small muted">É a primeira vez deste treino na ficha nova${st.protocol ? ' (' + esc(st.protocol) + ')' : ''}. Confira os exercícios, as cargas de referência e os vídeos antes de começar.</p></div></section>`;
 }
 
 /* ---------- importar ficha em PDF ---------- */
@@ -3567,9 +3572,9 @@ function studentView(){
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st, isSeq(st) ? nextSlot(st) : DAYS[(new Date().getDay() + 6) % 7].k) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
-  const minip = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st);
+  const minip = preview + autoBanner(st) + asmPrompt(st);
   if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
@@ -3599,7 +3604,7 @@ function studentView(){
       <div><p class="eyebrow">${df.f}${seq ? (state.day === nxt ? ' · próximo da sequência' : '') : (state.day === todayKey ? ' · hoje' : '')}</p><h2 class="serif">${esc(d.title || '—')}</h2></div>
       <div class="dhr">${trainOpen() ? wclockHTML() : ''}${d.ex.length ? `<span class="prog" id="prog">${progText(d)}</span>` : ''}</div>
     </header>
-    ${body}${guide()}
+    ${newProtoMsg(st, state.day)}${body}${guide()}
     <p class="foot">Protocolo de treino fiscalizado e supervisionado pelo profissional Marcelo Júnior, CREF RJ-056749</p>
   </main>${state.sumOpen && d.ex.length ? `<div class="sumov" role="dialog" aria-modal="true" aria-label="Resumo do treino"><div class="sumov-in"><div class="sumov-top"><span class="small muted">Mostre ao professor ou tire uma foto</span><button type="button" class="icon" data-act="sum-close">Fechar</button></div>${summaryCard(st, d, df)}</div></div>` : ''}${onboardHTML(st)}`;
 }
