@@ -3,6 +3,7 @@ const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const ICON_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>';
 const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const ICON_SIDE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M10 9l-3 3 3 3"/></svg>';
+const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 14v4M10 16h4"/></svg>';
 const LOGO = 'img/logo.webp';
 const LOGO_HI = 'img/logo-hi.webp';
 const CHEETAH = 'img/cheetah.webp';
@@ -951,7 +952,8 @@ function accountHTML(){
 }
 
 /* ---------- helpers ---------- */
-const stu = () => db.students.find(s => s.id === state.sid) || db.students[0];
+const stu0 = () => db.students.find(s => s.id === state.sid) || db.students[0];
+const stu = () => { const s = stu0(); return s && state.edNext && s.next && state.pview === 'edit' ? nextProxy(s) : s; };
 const lib = id => db.library.find(l => l.id === id) || {id, name:'Exercício removido', primary:[], secondary:[], instructions:'', video:''};
 const meth = id => db.methods.find(m => m.id === id) || db.methods[0];
 const draftKey = () => state.sid + '|' + state.day;
@@ -2673,7 +2675,8 @@ function phZoom(src){ const o = document.createElement('div'); o.className = 'ph
 
 /* ---------- painel de apoio (editor da ficha) ---------- */
 function apSources(s){
-  const out = [];
+  const out = []; const real = s.__real || s;
+  if (state.edNext && real.next) out.push({key: 'cur:' + s.id, grp: 'Deste aluno', label: 'Ficha atual (em uso)', days: real.days, st: s});
   (s.protos || []).slice().reverse().forEach((p, i) => out.push({key: 'p:' + s.id + ':' + ((s.protos.length - 1) - i), grp: 'Deste aluno', label: `${p.name} (guardado ${ddmm(p.to)})`, days: p.days, st: s}));
   db.students.filter(x => x.id !== s.id).sort((a, b) => a.name.localeCompare(b.name, 'pt')).forEach(x => {
     out.push({key: 's:' + x.id, grp: 'Outros alunos', label: `${x.name} · ${x.protocol || 'ficha atual'}`, days: x.days, st: x});
@@ -2749,7 +2752,7 @@ function profView(){
   return `<main class="wrap pfv">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <section class="pfhead"><div class="pfid"><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><h2 class="serif">${esc(s.name)}</h2>
-      <div class="pfchips">${dueChip(s)}${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}${ag ? `<span class="chip">${ag} anos</span>` : ''}</div></div>
+      <div class="pfchips">${dueChip(s)}${nextChip(s)}${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}${ag ? `<span class="chip">${ag} anos</span>` : ''}</div></div>
       <div class="pfacts"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button><button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button><button class="btn sm ghost" type="button" data-act="p-anam" data-v="${s.id}">Anamnese completa</button><button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button></div></section>
     <div class="pfgrid">
       ${noAnam}
@@ -2767,6 +2770,58 @@ function profView(){
 }
 // painel lateral do editor: recolher e abrir (lembra a escolha)
 function apCol(){ if (state.apCol === undefined){ try { state.apCol = localStorage.getItem('jau-apcol') === '1'; } catch(e){ state.apCol = false; } } return state.apCol; }
+
+
+/* ---------- próxima ficha agendada ---------- */
+const localISO = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const brISO = iso => iso ? String(iso).split('-').reverse().join('/') : '';
+const addDaysISO = n => { const d = new Date(); d.setDate(d.getDate() + n); return localISO(d); };
+function nextDue(s){ return !!(s && s.next && s.next.start && s.next.start <= localISO()); }
+function applyNext(s){
+  const n = s.next; if (!n) return;
+  s.protos = s.protos || [];
+  const name = s.protocol || 'Protocolo anterior';
+  if (!s.protos.some(p => p.name === name && p.to === n.start)) s.protos.push({name, to: n.start, days: JSON.parse(JSON.stringify(s.days))});
+  s.days = n.days; if (n.name) s.protocol = n.name; s.protoStart = n.start; delete s.next;
+  if (state.editBase && state.editBase.sid === s.id) state.editBase = {sid: s.id, name: s.protocol, days: JSON.parse(JSON.stringify(s.days))};
+  if (typeof dataVer !== 'undefined') dataVer++;
+}
+// troca automática no dia: o personal grava a troca; no app do aluno ela só vale na tela (o aluno não grava fichas)
+function nextTick(){
+  const cloudStu = typeof sb !== 'undefined' && !!sb && typeof isP === 'function' && !isP();
+  let ch = false;
+  (db.students || []).forEach(s => { if (nextDue(s)){ if (state.sid === s.id) state.edNext = false; applyNext(s); ch = true; } });
+  if (ch && !cloudStu) save();
+  return ch;
+}
+const NPX = new WeakMap();
+function nextProxy(s){
+  const c = NPX.get(s); if (c && c.n === s.next) return c.px;
+  const px = new Proxy(s, {get(t, k){ if (k === 'days') return t.next.days; if (k === 'protocol') return t.next.name; if (k === '__real') return t; return t[k]; },
+    set(t, k, v){ if (k === 'days') t.next.days = v; else if (k === 'protocol') t.next.name = v; else t[k] = v; return true; }});
+  NPX.set(s, {px, n: s.next}); return px;
+}
+function nextChip(s){ return s.next && s.next.start ? `<span class="chip nxchip" title="Próxima ficha agendada">${ICON_CAL}Nova ficha ${esc(brISO(s.next.start).slice(0, 5))}</span>` : ''; }
+function nextBar(s){
+  const r = s.__real || s, on = !!(state.edNext && r.next);
+  const seg = `<div class="nxseg" role="group" aria-label="Qual ficha editar">
+    <button type="button" data-act="nx-mode" data-v="cur" aria-pressed="${!on}"><b>Ficha atual</b><small>${esc(r.protocol || 'Em uso pelo aluno')}</small></button>
+    ${r.next ? `<button type="button" data-act="nx-mode" data-v="next" aria-pressed="${on}"><b>Próxima ficha</b><small>Entra em ${esc(brISO(r.next.start))}</small></button>`
+      : `<button type="button" class="nxnew" data-act="nx-new">${ICON_CAL}<span><b>Agendar próxima ficha</b><small>Troca sozinha na data que você escolher</small></span></button>`}</div>`;
+  if (!on) return seg;
+  return seg + `<section class="card nxcard" aria-label="Próxima ficha">
+    <p class="nxwarn">${ICON_CAL}<span>Você está editando a <b>próxima ficha</b>. ${esc(r.name.split(' ')[0])} continua com a atual até a data de início.</span></p>
+    <div class="nxgrid"><label>Nome do protocolo<input id="nx-name" data-nx="name" value="${esc(r.next.name || '')}" autocomplete="off"></label>
+      <label>Começa em<input id="nx-start" type="date" data-nx="start" min="${addDaysISO(1)}" value="${esc(r.next.start || '')}"></label></div>
+    <p class="small muted">No dia ${esc(brISO(r.next.start))}, “${esc(r.protocol || 'a ficha atual')}” fica guardada nos protocolos anteriores (dá para comparar na aba Volume) e esta entra no lugar.</p>
+    <div class="row nxacts"><button type="button" class="btn sm ghost" data-act="nx-now">Ativar agora</button><button type="button" class="linkbtn" data-act="nx-del">Cancelar agendamento</button></div></section>`;
+}
+function newProtoMsg(st){
+  if (!st || !st.protoStart) return ''; const d0 = new Date(st.protoStart + 'T12:00:00'), dd = Math.floor((Date.now() - d0) / 864e5);
+  if (dd < 0 || dd > 3) return ''; let off = false; try { off = localStorage.getItem('jau-np-' + st.protoStart) === '1'; } catch(e){}
+  if (off) return '';
+  return `<section class="card npmsg"><span class="asmic">${ICON_CAL}</span><div><p class="eyebrow">Ficha nova</p><h3>${esc(st.protocol || 'Treino novo')}</h3><p class="small muted">Seu personal preparou um treino novo, que começou em ${esc(brISO(st.protoStart))}. A ficha anterior fica guardada no histórico.</p></div><button type="button" class="linkbtn" data-act="np-ok" data-v="${esc(st.protoStart)}" aria-label="Fechar aviso">Entendi</button></section>`;
+}
 
 /* ---------- importar ficha em PDF ---------- */
 let impFile = null, impCtl = null, pdfjsP = null;
@@ -3512,9 +3567,9 @@ function studentView(){
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + asmPrompt(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
-  const minip = preview + autoBanner(st) + asmPrompt(st);
+  const minip = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st);
   if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
@@ -3650,7 +3705,7 @@ function trainerView(){
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}" data-act="p-prof" data-v="${s.id}">
-      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3><button type="button" class="stuname" data-act="p-prof" data-v="${s.id}">${esc(s.name)}</button></h3>${dueChip(s)}</div>${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
+      <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3><button type="button" class="stuname" data-act="p-prof" data-v="${s.id}">${esc(s.name)}</button></h3>${dueChip(s)}</div>${nextChip(s)}${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
       ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
@@ -3674,6 +3729,7 @@ function editView(){
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Editar ficha</p><h2>${esc(s.name)}</h2></div><div class="shacts"><span class="muted small">Salvo automaticamente</span><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div></div>
+    ${nextBar(s)}
     <div class="edlay ${apCol() ? 'apcol' : ''}"><aside class="edside" aria-label="Dados e volume do aluno">
     <button type="button" class="aprail" data-act="ap-col" aria-label="Abrir o painel lateral">${ICON_SIDE}<span>Abrir painel</span></button><button type="button" class="apcolbtn" data-act="ap-col">Recolher painel <span aria-hidden="true">›</span></button>
     ${apoioHTML(s)}
@@ -3864,7 +3920,7 @@ function methodsView(){
 function methodUsage(id){ let n = 0; db.students.forEach(s => Object.values(s.days).forEach(d => d.ex.forEach(e => { if (e.method === id) n++; }))); return n; }
 
 /* ---------- render ---------- */
-function render(){ render0(); polishAfter(); try { asmTick(); } catch(e){} try { syncBadge(); } catch(e){} }
+function render(){ try { nextTick(); } catch(e){} render0(); polishAfter(); try { asmTick(); } catch(e){} try { syncBadge(); } catch(e){} }
 function render0(){ autoFinish();
   if (AUTH.screen !== 'app'){ document.body.classList.remove('pm'); app.innerHTML = authView(); return; }
   document.body.classList.toggle('pm', state.mode !== 'aluno');
@@ -3918,6 +3974,12 @@ function newLibItem(name){ const l = {id: 'c-' + uid(), name, primary: [], secon
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, v = b.dataset.v;
+  if (act === 'nx-mode'){ state.edNext = v === 'next'; state.picker = null; render(); return; }
+  if (act === 'nx-new'){ const r = stu0(); r.next = {name: nextProto(r.protocol || 'Protocolo 0'), start: addDaysISO(28), days: cloneDays(r.days), created: new Date().toISOString()}; state.edNext = true; save(); render(); toast('Próxima ficha criada a partir da atual. Ajuste os treinos e a data de início.'); return; }
+  if (act === 'nx-now'){ const r = stu0(); if (!r.next) return; if (!arm(b, 'Toque de novo para trocar agora', 'Ativar agora')) return; r.next.start = localISO(); applyNext(r); state.edNext = false; save(); render(); toast('Ficha nova ativada. A anterior ficou guardada nos protocolos.'); return; }
+  if (act === 'nx-del'){ const r = stu0(); if (!r.next) return; if (!arm(b, 'Toque de novo para apagar a próxima ficha', 'Cancelar agendamento')) return; delete r.next; state.edNext = false; save(); render(); toast('Agendamento cancelado.'); return; }
+  if (act === 'np-ok'){ try { localStorage.setItem('jau-np-' + v, '1'); } catch(e){} render(); return; }
+  if (act === 'p-back' || act === 'p-edit') state.edNext = false;
   if (act === 'p-prof'){ const t = e.target.closest('a,button,input,select,textarea,label,summary,details'); if (t && t !== b) return; state.sid = v; state.pview = 'prof'; render(); top(); return; }
   if (act === 'p-anam'){ state.sid = v; state.pview = 'track'; state.ptab = 'anam'; render(); top(); return; }
   if (act === 'ap-col'){ state.apCol = !apCol(); try { localStorage.setItem('jau-apcol', state.apCol ? '1' : '0'); } catch(e){} render(); return; }
@@ -4214,7 +4276,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.apsrc){ state.apoioSrc = e.target.value; render(); return; }
   if (e.target.dataset && e.target.dataset.anp && e.target.files && e.target.files[0]){ const k = e.target.dataset.anp, f = e.target.files[0]; const big = asmCloud(); shrink(f, big ? 1440 : 560, big ? .82 : .7).then(p => { ANF.photos[k] = p; ANF.err = ''; render(); }).catch(() => toast('Não consegui abrir essa foto. Tente outra.')); return; }
-  if (e.target.id === 'f-protocol'){ const s = stu(), B = state.editBase, nv = e.target.value.trim();
+  if (e.target.id === 'f-protocol'){ if (state.edNext) return; const s = stu(), B = state.editBase, nv = e.target.value.trim();
     if (B && B.sid === s.id && B.name && nv && nv !== B.name){ protoSave(s, B.name, B.days); state.editBase = {sid: s.id, name: nv, days: JSON.parse(JSON.stringify(s.days))}; save(); toast('"' + B.name + '" guardado como versão anterior. Dá para comparar na aba Volume.'); }
     return; }
   if (e.target.id === 'f-due' || e.target.id === 'f-plan' || e.target.id === 'f-anam'){ render(); return; }
@@ -4277,6 +4339,7 @@ document.addEventListener('input', e => {
   if (t.dataset.imp && state.imp){ state.imp.data[t.dataset.imp] = t.value; return; }
   if (t.dataset.impday && state.imp){ state.imp.data.dias[t.dataset.impday].titulo = t.value; return; }
   if (t.dataset.setwa){ const n = t.value.replace(/\D/g, ''); db.settings = db.settings || {}; db.settings.wa = n ? (n.length <= 11 ? '55' + n : n) : ''; save(); return; }
+  if (t.dataset.nx){ const r = stu0(); if (!r.next) return; if (t.dataset.nx === 'start'){ if (!t.value) return; if (t.value <= localISO()){ toast('Escolha uma data a partir de amanhã. Para trocar hoje, use Ativar agora.'); t.value = r.next.start; return; } r.next.start = t.value; } else r.next.name = t.value; save(); return; }
   if (t.dataset.sf){ stu()[t.dataset.sf] = t.dataset.sf === 'email' ? t.value.trim().toLowerCase() : t.value; save(); return; }
   if (t.dataset.dt){ stu().days[state.editDay].title = t.value; save(); return; }
   if (t.dataset.cd){ const d0 = stu().days[state.editDay]; if (d0.cardio && d0.cardio[+t.dataset.i]){ d0.cardio[+t.dataset.i][t.dataset.cd] = t.value; save(); } return; }

@@ -1507,3 +1507,29 @@ article.stu[data-act="p-prof"]{cursor:pointer;transition:border-color .2s,box-sh
 
 /* --- notificações: motivo do erro --- */
 .nferr{margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));color:var(--ink);overflow-wrap:anywhere}
+
+/* --- próxima ficha agendada --- */
+/* ---------- próxima ficha agendada ---------- */
+.nxseg{display:flex;gap:6px;padding:5px;border-radius:16px;background:var(--sunk);border:1px solid var(--line);margin:0 0 14px;overflow-x:auto}
+.nxseg button{flex:1;display:grid;gap:1px;justify-items:start;text-align:left;min-height:52px;padding:8px 14px;border:0;border-radius:12px;background:transparent;color:var(--muted);font:inherit;font-family:inherit;cursor:pointer;min-width:150px}
+.nxseg button b{font-size:.9rem;color:var(--ink)}
+.nxseg button small{font-size:.74rem}
+.nxseg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.12);color:var(--ink)}
+.nxseg button[data-v="next"][aria-pressed="true"]{background:var(--grad);color:#fff}
+.nxseg button[data-v="next"][aria-pressed="true"] b,.nxseg button[data-v="next"][aria-pressed="true"] small{color:#fff}
+.nxseg .nxnew{display:flex;align-items:center;gap:10px;justify-items:unset;border:1.5px dashed color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--ink)}
+.nxseg .nxnew span{display:grid;gap:1px}
+.nxseg svg,.nxwarn svg,.nxchip svg{width:18px;height:18px;flex:none;color:var(--accent)}
+.nxcard{display:grid;gap:12px;margin-bottom:14px;border-color:color-mix(in srgb,var(--accent) 50%,var(--line))!important}
+.nxwarn{display:flex;gap:10px;align-items:flex-start;margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.nxgrid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:640px){.nxgrid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}}
+.nxgrid label{display:grid;gap:6px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.nxgrid input{width:100%;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--fieldbg,var(--bg));border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px}
+.nxacts{align-items:center;gap:14px}
+.nxchip{display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.nxchip svg{width:14px;height:14px}
+.npmsg{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;border-color:color-mix(in srgb,var(--accent) 45%,var(--line))!important}
+.npmsg h3{margin:2px 0 4px}
+.npmsg .linkbtn{grid-column:1 / -1;justify-self:end}
+@media (min-width:700px){.npmsg{grid-template-columns:auto 1fr auto}.npmsg .linkbtn{grid-column:auto}}
