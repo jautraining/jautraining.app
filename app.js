@@ -3492,6 +3492,16 @@ const TABI = {
   evolucao: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19h16M6 15l4-4 3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   perfil: '<svg class="ti" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
 };
+/* ---------- ajustes e pendências (UX bloco 1) ---------- */
+const ICON_GEAR = '<svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+function setBtn(){ return `<button type="button" class="setbtn" data-act="psec" data-v="ajustes" aria-pressed="${state.psec === 'ajustes'}" aria-label="Ajustes">${ICON_GEAR}<span>Ajustes</span></button>`; }
+function pendBar(){
+  const c = f => { try { return f() || 0; } catch(e){ return 0; } };
+  const an = c(() => asmOrphans().length), at = c(() => db.students.filter(s => alertFor(s)).length),
+    fb = c(() => db.students.filter(s => { const f = fbState(s); return f && f.due; }).length), rn = c(() => db.students.filter(alRenew).length);
+  const items = [[an, an === 1 ? 'anamnese nova' : 'anamneses novas', 'hi'], [at, 'precisam de atenção', 'hi'], [fb, fb === 1 ? 'feedback' : 'feedbacks', ''], [rn, 'renovação', '']].filter(x => x[0]);
+  return `<button type="button" class="pendbar" data-act="al-pend" aria-expanded="${!!state.pendOpen}"><span class="pendt">Pendências</span><span class="pendc">${items.length ? items.map(([n, l, k]) => `<span class="pnd ${k}"><b>${n}</b> ${l}</span>`).join('') : '<span class="pnd ok">Tudo em dia</span>'}</span><span class="pendchev" aria-hidden="true"></span></button>`;
+}
 function header(){
   const tabs = state.mode === 'aluno'
     ? [['inicio','Início'], ['treino','Treino'], ['evolucao','Evolução'], ['perfil','Perfil']].map(([k, l]) => `<button type="button" data-act="stab" data-v="${k}" aria-pressed="${state.stab === k}">${TABI[k]}<span>${l}</span></button>`).join('')
@@ -3501,7 +3511,7 @@ function header(){
     ${isP() ? `<div class="modes" role="group" aria-label="Visão">
       <button type="button" data-act="mode" data-v="aluno" aria-pressed="${state.mode === 'aluno'}">Aluno</button>
       <button type="button" data-act="mode" data-v="personal" aria-pressed="${state.mode === 'personal'}">Personal</button>
-    </div>` : ''}</div>
+    </div>` : ''}${state.mode !== 'aluno' ? setBtn() : ''}</div>
     <nav class="tabs">${tabs}</nav></div></header>`;
 }
 
@@ -3689,6 +3699,14 @@ function guide(){
 /* ---------- personal: alunos ---------- */
 function trainerView(){
   if (ANF.open && ANF.manual) return `<main class="wrap">${anamForm()}</main>`;
+  if (state.psec === 'ajustes') return `<main class="wrap v-narrow v-ajustes">
+    <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Ajustes</h2></div></div>
+    ${bkHTML()}
+    ${notifHTML()}
+    ${themeHTML()}
+    <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
+    ${accountHTML()}
+  </main>`;
   if (state.psec === 'painel' && state.pview === 'list') return panelView();
   if (state.psec === 'lib') return libraryView();
   if (state.psec === 'feed') return feedView();
@@ -3699,33 +3717,27 @@ function trainerView(){
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    <div class="alay"><div class="amain">${asmNewHTML()}${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist">
-    <div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
+    <div class="alay ${state.pendOpen ? 'pendopen' : ''}"><div class="atop"><div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off" value="${esc((state.newPre || {}).name || '')}">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off" value="${esc((state.newPre || {}).email || '')}">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
       <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
-    ${alFilLine()}<div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
+    ${pendBar()}${alFilLine()}</div><div class="amain">${asmNewHTML()}${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist"><div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}" data-act="p-prof" data-v="${s.id}">
       <div><p class="eyebrow">${esc(s.protocol || 'Sem protocolo')}${s.plan ? ' · ' + planLbl(s) : ''}</p><div class="namerow"><h3><button type="button" class="stuname" data-act="p-prof" data-v="${s.id}">${esc(s.name)}</button></h3>${dueChip(s)}</div>${nextChip(s)}${asmChip(s)}${anamOk(s) ? '' : '<span class="abadge anam">Anamnese pendente</span>'}<div class="accrow">${accessHTML(s)}</div>${(() => { const a = alertFor(s); return a ? `<span class="abadge ${a.lvl}">${esc(a.t)}</span>` : ''; })()}
       <p class="muted small" style="margin-top:4px">${s.last ? 'Último treino: ' + esc(dateBR(s.last)) : 'Ainda não registrou nenhum treino'} · ${s.logs.length} ${s.logs.length === 1 ? 'treino' : 'treinos'}</p>
-      ${(() => { const f = freqStats(s); return `<p class="small" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
+      ${(() => { const f = freqStats(s); return `<p class="small stufreq" style="margin-top:4px"><b>${f.week}</b> de ${f.plan} treinos nesta semana · <b>${f.month}</b> no mês · sequência de ${f.streak} ${f.streak === 1 ? 'semana' : 'semanas'}</p>`; })()}
       ${s.privNotes ? `<p class="pnprev">Nota: ${esc(s.privNotes.length > 90 ? s.privNotes.slice(0, 90) + '…' : s.privNotes)}</p>` : ''}
       ${nc ? `<p class="alert" style="margin-top:4px">${nc} ${nc === 1 ? 'observação' : 'observações'} no último treino</p>` : ''}</div>
       ${splitChips(s)}
       <div class="row"><button class="btn sm" type="button" data-act="p-edit" data-v="${s.id}">Editar ficha</button>
         <button class="btn sm quiet" type="button" data-act="p-track" data-v="${s.id}">Acompanhar</button>
-        <button class="btn sm ghost" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div>
+        <button class="btn sm ghost stux" type="button" data-act="p-open" data-v="${s.id}">Ver como aluno</button><button class="btn sm ghost pdfb stux" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button></div>
     </article>`;}).join('')}</div>
     <p class="empty" id="stu-none" hidden>Nenhum aluno com esse nome.</p></section></div>
-    ${bkHTML()}
-    ${notifHTML()}
-    ${themeHTML()}
-    <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
-    ${accountHTML()}
   </main>`;
 }
 function editView(){
@@ -4019,6 +4031,7 @@ document.addEventListener('click', e => {
     if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
     else { st.logs = st.logs || []; st.logs.push(Object.assign({id: uid(), date: now, day: state.day, title: d.title || 'Cardio', protocol: st.protocol, entries: [], cardioOnly: 1}, cc ? {cardioCmt: cc} : {})); st.last = now; toast(cc ? 'Cardio concluído. Sua observação foi para o personal.' : 'Cardio concluído'); if (navigator.vibrate) try { navigator.vibrate(18); } catch(_){} }
     delete db.drafts[k]; if (db.draftMeta) delete db.draftMeta[k]; state.cdEdit = null; state.cdOpen = null; save(); render(); return; }
+  if (act === 'al-pend'){ state.pendOpen = !state.pendOpen; render(); return; }
   if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
   else if (act === 'stab'){ state.done = null; state.editLog = null; if (state.stab !== v) ANIM = 'tab'; state.stab = v; render(); top(); }
   else if (act === 'psec'){ if (state.psec !== v) ANIM = 'tab'; state.psec = v; state.pview = 'list'; state.picker = null; render(); top(); }

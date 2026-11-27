@@ -1547,3 +1547,65 @@ article.stu[data-act="p-prof"]{cursor:pointer;transition:border-color .2s,box-sh
   body.pm .band .tabs button[aria-pressed="true"] .tbadge{background:#fff;color:#8A0000}
   body.pm main.wrap,body.pm main{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))!important}
 }
+
+/* ===== UX bloco 1: Alunos, Ajustes, topo compacto, toque ===== */
+.setbtn{display:none;border:0;background:none;color:inherit;cursor:pointer}
+.setbtn .gear{width:20px;height:20px;display:block;flex:none}
+body.pm .setbtn{display:flex;align-items:center;justify-content:center}
+.v-ajustes{display:flex;flex-direction:column;gap:16px}
+.v-ajustes > .card{margin:0}
+.atop{grid-area:t;display:grid;gap:10px;align-content:start;min-width:0}
+.alay{grid-template-areas:"t" "m" "l"}
+.pendbar{display:none;width:100%;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:10px 14px;min-height:52px;font:inherit;cursor:pointer}
+.pendt{font-weight:800;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);flex:none}
+.pendc{grid-column:1 / -1;grid-row:2;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;min-width:0;font-size:.8rem;text-align:left}
+.pnd{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--sunk,rgba(0,0,0,.05))}
+.pnd b{font-weight:800}
+.pnd.hi b{color:var(--accent)}
+.pnd.ok{color:var(--muted)}
+.pendchev{grid-column:2;grid-row:1;flex:none;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-3px);opacity:.6;transition:transform .2s}
+.pendbar[aria-expanded="true"] .pendchev{transform:rotate(225deg) translateY(-2px)}
+@media (min-width:1100px){
+  .alay{grid-template-areas:"t m" "l m";grid-template-rows:auto 1fr}
+  .amain{grid-row:1 / span 2}
+  body.pm .band .setbtn{order:4;margin-top:auto;width:100%;justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:14px;font-size:.95rem;font-weight:700;color:#fff;opacity:.82}
+  body.pm .band .setbtn:hover{opacity:1;background:rgba(255,255,255,.07)}
+  body.pm .band .setbtn[aria-pressed="true"]{opacity:1;background:var(--grad,linear-gradient(135deg,#F0463C,#B3100B))}
+  body.pm .band .modes{order:5;margin-top:4px!important}
+}
+@media (min-width:1100px) and (prefers-color-scheme:light){:root:not([data-theme="dark"]) body.pm .band .setbtn:not([aria-pressed="true"]){color:#2A1414}:root:not([data-theme="dark"]) body.pm .band .setbtn:not([aria-pressed="true"]) .gear{color:#B3100B}}
+@media (min-width:1100px){:root[data-theme="light"] body.pm .band .setbtn:not([aria-pressed="true"]){color:#2A1414}:root[data-theme="light"] body.pm .band .setbtn:not([aria-pressed="true"]) .gear{color:#B3100B}}
+@media (max-width:1099px){
+  /* topo compacto */
+  body.pm .band .wrap{display:block!important;padding:10px 16px 6px!important}
+  body.pm .band-top{display:flex!important;flex-wrap:nowrap!important;align-items:center;gap:8px}
+  body.pm .band .logo{height:50px!important;width:auto!important;max-width:none!important;margin:0!important;flex:none}
+  body.pm .band .draftbadge{display:none!important}
+  body.pm .band .modes{margin:0 0 0 auto!important;flex:none}
+  body.pm .band .modes button{min-height:40px;padding:0 13px}
+  body.pm .band .setbtn{width:44px;height:44px;border-radius:50%;flex:none;color:#fff;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  body.pm .band .setbtn[aria-pressed="true"]{background:#fff;color:#8A0000}
+  body.pm .band .setbtn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  body.pm main.wrap{padding-top:14px}
+  /* aba Alunos: busca primeiro, pendências recolhidas, cartão compacto */
+  .pendbar{display:grid}
+  .alay:not(.pendopen) .amain{display:none}
+  .alay:not(.pendopen){grid-template-areas:"t" "l"}
+  body.pm .stuacts{flex-wrap:wrap!important}
+  body.pm .stuacts .search{flex:1 1 100%!important;max-width:none!important;min-height:48px}
+  body.pm .stuacts .btn{flex:1 1 0!important;min-height:44px}
+  .alist .stugrid{gap:10px!important}
+  .alist .stu{padding:14px;gap:8px}
+  .alist .stu .split,.alist .stu .stufreq,.alist .stu .pnprev,.alist .stu .stux{display:none!important}
+  .alist .stu .row{flex-wrap:nowrap}
+  .alist .stu .row .btn{flex:1 1 0;min-height:44px}
+  /* toque: alvos maiores */
+  body.pm .back{min-height:44px;display:inline-flex;align-items:center;padding-right:14px}
+  body.pm .pchip{min-height:40px;padding:6px 12px}
+  body.pm .pfil button{min-height:40px}
+  body.pm .seg button[data-act="ptab"]{min-height:44px}
+  body.pm .attn-row .acts .icon{min-height:40px}
+  body.pm [data-act="feed-seen"],body.pm [data-act="feed-allread"],body.pm [data-act="ask-photos"]{min-height:44px;padding:0 8px}
+}
+@media (max-width:1099px) and (prefers-color-scheme:light){:root:not([data-theme="dark"]) body.pm{--pagebg:radial-gradient(200% 190px at 50% -45px,#A80C12 0%,#C8141B 38%,#DA4B49 55%,rgba(236,150,146,.75) 72%,rgba(244,239,238,0) 100%),#F4EFEE}}
+@media (max-width:1099px){:root[data-theme="light"] body.pm{--pagebg:radial-gradient(200% 190px at 50% -45px,#A80C12 0%,#C8141B 38%,#DA4B49 55%,rgba(236,150,146,.75) 72%,rgba(244,239,238,0) 100%),#F4EFEE}}
