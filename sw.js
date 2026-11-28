@@ -1,7 +1,7 @@
 // Service worker: o app abre mesmo sem sinal na academia.
 // Arquivos do app: tenta a rede primeiro (pega atualizações) e usa a cópia guardada se estiver offline.
 // Fontes e imagens: usa a cópia guardada primeiro. O banco (Supabase) nunca passa pelo cache.
-const CACHE = 'jau-v9';
+const CACHE = 'jau-v13';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest',
   'img/logo.webp', 'img/logo-hi.webp', 'img/cheetah.webp', 'img/icon-192.png', 'img/apple-touch-icon.png', 'img/favicon-32.png',
   'fonts/montserrat-latin-400-normal.woff2', 'fonts/montserrat-latin-500-normal.woff2', 'fonts/montserrat-latin-600-normal.woff2', 'fonts/montserrat-latin-700-normal.woff2', 'fonts/montserrat-latin-800-normal.woff2', 'fonts/playfair-display-latin-600-italic.woff2', 'fonts/playfair-display-latin-700-italic.woff2'];
