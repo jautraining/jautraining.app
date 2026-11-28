@@ -3650,9 +3650,9 @@ const ICON_ALERT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 function planCard(st){
   const p = planState(st); if (!p || p === 'ok') return '';
   const n = Math.round((new Date(st.planDue + 'T12:00') - new Date(isoToday() + 'T12:00')) / 864e5);
-  if (p === 'breve' && n > 3) return '';
+  if (p === 'breve' && n > 2) return '';
   const k = p === 'vencido' ? 'vencido' : p === 'hoje' || n === 1 ? 'hoje' : 'breve';
-  const t = p === 'vencido' ? 'Seu plano venceu' : p === 'hoje' ? 'Seu plano vence hoje' : n === 1 ? 'Seu plano vence amanhã' : `Seu plano vence em ${n} dias`;
+  const t = p === 'vencido' ? 'Seu plano está vencido' : p === 'hoje' ? 'Seu plano venceu hoje' : n === 1 ? 'Seu plano vence amanhã' : `Seu plano vence em ${n} dias`;
   const sub = p === 'vencido' ? `Venceu em ${dueBR(st.planDue)}. Renove com seu personal para continuar recebendo treinos novos e ajustes.` : `Vencimento: ${dueBR(st.planDue)}. Renove para não ficar sem acompanhamento.`;
   return `<section class="plancard ${k}" role="status"><span class="plic">${k === 'breve' ? ICON_CAL : ICON_ALERT}</span><div class="pltx"><b>${t}</b><small>${esc(sub)}</small></div>${waNum() ? `<a class="btn sm plbtn" href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Renovar pelo WhatsApp</a>` : ''}</section>`;
 }
