@@ -1676,3 +1676,8 @@ body.pm .setbtn{display:flex;align-items:center;justify-content:center}
 .privd > summary small{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .privd[open] > summary small{display:none}
 .privd .privn{margin:0 0 14px}
+
+/* anamnese: importar PDF do Forms */
+.anpdf{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0 12px}
+.anpdf .btn{cursor:pointer;min-height:44px;display:inline-flex;align-items:center}
+.anpdf + .small{margin-top:4px}

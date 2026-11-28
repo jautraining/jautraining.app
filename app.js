@@ -2515,6 +2515,66 @@ function anfPaste(txt){
     ANF.ans[k] = v; n++; });
   return n;
 }
+/* ---------- anamnese: importar o PDF da resposta do Google Forms ---------- */
+async function anfPdfPairs(file){
+  const lib = await loadPdfJs();
+  const doc = await lib.getDocument({data: new Uint8Array(await file.arrayBuffer())}).promise;
+  const out = []; let cur = null, qx = null, prevQ = false;
+  for (let pn = 1; pn <= doc.numPages; pn++){
+    const page = await doc.getPage(pn), vp = page.getViewport({scale: 2});
+    const cv = document.createElement('canvas'); cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+    const ctx = cv.getContext('2d', {willReadFrequently: true});
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+    const tc = await page.getTextContent(), rows = [];
+    tc.items.forEach(it => {
+      if (!it.str) return;
+      const t = it.transform, x = t[4], y = t[5], size = Math.hypot(t[2], t[3]) || Math.abs(t[3]);
+      let font = ''; try { const f = page.commonObjs.get(it.fontName); font = (f && (f.name || '')) || ''; } catch(e){}
+      let r = rows.find(r => Math.abs(r.y - y) < 2.5);
+      if (!r){ r = {y, x, size: 0, bold: false, parts: []}; rows.push(r); }
+      r.parts.push({x, w: it.width || 0, s: it.str, size, bold: /bold/i.test(font)}); r.x = Math.min(r.x, x);
+    });
+    rows.sort((a, b) => b.y - a.y);
+    const red = (px, py) => { const p = vp.convertToViewportPoint(px, py); const d = ctx.getImageData(Math.round(p[0]), Math.round(p[1]), 1, 1).data; return d[0] > 130 && d[0] - d[1] > 60 && d[0] - d[2] > 60; };
+    for (const r of rows){
+      r.parts.sort((a, b) => a.x - b.x);
+      const p0 = r.parts.find(p => p.s.trim()); if (!p0) continue; r.size = p0.size; r.bold = p0.bold;
+      let txt = '', end = null;
+      r.parts.forEach(p => { if (end !== null && p.x - end > r.size * 0.15 && !/\s$/.test(txt) && !/^\s/.test(p.s)) txt += ' '; txt += p.s; end = p.x + p.w; });
+      txt = txt.replace(/\s+/g, ' ').trim();
+      if (!txt || r.size < 10.5 || r.size >= 20 || /^Formulários$|não foi criado nem aprovado pelo Google/i.test(txt)) continue;
+      const isQ = r.size >= 12.3;
+      if (isQ){
+        if (prevQ && cur) cur.q += ' ' + txt; else { cur = {q: txt, a: [], opts: []}; out.push(cur); qx = r.x; }
+        prevQ = true; continue;
+      }
+      prevQ = false; if (!cur) continue;
+      if (r.x > qx + 12){
+        const cx = r.x - 18, cy = r.y + r.size * 0.4, k = 4.5;
+        const on = [[0, 0], [k, k], [-k, k], [k, -k], [-k, -k], [k, 0], [-k, 0], [0, k], [0, -k]].some(([dx, dy]) => red(cx + dx, cy + dy));
+        cur.opts.push({t: txt, on});
+      } else cur.a.push(txt);
+    }
+  }
+  return out.map(p => {
+    let a = p.opts.length ? p.opts.filter(o => o.on).map(o => o.t).join(', ') : p.a.join(' ');
+    if (/^\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4}$/.test(a)) a = a.replace(/\s+/g, '');
+    return [p.q.replace(/\s*\*\s*$/, '').trim(), a.trim()];
+  });
+}
+async function anfPdf(file){
+  if (!file) return;
+  ANF.pasteMsg = 'Lendo o PDF…'; render();
+  try {
+    const pairs = await anfPdfPairs(file);
+    const cell = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const tsv = ['Carimbo de data/hora', ...pairs.map(p => p[0])].map(cell).join('\t') + '\n' + ['', ...pairs.map(p => p[1])].map(cell).join('\t');
+    const n = pairs.length ? anfPaste(tsv) : 0;
+    ANF.pasteMsg = n ? n + ' respostas preenchidas a partir do PDF. Confira etapa por etapa e salve na revisão.' : 'Não reconheci as respostas neste PDF. Use o PDF da resposta do aluno baixado do Forms, ou cole a linha da planilha.';
+  } catch(e){ ANF.pasteMsg = 'Não consegui abrir este PDF. Confira a internet e tente de novo, ou cole a linha da planilha.'; }
+  render();
+}
+document.addEventListener('change', e => { if (e.target && e.target.id === 'anf-pdf') anfPdf(e.target.files && e.target.files[0]); });
 const anfVisible = q => !q.show || q.show(ANF.ans);
 function anfMissing(step){
   if (ANF.manual) return [];
@@ -2551,7 +2611,7 @@ function anamForm(){
   if (ANF.sent) return `<section class="card anfcard anfdone"><span class="anok">${ICON_CHECK}</span><p class="eyebrow">${ANF.kind === 'fotos' ? 'Fotos enviadas' : 'Anamnese enviada'}</p><h2 class="serif">Tudo certo!</h2>
     <p>${ANF.kind === 'fotos' ? 'O seu personal já recebeu as fotos e vai usar na sua avaliação.' : 'O Marcelo já recebeu as suas respostas e vai usar para montar o seu treino.'}</p><button class="btn block" type="button" data-act="anf-close">Voltar ao app</button></section>`;
   const pct = Math.round(100 * (ANF.step + 1) / steps.length);
-  const intro = mst ? (ANF.step === 0 ? `<div class="anintro"><p><b>${ANF.edit ? 'Corrigindo' : 'Preenchendo'} a anamnese de ${esc(mst.name)}.</b> Nenhuma pergunta é obrigatória aqui. O aluno não recebe nada.</p>${ANF.edit ? '' : `<details class="anpaste" ${ANF.pasteMsg ? 'open' : ''}><summary>Colar respostas do Google Forms</summary><p class="small muted">Na planilha de respostas do Forms, selecione a linha do aluno (de preferência junto com a linha de títulos), copie e cole aqui. Confira tudo na revisão antes de salvar.</p><textarea id="anf-paste" rows="3" placeholder="Cole aqui a linha copiada da planilha"></textarea><button type="button" class="btn sm" data-act="anf-paste">Preencher com o que colei</button>${ANF.pasteMsg ? `<p class="small">${esc(ANF.pasteMsg)}</p>` : ''}</details>`}</div>` : '') : ANF.step === 0 && ANF.kind === 'anamnese' ? `<div class="anintro"><p><b>Vamos dar o primeiro passo para esse novo movimento!</b> Saber da sua rotina e das suas particularidades me ajuda a montar o treino certo para você. Responda de forma bem completa e específica.</p><p class="small muted">Supervisionado por Marcelo Júnior · CREF RJ-056749. As respostas ficam guardadas só para o seu personal.</p></div>` : '';
+  const intro = mst ? (ANF.step === 0 ? `<div class="anintro"><p><b>${ANF.edit ? 'Corrigindo' : 'Preenchendo'} a anamnese de ${esc(mst.name)}.</b> Nenhuma pergunta é obrigatória aqui. O aluno não recebe nada.</p>${ANF.edit ? '' : `<details class="anpaste" ${ANF.pasteMsg ? 'open' : ''}><summary>Importar do Google Forms (PDF ou planilha)</summary><div class="anpdf"><label class="btn sm">Escolher o PDF da resposta<input type="file" id="anf-pdf" accept="application/pdf,.pdf" hidden></label><span class="small muted">O PDF com a resposta do aluno, baixado do Forms.</span></div><p class="small muted">Ou, pela planilha: na planilha de respostas do Forms, selecione a linha do aluno (de preferência junto com a linha de títulos), copie e cole aqui. Confira tudo na revisão antes de salvar.</p><textarea id="anf-paste" rows="3" placeholder="Cole aqui a linha copiada da planilha"></textarea><button type="button" class="btn sm" data-act="anf-paste">Preencher com o que colei</button>${ANF.pasteMsg ? `<p class="small">${esc(ANF.pasteMsg)}</p>` : ''}</details>`}</div>` : '') : ANF.step === 0 && ANF.kind === 'anamnese' ? `<div class="anintro"><p><b>Vamos dar o primeiro passo para esse novo movimento!</b> Saber da sua rotina e das suas particularidades me ajuda a montar o treino certo para você. Responda de forma bem completa e específica.</p><p class="small muted">Supervisionado por Marcelo Júnior · CREF RJ-056749. As respostas ficam guardadas só para o seu personal.</p></div>` : '';
   const body = s.review ? anfReview() : (s.photos ? (s.q ? s.q.map(anfField).join('') : '') + anfPhotos() : s.q.filter(anfVisible).map(anfField).join(''));
   return `<section class="card anfcard" aria-labelledby="anf-h">
     <div class="anftop"><button type="button" class="linkbtn" data-act="${ANF.step ? 'anf-back' : 'anf-close'}">← ${ANF.step ? 'Voltar' : 'Sair'}</button><span class="small muted">Etapa ${ANF.step + 1} de ${steps.length}</span></div>
