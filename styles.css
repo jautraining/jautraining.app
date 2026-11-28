@@ -1681,3 +1681,37 @@ body.pm .setbtn{display:flex;align-items:center;justify-content:center}
 .anpdf{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0 12px}
 .anpdf .btn{cursor:pointer;min-height:44px;display:inline-flex;align-items:center}
 .anpdf + .small{margin-top:4px}
+
+/* aluno: aviso do plano */
+.plancard{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px 14px;border-radius:20px;padding:16px 18px;margin:0 0 16px}
+.plancard .plic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.plancard .plic svg{width:22px;height:22px}
+.plancard .pltx{display:grid;gap:3px;min-width:0}
+.plancard .pltx b{font-size:1.05rem;line-height:1.25}
+.plancard .pltx small{font-size:.82rem;line-height:1.4;opacity:.9}
+.plancard .plbtn{grid-column:1 / -1;justify-content:center;min-height:44px;display:flex;align-items:center;text-decoration:none}
+.plancard.vencido{background:linear-gradient(135deg,#D0201E,#8A0000);color:#fff;box-shadow:0 12px 30px rgba(160,10,10,.35)}
+.plancard.vencido .plic{background:rgba(255,255,255,.18)}
+.plancard.vencido .plbtn{background:#fff!important;color:#8A0000!important;border:0}
+.plancard.hoje{background:var(--surface);color:var(--ink);border:2px solid var(--accent)}
+.plancard.hoje .plic{background:var(--accent);color:#fff}
+.plancard.hoje b{color:var(--accent)}
+.plancard.breve{background:var(--surface);color:var(--ink);border:1px solid #E2A400}
+.plancard.breve .plic{background:#FFF1C7;color:#8A5A00}
+@media (min-width:700px){.plancard{grid-template-columns:auto minmax(0,1fr) auto}.plancard .plbtn{grid-column:auto}}
+
+/* e-mail quando o aluno some */
+.fcard{display:grid;gap:12px}
+.fcard .fseg{max-width:320px}
+.fcard .fmsg{display:grid;gap:6px;font-weight:700;font-size:.9rem}
+.fcard .fmsg .hint{font-weight:400}
+.fcard textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:12px 14px;font:inherit;font-weight:400;font-size:.95rem;line-height:1.45;resize:vertical}
+.fcard .frow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.fcard .frow .btn{min-height:44px}
+.fcard .fnote{margin:0;padding:10px 12px;border-radius:12px;background:var(--soft)}
+.fcard .fsub{margin-top:4px}
+.flist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.flist li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:.88rem;padding:8px 0;border-top:1px solid var(--line)}
+.flist li span{color:var(--muted);font-size:.8rem}
+.nofalta{display:flex;align-items:center;gap:10px;font-size:.9rem;min-height:44px;cursor:pointer}
+.nofalta input{width:20px;height:20px;accent-color:var(--accent);flex:none}

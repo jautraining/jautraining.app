@@ -469,6 +469,7 @@ function snap(){
     if (db.settings && db.settings.libVer) m['set:libver'] = JSON.stringify(db.settings.libVer);
     if (db.settings && db.settings.volRange) m['set:volrange'] = JSON.stringify(db.settings.volRange);
     if (db.settings && db.settings.feedOpened) m['set:feedopen'] = JSON.stringify(db.settings.feedOpened);
+    if (db.settings && db.settings.faltaMail) m['set:faltamail'] = JSON.stringify(db.settings.faltaMail);
     Object.keys(db.seen || {}).forEach(k => { if (db.seen[k] && logIds.has(k)) m['seen:' + k] = '1'; });
   }
   return m;
@@ -668,6 +669,7 @@ async function pullFull(P){
 function applySettings(set){
   const wa = set.find(r => r.key === 'wa'), lv = set.find(r => r.key === 'libver'), vr = set.find(r => r.key === 'volrange'), fo = set.find(r => r.key === 'feedopen');
   db.settings = Object.assign({}, db.settings, {wa: wa && typeof wa.value === 'string' ? wa.value : '', libVer: lv && typeof lv.value === 'number' ? lv.value : 0}, vr && vr.value && typeof vr.value === 'object' ? {volRange: vr.value} : {}, fo && typeof fo.value === 'string' ? {feedOpened: fo.value} : {});
+  const fm = set.find(r => r.key === 'faltamail'); if (fm && fm.value && typeof fm.value === 'object') db.settings.faltaMail = fm.value;
 }
 /* No dia a dia: baixa só as linhas alteradas desde a última vez e confere se algo foi apagado. */
 async function pullDelta(P){
@@ -3563,6 +3565,44 @@ const TABI = {
 };
 /* ---------- ajustes e pendências (UX bloco 1) ---------- */
 const ICON_GEAR = '<svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+/* ---------- e-mail quando o aluno some (3 dias de treino seguidos) ---------- */
+const FALTA_DEF = 'Oi, {nome}! Senti sua falta nos treinos dos últimos dias. Aconteceu alguma coisa? Se a rotina apertou, me conta que a gente ajusta o treino para caber na sua semana. Bora voltar? 💪';
+const FALTA = {list: null, loading: false, msg: '', busy: false};
+function faltaCfg(){ return Object.assign({on: true, msg: FALTA_DEF}, (db.settings || {}).faltaMail || {}); }
+function faltaCloud(){ return typeof sb !== 'undefined' && !!sb; }
+function faltaLoad(){
+  if (!faltaCloud() || FALTA.loading || FALTA.list !== null) return;
+  FALTA.loading = true;
+  sb.from('falta_sent').select('student_id,missed,sent_at').order('sent_at', {ascending: false}).limit(5)
+    .then(r => { FALTA.list = r.error ? [] : (r.data || []); FALTA.loading = false; render(); }, () => { FALTA.list = []; FALTA.loading = false; });
+}
+function faltaHTML(){
+  if (faltaCloud() && !isP()) return '';
+  const c = faltaCfg(); faltaLoad();
+  const when = iso => { const d = new Date(iso); return d.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}); };
+  const list = (FALTA.list || []).map(x => { const s = db.students.find(y => y.id === x.student_id); return `<li><b>${esc(s ? s.name : 'Aluno removido')}</b><span>${x.missed ? x.missed + ' treinos sem aparecer · ' : ''}${esc(when(x.sent_at))}</span></li>`; }).join('');
+  return `<section class="card fcard"><p class="eyebrow">E-mail quando o aluno some</p>
+    <p class="small">Quando um aluno passa <b>3 dias de treino seguidos</b> sem treinar, ele recebe um e-mail seu. Os dias de descanso da ficha não contam. Vai uma vez só por sumiço, e só volta a valer depois que ele treinar de novo. Sai do seu Gmail, todo dia às 10h.</p>
+    <div class="seg fseg" role="group" aria-label="E-mail automático"><button type="button" data-act="falta-on" data-v="1" aria-pressed="${!!c.on}">Ligado</button><button type="button" data-act="falta-on" data-v="0" aria-pressed="${!c.on}">Desligado</button></div>
+    <label class="fmsg">Mensagem <span class="hint">{nome} vira o primeiro nome do aluno. Para um aluno não receber, marque isso nos dados dele, em Editar ficha.</span><textarea id="falta-msg" data-falta="1" rows="4">${esc(c.msg)}</textarea></label>
+    <div class="frow"><button type="button" class="btn sm ghost" data-act="falta-test" ${FALTA.busy ? 'disabled' : ''}>${FALTA.busy ? 'Enviando…' : 'Enviar um teste para mim'}</button>${c.msg !== FALTA_DEF ? '<button type="button" class="linkbtn small" data-act="falta-def">Voltar ao texto padrão</button>' : ''}</div>
+    ${FALTA.msg ? `<p class="small fnote">${esc(FALTA.msg)}</p>` : ''}
+    ${faltaCloud() ? `<p class="eyebrow fsub">Últimos e-mails enviados</p>${list ? `<ul class="flist">${list}</ul>` : `<p class="small muted">${FALTA.list === null ? 'Carregando…' : 'Nenhum ainda.'}</p>`}` : '<p class="small muted">No rascunho o envio é só simulado.</p>'}
+  </section>`;
+}
+async function faltaTest(){
+  FALTA.busy = true; FALTA.msg = ''; render();
+  if (!faltaCloud()){ await new Promise(r => setTimeout(r, 600)); FALTA.busy = false; FALTA.msg = 'Rascunho: no app de verdade, o teste chega no seu e-mail em alguns segundos.'; render(); return; }
+  try {
+    const cfg = window.JAU_CONFIG || {}, s = await sb.auth.getSession(), tok = s && s.data && s.data.session ? s.data.session.access_token : cfg.supabaseKey;
+    const r = await fetch(String(cfg.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/lembrete-falta', {method: 'POST', headers: {'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + tok}, body: JSON.stringify({action: 'test', msg: faltaCfg().msg})});
+    let d = null; try { d = await r.json(); } catch(_){}
+    FALTA.msg = r.status === 404 ? 'A função lembrete-falta ainda não foi criada no Supabase.' : d && d.sent ? 'Teste enviado para ' + d.to + '. Confira a caixa de entrada (e o spam).' : 'Não deu certo: ' + ((d && d.error) || 'erro ' + r.status) + '.';
+  } catch(e){ FALTA.msg = 'Não deu certo. Confira a internet e tente de novo.'; }
+  FALTA.busy = false; render();
+}
+document.addEventListener('input', e => { const t = e.target; if (!t || !t.dataset || !t.dataset.falta) return; db.settings = db.settings || {}; db.settings.faltaMail = Object.assign(faltaCfg(), {msg: t.value}); clearTimeout(window.__fmT); window.__fmT = setTimeout(save, 600); });
+document.addEventListener('change', e => { const t = e.target; if (!t || !t.dataset || !t.dataset.nofalta) return; const s = stu(); if (!s) return; s.noFaltaMail = t.checked; save(); toast(t.checked ? 'Este aluno não vai receber o e-mail de falta.' : 'E-mail de falta ligado para este aluno.'); });
 function setBtn(){ return `<button type="button" class="setbtn" data-act="psec" data-v="ajustes" aria-pressed="${state.psec === 'ajustes'}" aria-label="Ajustes">${ICON_GEAR}<span>Ajustes</span></button>`; }
 function pendBar(){
   const c = f => { try { return f() || 0; } catch(e){ return 0; } };
@@ -3604,6 +3644,17 @@ function dueChip(s){
   const p = planState(s); if (!p) return '';
   const txt = p === 'hoje' ? 'Vence hoje' : p === 'vencido' ? 'Venceu ' + dueBR(s.planDue) : 'Vence ' + dueBR(s.planDue);
   return `<span class="due ${p}" title="Vencimento do plano">${esc(txt)}</span>`;
+}
+/* ---------- aluno: aviso do vencimento do plano ---------- */
+const ICON_ALERT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+function planCard(st){
+  const p = planState(st); if (!p || p === 'ok') return '';
+  const n = Math.round((new Date(st.planDue + 'T12:00') - new Date(isoToday() + 'T12:00')) / 864e5);
+  if (p === 'breve' && n > 3) return '';
+  const k = p === 'vencido' ? 'vencido' : p === 'hoje' || n === 1 ? 'hoje' : 'breve';
+  const t = p === 'vencido' ? 'Seu plano venceu' : p === 'hoje' ? 'Seu plano vence hoje' : n === 1 ? 'Seu plano vence amanhã' : `Seu plano vence em ${n} dias`;
+  const sub = p === 'vencido' ? `Venceu em ${dueBR(st.planDue)}. Renove com seu personal para continuar recebendo treinos novos e ajustes.` : `Vencimento: ${dueBR(st.planDue)}. Renove para não ficar sem acompanhamento.`;
+  return `<section class="plancard ${k}" role="status"><span class="plic">${k === 'breve' ? ICON_CAL : ICON_ALERT}</span><div class="pltx"><b>${t}</b><small>${esc(sub)}</small></div>${waNum() ? `<a class="btn sm plbtn" href="${esc(waLink('Oi! Quero renovar meu plano.'))}" target="_blank" rel="noopener">Renovar pelo WhatsApp</a>` : ''}</section>`;
 }
 function planMsg(s){
   const p = planState(s); if (p !== 'hoje' && p !== 'vencido') return '';
@@ -3651,10 +3702,10 @@ function studentView(){
   const first = st.name.split(' ')[0];
   const picker = isP() && db.students.length > 1 ? `<label class="viewas" for="viewas">Vendo como
       <select id="viewas" data-change="viewas">${db.students.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : '';
-  const hello = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st, isSeq(st) ? nextSlot(st) : DAYS[(new Date().getDay() + 6) % 7].k) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1>${planMsg(st)}<p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
+  const hello = preview + autoBanner(st) + asmPrompt(st) + newProtoMsg(st, isSeq(st) ? nextSlot(st) : DAYS[(new Date().getDay() + 6) % 7].k) + `<section class="hello"><p class="eyebrow">${esc(st.protocol || 'Sua ficha')}</p><h1>Olá, ${esc(first)}</h1><p class="muted small">Foco: ${esc(st.focus || '—')}</p>${picker}</section>`;
   const mini = preview + autoBanner(st) + planMsg(st);
   const minip = preview + autoBanner(st) + asmPrompt(st);
-  if (state.stab === 'inicio') return `<main class="wrap">${hello}${homeView(st)}</main>${onboardHTML(st)}`;
+  if (state.stab === 'inicio') return `<main class="wrap">${hello}${planCard(st)}${homeView(st)}</main>${onboardHTML(st)}`;
   if (state.stab === 'evolucao') return `<main class="wrap">${mini}<div class="tabhead"><p class="eyebrow">Seu progresso</p><h2 class="serif">Evolução</h2></div>${progressAll(st)}</main>`;
   if (state.stab === 'perfil') return `<main class="wrap">${minip}<div class="tabhead"><p class="eyebrow">Sua conta</p><h2 class="serif">${esc(st.name)}</h2>${picker}</div>${profile(st)}${isP() ? '' : accountHTML()}</main>`;
   const seq = isSeq(st), nxt = seq ? nextSlot(st) : null;
@@ -3667,7 +3718,7 @@ function studentView(){
     body = cardioList(d).length ? cardioCard(d, 'solo') : `<div class="restday"><h3>${esc(d.title || 'Sem treino neste dia')}</h3>
       <p>${isCardio ? esc(st.cardio || 'Dia de cardio.') : (d.title ? 'Dia de recuperação. Sono, hidratação e alimentação também fazem parte do treino.' : 'O personal ainda não montou o treino deste dia.')}</p></div>`;
   } else {
-    body = !trainOpen() ? startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
+    body = !trainOpen() ? planCard(st) + startHTML(d) : `<button type="button" class="photobtn" data-act="sum-open">${ICON_CAM}<span><b>Ficha do dia numa tela só</b><small>Para mostrar ao professor da academia ou tirar foto</small></span></button>${cardioCard(d, true)}${mobHTML(d)}<div class="list">${d.ex.map((ex, i) => exCard(st, ex, i)).join('')}</div>
       ${muscleCard(d, 'O que foi treinado hoje', true)}
       <div id="finish-area"><button class="btn block" type="button" data-act="finish">Concluir e salvar treino</button></div>`;
   }
@@ -3750,9 +3801,9 @@ function exCard(st, ex, i){
       <div class="shead"><span>#</span><div class="cols ${conj ? 'withl' : ''}">${conj ? '<span></span>' : ''}<span>Meta</span><span>Carga</span><span>${ex.items.every((_, k) => measOf(ex, k) === 'tempo') ? 'Tempo' : ex.items.some((_, k) => measOf(ex, k) === 'tempo') ? 'Reps/tempo' : 'Reps'}</span></div><span></span></div>
       ${rows}
     </div>
-    ${waNum() ? `<a class="walink" href="${esc(waLink(`Oi! Tenho uma dúvida no exercício ${ps.map(p => p.name).join(' + ')} (${st.days[state.day] ? st.days[state.day].title : ''}): `))}" target="_blank" rel="noopener">${ICON_CHAT}Dúvida? Fale com o personal no WhatsApp</a>` : ''}
     <div class="cmtbox"><label for="cm-${ex.id}">Observação para o personal</label>
       <textarea id="cm-${ex.id}" rows="1" data-cm="${ex.id}" placeholder="Incômodo, equipamento que usou, ajuste de carga...">${esc(dr.comment || '')}</textarea></div>
+    ${waNum() ? `<a class="walink" href="${esc(waLink(`Oi! Tenho uma dúvida no exercício ${ps.map(p => p.name).join(' + ')} (${st.days[state.day] ? st.days[state.day].title : ''}): `))}" target="_blank" rel="noopener">${ICON_CHAT}Dúvida? Fale com o personal no WhatsApp</a>` : ''}
   </article>`;
 }
 function guide(){
@@ -3771,6 +3822,7 @@ function trainerView(){
   if (state.psec === 'ajustes') return `<main class="wrap v-narrow v-ajustes">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Ajustes</h2></div></div>
     ${bkHTML()}
+    ${faltaHTML()}
     ${notifHTML()}
     ${themeHTML()}
     <section class="card form"><label>Seu WhatsApp <span class="hint">Os alunos falam com você por ele, direto do exercício. Com DDD, só números.</span><input id="set-wa" inputmode="tel" data-setwa="1" value="${esc(waNum().replace(/^55/, ''))}" placeholder="21984183052"></label></section>
@@ -3827,6 +3879,7 @@ function editView(){
       <div class="grid2al"><label>Plano<select id="f-plan" data-sf="plan"><option value="">Não definido</option>${PLANS.map(([k, l]) => `<option value="${k}" ${s.plan === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label><label>Anamnese<select id="f-anam" data-sf="anam"><option value="" ${anamOk(s) ? '' : 'selected'}>Pendente</option><option value="ok" ${anamOk(s) ? 'selected' : ''}>Respondida</option></select></label></div>
       ${fbEditHTML(s)}
       <label>E-mail de acesso <span class="hint">O aluno cria a conta no app com este e-mail e a ficha aparece pra ele. ${s.userId ? 'Situação: app ativo.' : s.email ? 'Situação: ainda não criou a conta.' : ''}</span><input id="f-email" type="email" inputmode="email" data-sf="email" value="${esc(s.email || '')}" placeholder="aluno@email.com"></label>
+      <label class="nofalta"><input type="checkbox" data-nofalta="1" ${s.noFaltaMail ? 'checked' : ''}> Não enviar o e-mail de falta para este aluno</label>
       <div class="grid4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
         <label>Organização dos treinos<select id="f-sched" data-sched="1"><option value="fixo" ${isSeq(s) ? '' : 'selected'}>Dias fixos da semana</option><option value="seq" ${isSeq(s) ? 'selected' : ''}>Sequência A, B, C (sem dia fixo)</option></select></label>
         ${isSeq(s) ? `<label>Meta de treinos por semana<input id="f-perweek" type="number" min="1" max="7" data-sf="perWeek" value="${esc(s.perWeek || '')}"></label>` : ''}
@@ -4103,6 +4156,9 @@ document.addEventListener('click', e => {
     if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
     else { st.logs = st.logs || []; st.logs.push(Object.assign({id: uid(), date: now, day: state.day, title: d.title || 'Cardio', protocol: st.protocol, entries: [], cardioOnly: 1}, cc ? {cardioCmt: cc} : {})); st.last = now; toast(cc ? 'Cardio concluído. Sua observação foi para o personal.' : 'Cardio concluído'); if (navigator.vibrate) try { navigator.vibrate(18); } catch(_){} }
     delete db.drafts[k]; if (db.draftMeta) delete db.draftMeta[k]; state.cdEdit = null; state.cdOpen = null; save(); render(); return; }
+  if (act === 'falta-on'){ db.settings = db.settings || {}; db.settings.faltaMail = Object.assign(faltaCfg(), {on: v === '1'}); save(); render(); return; }
+  if (act === 'falta-def'){ db.settings = db.settings || {}; db.settings.faltaMail = Object.assign(faltaCfg(), {msg: FALTA_DEF}); save(); render(); return; }
+  if (act === 'falta-test'){ if (!FALTA.busy) faltaTest(); return; }
   if (act === 'ex-tog'){ state.exOpen = state.exOpen === v ? null : v; render(); const e = document.querySelector('[data-exc="' + v + '"]'); if (e && state.exOpen === v && e.getBoundingClientRect().top < 60) e.scrollIntoView({block: 'start'}); return; }
   if (act === 'hist-more'){ const cur = state.histFor === state.sid ? state.histN : 5; state.histFor = state.sid; state.histN = cur + 10; render(); return; }
   if (act === 'priv-tog'){ state.privOpen = !state.privOpen; return; }
