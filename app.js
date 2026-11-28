@@ -3573,8 +3573,8 @@ function faltaCloud(){ return typeof sb !== 'undefined' && !!sb; }
 function faltaLoad(){
   if (!faltaCloud() || FALTA.loading || FALTA.list !== null) return;
   FALTA.loading = true;
-  sb.from('falta_sent').select('student_id,missed,sent_at').order('sent_at', {ascending: false}).limit(5)
-    .then(r => { FALTA.list = r.error ? [] : (r.data || []); FALTA.loading = false; render(); }, () => { FALTA.list = []; FALTA.loading = false; });
+  try { sb.from('falta_sent').select('student_id,missed,sent_at').order('sent_at', {ascending: false}).limit(5)
+    .then(r => { FALTA.list = r.error ? [] : (r.data || []); FALTA.loading = false; render(); }, () => { FALTA.list = []; FALTA.loading = false; }); } catch(e){ FALTA.list = []; FALTA.loading = false; }
 }
 function faltaHTML(){
   if (faltaCloud() && !isP()) return '';
