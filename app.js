@@ -1063,6 +1063,17 @@ function panFeed(){
       <span class="pat"><b>${esc(st.name)}</b><small>Terminou ${esc(l.title || 'o treino')}${l.dur ? ' · ' + durTxt(l.dur) : ''}${l.effort ? ' · esforço ' + effTxt(l.effort).toLowerCase() : ''}${nc ? ' · ' + nc + (nc === 1 ? ' observação' : ' observações') : ''}</small></span>
       <span class="paw">${esc(whenTxt(l.date))}</span></button>`; }).join('');
 }
+/* ---------- UX bloco 2 ---------- */
+function panPend(){
+  const html = [asmNewHTML(), attentionHTML(), fbHTML()].join('');
+  return html.replace(/\s/g, '') ? html : '<section class="card pempty"><p class="eyebrow">Pendências</p><b>Tudo em dia</b><span class="small muted">Sem anamneses novas, alunos sumidos ou feedbacks atrasados.</span></section>';
+}
+function bkDueNow(){ try { const t = bkLast(); return !t || (Date.now() - t) / 864e5 >= 30; } catch(e){ return false; } }
+function exSum(ex){
+  const w = ex.series.filter(x => x.type === 'trab'), n = (w.length || ex.series.length), r = ((w[0] || ex.series[0] || {}).reps || '').trim();
+  let m = ''; try { m = ex.method !== 'normal' ? meth(ex.method).name : ''; } catch(e){}
+  return [n + (n === 1 ? ' série' : ' séries'), r, m, ex.rest].filter(Boolean).join(' · ');
+}
 function panelView(){
   const info = panInfo(), f = state.panF || 'todos';
   const done = info.filter(x => x.today), wait = info.filter(x => !x.today && x.planned);
@@ -1070,19 +1081,17 @@ function panelView(){
   return `<main class="wrap v-painel">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Visão geral</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'} · ${new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: '2-digit', month: '2-digit'})}</span></div>
     <div class="panel">
-      <section class="card pcolL"><input id="pan-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno" value="${esc(state.panQ || '')}">
-        <div class="pfil">${PANF.map(([k, l]) => `<button type="button" data-act="pan-f" data-v="${k}" aria-pressed="${f === k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
-        <div class="plist" id="pan-list">${panList()}</div></section>
+      <div class="pcolL ppend">${panPend()}</div>
       <div class="pcolM">
         <section class="card phoje"><div class="phd"><p class="eyebrow">Hoje</p><span class="muted small">${done.length} ${done.length === 1 ? 'treinou' : 'treinaram'} · ${wait.length} ${wait.length === 1 ? 'ainda não treinou' : 'ainda não treinaram'}</span></div>
           ${done.length ? `<div class="pchips">${done.map(x => `<button type="button" class="pchip ok" data-act="pan-open" data-v="${x.s.id}">${ICON_CHECK}${esc(x.s.name.split(' ')[0])}</button>`).join('')}</div>` : ''}
           ${wait.length ? `<p class="plabel">Aguardando</p><div class="pchips">${wait.map(x => `<button type="button" class="pchip" data-act="pan-open" data-v="${x.s.id}">${esc(x.s.name.split(' ').slice(0, 2).join(' '))}</button>`).join('')}</div>` : (done.length ? '' : '<p class="muted small">Ninguém com treino previsto para hoje.</p>')}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Treinos por dia · últimos 14 dias</p></div>${panChart()}</section>
-        <section class="card"><div class="phd"><p class="eyebrow">Renovações</p></div><div class="ptwrap">${panDue()}</div></section>
+        <section class="card pchartc"><div class="phd"><p class="eyebrow">Treinos por dia · últimos 14 dias</p></div>${panChart()}</section>
+        <section class="card prenovc"><div class="phd"><p class="eyebrow">Renovações</p></div><div class="ptwrap">${panDue()}</div></section>
       </div>
       <section class="card pcolR"><div class="phd"><p class="eyebrow">Atividade</p><button type="button" class="linkbtn small" data-act="psec" data-v="feed">Ver tudo</button></div><div class="pfeed">${panFeed()}</div></section>
     </div>
-    ${bkHTML()}
+    ${bkDueNow() ? bkHTML() : ''}
   </main>`;
 }
 
@@ -3717,13 +3726,13 @@ function trainerView(){
   if (state.pview === 'track') return trackView();
   return `<main class="wrap v-alunos">
     <div class="sectionhead"><div><p class="eyebrow">Painel do personal</p><h2>Seus alunos</h2></div><span class="muted small">${db.students.length} ${db.students.length === 1 ? 'aluno' : 'alunos'}</span></div>
-    <div class="alay ${state.pendOpen ? 'pendopen' : ''}"><div class="atop"><div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
+    <div class="alay alay2"><div class="atop"><div class="stuacts"><input id="stu-q" class="search" placeholder="Buscar aluno" autocomplete="off" aria-label="Buscar aluno"><button class="btn sm" type="button" data-act="new-open">${ICON_PLUS}Novo aluno</button><button class="btn sm ghost" type="button" data-act="imp-start" data-v="new">${ICON_UP}Importar PDF</button></div>
     ${state.newOpen ? `<form class="newst" id="newst"><input id="new-name" placeholder="Nome do novo aluno" aria-label="Nome do novo aluno" autocomplete="off" value="${esc((state.newPre || {}).name || '')}">
       <input id="new-email" type="email" inputmode="email" placeholder="E-mail do aluno (para o acesso ao app)" aria-label="E-mail do aluno" autocomplete="off" value="${esc((state.newPre || {}).email || '')}">
       <select id="new-from" class="selbox" aria-label="Começar com a ficha de"><option value="">Ficha em branco</option>${db.students.map(x => `<option value="${x.id}">Copiar ficha de ${esc(x.name.split(' ')[0])}</option>`).join('')}</select>
       <label class="newdue">Vencimento do plano<input id="new-due" type="date" aria-label="Vencimento do plano"></label><select id="new-plan" class="selbox" aria-label="Plano"><option value="">Tipo de plano</option>${PLANS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
       <button class="btn sm" type="submit">Adicionar</button></form>` : ''}
-    ${pendBar()}${alFilLine()}</div><div class="amain">${asmNewHTML()}${alBoxes()}${alDetail()}${attentionHTML()}${fbHTML()}</div><section class="alist"><div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
+    ${alBoxes()}${alDetail()}${alFilLine()}</div><section class="alist"><div class="stugrid">${db.students.filter(alPass).sort((a, b) => { const o = {high: 0, mid: 1, info: 2}, la = alertFor(a), lb = alertFor(b); return (la ? o[la.lvl] : 3) - (lb ? o[lb.lvl] : 3) || a.name.localeCompare(b.name, 'pt'); }).map(s => {
       const lastLog = s.logs[s.logs.length - 1];
       const nc = lastLog ? lastLog.entries.filter(e => e.comment).length + (lastLog.cardioCmt ? 1 : 0) + (lastLog.effortMsg ? 1 : 0) : 0;
       return `<article class="stu" data-name="${esc(norm(s.name))}" data-act="p-prof" data-v="${s.id}">
@@ -3784,13 +3793,15 @@ function editView(){
     <div class="list">${d.ex.length ? d.ex.map((ex, i) => editEx(ex, i, d.ex.length) + (pk && pk.target === ex.id ? pickerHTML('Conjugar com qual exercício?') : '') + (pk && String(pk.target).startsWith('alt:' + ex.id + ':') ? pickerHTML('Escolha o exercício alternativo') : '') + (pk && String(pk.target).startsWith('swap:' + ex.id + ':') ? pickerHTML('Trocar ' + esc(lib(ex.items[+pk.target.split(':')[2]]).name) + ' por') : '')).join('') : '<div class="empty">Nenhum exercício neste dia. Deixe vazio para dia de descanso ou cardio.</div>'}</div>
     ${pk && pk.target === 'new' ? pickerHTML('Adicionar exercício da biblioteca') : `<button class="btn block ghost" type="button" data-act="pick-open" data-v="new">+ Adicionar exercício</button>`}
     </div></div>
-    <div class="row" style="justify-content:center;margin-top:12px"><button class="icon danger" type="button" data-act="st-del" data-v="${s.id}">Remover aluno</button></div>
+    ${pk ? '' : '<button class="fabadd" type="button" data-act="pick-open" data-v="new">+ Exercício</button>'}<div class="row" style="justify-content:center;margin-top:12px"><button class="icon danger" type="button" data-act="st-del" data-v="${s.id}">Remover aluno</button></div>
   </main>`;
 }
 function editEx(ex, i, n){
   const L = k => String.fromCharCode(65 + k);
   const hasM = ex.method !== 'normal';
-  return `<div class="edit-ex ${hasM ? 'hasm' : ''}">
+  const open = state.exOpen === ex.id;
+  return `<div class="edit-ex ${hasM ? 'hasm' : ''} ${open ? 'exopen' : ''}" data-exc="${ex.id}">
+    <button type="button" class="exsum" data-act="ex-tog" data-v="${ex.id}" aria-expanded="${open}"><span class="exn">${i + 1}</span><span class="ext"><b>${esc(ex.items.map(id => lib(id).name).join(' + '))}</b><small>${esc(exSum(ex))}</small></span><span class="exchev" aria-hidden="true"></span></button>
     ${hasM ? `<div class="mband">${methPill(ex.method)}<p>${esc(meth(ex.method).desc)}</p></div>` : ''}
     <div class="items ${ex.items.length > 1 ? 'conjgrp' : ''}">${ex.items.map((id, k) => { const l = lib(id); return `<div class="item"><span class="num">${ex.items.length > 1 ? L(k) : i + 1}</span>
       <span class="nm">${esc(l.name)}<small>${esc(l.primary.map(m => MNAME[m]).join(', ') || 'Sem músculos definidos')}</small>${editRef(id)}${ex.alt && ex.alt[k] ? `<span class="altline">Exercício alternativo: <b>${esc(lib(ex.alt[k]).name)}</b> <button type="button" class="linkbtn" data-act="alt-del" data-ex="${ex.id}" data-i="${k}">Remover</button></span>` : `<button type="button" class="linkbtn altadd" data-act="pick-open" data-v="alt:${ex.id}:${k}">+ Exercício alternativo</button>`}</span>
@@ -3860,16 +3871,17 @@ function histSection(st){
 function trackView(){
   const s = stu();
   const logs = s.logs.slice().reverse(), prMap = prHistory(s).prs;
-  const hist = logs.length ? logs.map(l => logCard(s, l, prMap, `<article class="log">
+  const histN = state.histFor === s.id ? state.histN : 5;
+  const hist = logs.length ? logs.slice(0, histN).map(l => logCard(s, l, prMap, `<article class="log">
       <div class="loghd"><div><p class="eyebrow">${esc(dateBR(l.date, {weekday:'long', day:'2-digit', month:'2-digit'}))}${l.protocol ? ' · ' + esc(l.protocol) : ''}${l.sample ? ' · exemplo' : ''}</p><h3>${esc(l.title)}</h3></div><button type="button" class="icon" data-act="log-edit" data-v="${l.id}">Editar</button></div>
       ${l.auto ? `<p class="effline autoline">Finalizado automaticamente</p>` : ''}${l.effort ? `<p class="effline">Esforço: ${effChip(l.effort)}</p>` : ''}${l.effortMsg ? `<div class="cmt cardiocmt"><b>Recado do treino</b>${esc(l.effortMsg)}</div>` : ''}${l.cardioCmt ? `<div class="cmt cardiocmt"><b>Observação do cardio</b>${esc(l.cardioCmt)}</div>` : ''}<div class="tablewrap"><table>${l.entries.map(e => `<tr><td>${esc(e.items.map(i => lib(i).name).join(' + '))}${methPill(e.method || (e.items.length > 1 ? 'conjugado' : 'normal'), 'inl')}${e.alt ? '<span class="mpill inl alt">Alternativa</span>' : ''}${(prMap[l.id] || []).some(p => p.exId === e.exId) ? '<span class="mpill inl gold">Recorde</span>' : ''}</td><td>${e.sets.map(st => st.parts.map((p, pi) => partTxt(e, p, pi)).join(' + ')).map(esc).join('<br>')}</td></tr>${e.comment ? `<tr class="c"><td colspan="2"><div class="cmt"><b>Observação</b>${esc(e.comment)}</div></td></tr>` : ''}`).join('')}</table></div>
     </article>`)).join('') : `<div class="empty">Quando ${esc(s.name.split(' ')[0])} finalizar um treino, as cargas, repetições e observações de cada exercício aparecem aqui.</div>`;
   return `<main class="wrap">
     <button class="back" type="button" data-act="p-back">← Alunos</button>
     <div class="sectionhead"><div><p class="eyebrow">Acompanhar</p><h2>${esc(s.name)}</h2></div><div class="shacts"><button class="btn sm ghost pdfb" type="button" data-act="pdf-ficha" data-v="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Baixar PDF</button><button type="button" class="btn sm" data-act="pres-open">Apresentar protocolo</button></div></div>
-    <label class="privn">Anotações privadas <span class="hint">Só você vê.</span><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label>
-    <div class="seg" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button><button type="button" data-act="ptab" data-v="anam" aria-pressed="${state.ptab === 'anam'}">Anamnese</button></div>
-    ${state.ptab === 'anam' ? asmView(s) : state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>`}
+    <details class="privd" ${state.privOpen ? 'open' : ''}><summary data-act="priv-tog"><b>Anotações privadas</b><small>${s.privNotes ? esc(s.privNotes.split('\n')[0].slice(0, 70)) : 'Só você vê. Toque para escrever.'}</small></summary><label class="privn"><textarea id="t-priv" data-sf="privNotes" rows="2" placeholder="Lesões, preferências, horários, combinados...">${esc(s.privNotes || '')}</textarea></label></details>
+    <div class="seg ptabs" role="group"><button type="button" data-act="ptab" data-v="hist" aria-pressed="${state.ptab === 'hist'}">Histórico</button><button type="button" data-act="ptab" data-v="evo" aria-pressed="${state.ptab === 'evo'}">Evolução</button><button type="button" data-act="ptab" data-v="cargas" aria-pressed="${state.ptab === 'cargas'}">Cargas</button><button type="button" data-act="ptab" data-v="fb" aria-pressed="${state.ptab === 'fb'}">Feedbacks</button><button type="button" data-act="ptab" data-v="vol" aria-pressed="${state.ptab === 'vol'}">Volume</button><button type="button" data-act="ptab" data-v="anam" aria-pressed="${state.ptab === 'anam'}">Anamnese</button></div>
+    ${state.ptab === 'anam' ? asmView(s) : state.ptab === 'vol' ? volView(s) : state.ptab === 'fb' ? fbTab(s) : state.ptab === 'evo' ? evolution(s) : state.ptab === 'cargas' ? loadsView(s) : `<div class="loggrid">${hist}</div>${logs.length > histN ? `<button class="btn block ghost histmore" type="button" data-act="hist-more">Ver mais treinos (${logs.length - histN})</button>` : ''}`}
   </main>`;
 }
 
@@ -4031,6 +4043,9 @@ document.addEventListener('click', e => {
     if (ex){ if (cc) ex.cardioCmt = cc; else if (state.cdEdit === k) delete ex.cardioCmt; toast(cc || state.cdEdit === k ? 'Observação do cardio salva' : 'Cardio já registrado hoje'); }
     else { st.logs = st.logs || []; st.logs.push(Object.assign({id: uid(), date: now, day: state.day, title: d.title || 'Cardio', protocol: st.protocol, entries: [], cardioOnly: 1}, cc ? {cardioCmt: cc} : {})); st.last = now; toast(cc ? 'Cardio concluído. Sua observação foi para o personal.' : 'Cardio concluído'); if (navigator.vibrate) try { navigator.vibrate(18); } catch(_){} }
     delete db.drafts[k]; if (db.draftMeta) delete db.draftMeta[k]; state.cdEdit = null; state.cdOpen = null; save(); render(); return; }
+  if (act === 'ex-tog'){ state.exOpen = state.exOpen === v ? null : v; render(); const e = document.querySelector('[data-exc="' + v + '"]'); if (e && state.exOpen === v && e.getBoundingClientRect().top < 60) e.scrollIntoView({block: 'start'}); return; }
+  if (act === 'hist-more'){ const cur = state.histFor === state.sid ? state.histN : 5; state.histFor = state.sid; state.histN = cur + 10; render(); return; }
+  if (act === 'priv-tog'){ state.privOpen = !state.privOpen; return; }
   if (act === 'al-pend'){ state.pendOpen = !state.pendOpen; render(); return; }
   if (act === 'mode'){ state.done = null; state.editLog = null; state.mode = v; if (v === 'personal'){ state.pview = 'list'; state.psec = 'painel'; } render(); top(); }
   else if (act === 'stab'){ state.done = null; state.editLog = null; if (state.stab !== v) ANIM = 'tab'; state.stab = v; render(); top(); }
@@ -4221,7 +4236,7 @@ document.addEventListener('click', e => {
       if (f){ const from = lib(f.ex.items[+k]).name; f.ex.items[+k] = l.id; if (f.ex.alt) f.ex.alt[+k] = null; if (l.defMeas){ f.ex.meas = f.ex.items.map((_, j) => j === +k ? l.defMeas : measOf(f.ex, j)); } if (f.ex.nokg) f.ex.nokg[+k] = false; state.picker = null; save(); render(); toast(`${from} trocado por ${l.name}`); }
       return; }
     if (String(state.picker.target).startsWith('alt:')){ const [, exId, k] = state.picker.target.split(':'); const f = findEx(exId); if (f){ f.ex.alt = f.ex.alt || []; f.ex.alt[+k] = l.id; } }
-    else if (state.picker.target === 'new'){ const ne = P([l.id], 3, l.defMeas === 'tempo' ? '30 a 45' : '10 a 12', '1:30 a 2:00'); ne.meas = [l.defMeas || 'reps']; day.ex.push(ne); }
+    else if (state.picker.target === 'new'){ const ne = P([l.id], 3, l.defMeas === 'tempo' ? '30 a 45' : '10 a 12', '1:30 a 2:00'); ne.meas = [l.defMeas || 'reps']; day.ex.push(ne); state.exOpen = ne.id; }
     else { const f = findEx(state.picker.target); if (f){ f.ex.items.push(l.id); f.ex.meas = f.ex.items.map((_, j) => j === f.ex.items.length - 1 ? (l.defMeas || 'reps') : measOf(f.ex, j)); if (f.ex.method === 'normal') f.ex.method = 'conjugado'; f.ex.series.forEach(s => s.reps = s.reps + ' + ' + (s.type === 'trab' ? '10 a 12' : '12')); } }
     state.picker = null; save(); render();
     toast(created ? 'Criado na biblioteca. Complete músculos e vídeo por lá.' : l.name + ' adicionado');
